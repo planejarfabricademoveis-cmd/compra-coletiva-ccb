@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CCB - Compra Coletiva (v2) - Final</title>
+  <style>
+    body { font-family: Arial, sans-serif; background-color: #f0f4f8; margin:0; padding:0; }
+    header { background-color:#0056b3; color:white; text-align:center; padding:15px; font-size:22px; font-weight:bold; }
+    main { margin:20px auto; max-width:900px; background:white; padding:20px; border-radius:8px; box-shadow:0 0 10px rgba(0,0,0,0.08); }
+    h2{ color:#0056b3; }
+    input, select, button, textarea { padding:10px; margin:6px 0; font-size:16px; border-radius:4px; border:1px solid #ccc; box-sizing:border-box; width:100%; }
+    input[type=number]{ -moz-appearance:textfield; }
+    button{ background:#0056b3; color:white; border:none; cursor:pointer; font-weight:bold; }
+    button:hover{ background:#004080; }
+    .hidden{ display:none; }
+    .menu{ display:flex; gap:8px; margin-top:10px; }
+    .menu button{ flex:1; }
+    table{ width:100%; border-collapse:collapse; margin-top:10px; }
+    th,td{ border:1px solid #ddd; padding:8px; text-align:left; }
+    th{ background:#0056b3; color:white; }
+    .logout-btn{ background:#b30000; }
+    .delivered { background:#e8ffe8; }
+    #produtoList{ max-height:140px; overflow:auto; border:1px solid #ccc; border-radius:4px; background:white; position:relative; z-index:2; }
+    #produtoList div{ padding:8px; cursor:pointer; border-bottom:1px solid #f0f0f0; }
+    #produtoList div:hover{ background:#f2f8ff; }
+    .actions button{ margin-right:6px; }
+    .small{ font-size:13px; padding:6px 10px; }
+    .center{ text-align:center; }
+    .help-link{ color:#fff; text-decoration:underline; cursor:pointer; }
+  </style>
+</head>
+<body>
+  <header>CCB - Compra Coletiva</header>
+  <main>
+    <div id="loginScreen">
+      <h2>Login</h2>
+      <input type="text" id="loginUser" placeholder="Usuário" />
+      <input type="password" id="loginPass" placeholder="Senha" />
+      <div class="menu">
+        <button onclick="login()">Entrar</button>
+        <button onclick="showRegister()">Criar conta</button>
+      </div>
+      <p id="ajuda" class="center"><span class="help-link" onclick="openHelp()">Ajuda / Contato</span></p>
+      <p id="loginError" style="color:red; text-align:center;"></p>
+    </div>
+
+    <div id="registerScreen" class="hidden">
+      <h2>Criar Conta</h2>
+      <input type="text" id="regNome" placeholder="Nome completo" />
+      <select id="regMinisterio">
+        <option value="">-- Selecione o ministério --</option>
+        <option>Ancião</option>
+        <option>Cooperador de ofício</option>
+        <option>Cooperador de jovens</option>
+        <option>Auxiliar da escrita</option>
+        <option>Outros</option>
+      </select>
+      <input type="text" id="regLocalidade" placeholder="Localidade" />
+      <input type="text" id="regUser" placeholder="Usuário" />
+      <input type="password" id="regPass" placeholder="Senha" />
+      <div class="menu">
+        <button onclick="register()">Registrar</button>
+        <button onclick="backToLogin()">Voltar</button>
+      </div>
+      <p id="registerMsg" class="center" style="color:green;"></p>
+    </div>
+
+    <div id="pedidoScreen" class="hidden">
+      <h2>Fazer Pedido</h2>
+      <label>Buscar produto</label>
+      <input type="text" id="produtoSearch" placeholder="Digite para buscar..." oninput="filterProdutos()" autocomplete="off" />
+      <div id="produtoList" class="hidden"></div>
+
+      <label>Produto selecionado</label>
+      <input type="text" id="produtoSelected" placeholder="Nenhum produto selecionado" readonly />
+      <label>Quantidade (unidades)</label>
+      <input type="number" id="quantidade" placeholder="Quantidade" min="1" />
+      <label>Observações</label>
+      <input type="text" id="obs" placeholder="Observações" />
+
+      <div class="menu">
+        <button onclick="salvarPedido()">Enviar Pedido</button>
+        <button onclick="verRelatorioUsuario()">Meus Pedidos</button>
+      </div>
+
+      <div class="menu">
+        <button id="adminRelatorioBtn" class="hidden" onclick="verRelatorioAdmin()">Relatórios (Admin)</button>
+        <button id="adminProdutosBtn" class="hidden" onclick="showAdminProdutos()">Produtos (Admin)</button>
+        <button id="adminUsuariosBtn" class="hidden" onclick="showAdminUsuarios()">Usuários (Admin)</button>
+      </div>
+
+      <button class="logout-btn" onclick="logout()">Sair</button>
+      <p id="pedidoMsg" class="center" style="color:green;"></p>
+      <p id="cycleInfo" class="center" style="color:#333;"></p>
+    </div>
+
+    <div id="relatorioUsuario" class="hidden">
+      <h2>Meus Pedidos</h2>
+      <button onclick="printSection('relatorioUsuario')" class="small">Imprimir meus pedidos</button>
+      <table id="tabelaPedidosUsuario">
+        <thead><tr><th>Produto</th><th>Quantidade</th><th>Observações</th><th>Entregue</th><th>Ações</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <button onclick="voltarPedidos()">Voltar</button>
+    </div>
+
+    <div id="relatorioAdmin" class="hidden">
+      <h2>Relatórios (Administrador)</h2>
+      <div class="menu">
+        <button onclick="printSection('relatorioAdmin')" class="small">Imprimir relatórios</button>
+        <button onclick="showAdminProdutos()" class="small">Gerenciar produtos</button>
+        <button onclick="showAdminUsuarios()" class="small">Gerenciar usuários</button>
+      </div>
+
+      <h3>Pedidos</h3>
+      <table id="tabelaPedidosAdmin">
+        <thead><tr><th>Usuário</th><th>Localidade</th><th>Produto</th><th>Qtd</th><th>Obs</th><th>Entregue</th><th>Ações</th></tr></thead>
+        <tbody></tbody>
+      </table>
+
+      <h3>Resumo por Item</h3>
+      <table id="resumoItens">
+        <thead><tr><th>Produto</th><th>Unidade</th><th>Quantidade Total</th></tr></thead>
+        <tbody></tbody>
+      </table>
+
+      <h3>Usuários Cadastrados</h3>
+      <table id="tabelaUsuariosAdmin">
+        <thead><tr><th>Nome</th><th>Usuário</th><th>Localidade</th><th>Ministério</th><th>Ações</th></tr></thead>
+        <tbody></tbody>
+      </table>
+
+      <button onclick="voltarPedidos()">Voltar</button>
+    </div>
+
+    <!-- Admin Produtos -->
+    <div id="adminProdutos" class="hidden">
+      <h2>Produtos (Admin)</h2>
+      <input type="text" id="novoProdutoNome" placeholder="Nome do produto" />
+      <input type="text" id="novoProdutoUnidade" placeholder="Unidade (ex: pacote, rolo, unidade)" />
+      <div class="menu">
+        <button onclick="addProduto()">Adicionar Produto</button>
+        <button onclick="voltarAdmin()">Voltar</button>
+      </div>
+      <table id="tabelaProdutosAdmin">
+        <thead><tr><th>Produto</th><th>Unidade</th><th>Ações</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <!-- Admin Usuarios -->
+    <div id="adminUsuarios" class="hidden">
+      <h2>Usuários (Admin)</h2>
+      <input type="text" id="adminNovoNome" placeholder="Nome completo" />
+      <input type="text" id="adminNovoUser" placeholder="Usuário" />
+      <input type="password" id="adminNovoPass" placeholder="Senha" />
+      <input type="text" id="adminNovoLocalidade" placeholder="Localidade" />
+      <select id="adminNovoMinisterio">
+        <option value="">-- Selecionar ministério --</option>
+        <option>Ancião</option>
+        <option>Cooperador de ofício</option>
+        <option>Cooperador de jovens</option>
+        <option>Auxiliar da escrita</option>
+        <option>Outros</option>
+      </select>
+      <div class="menu">
+        <button onclick="adminAddUser()">Adicionar Usuário</button>
+        <button onclick="voltarAdmin()">Voltar</button>
+      </div>
+      <table id="tabelaAdminUsuariosList">
+        <thead><tr><th>Nome</th><th>Usuário</th><th>Localidade</th><th>Ministério</th><th>Ações</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+  </main>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script>
+/* ======================= CONFIGURAÇÃO FIREBASE (seu novo projeto) ======================= */
+const firebaseConfig = {
+  apiKey: "AIzaSyB940reXNqw_xfne8uaeh5PwjgA-tzMeGg",
+  authDomain: "compra-coletiva-ccb-web.firebaseapp.com",
+  databaseURL: "https://compra-coletiva-ccb-web-default-rtdb.firebaseio.com",
+  projectId: "compra-coletiva-ccb-web",
+  storageBucket: "compra-coletiva-ccb-web.firebasestorage.app",
+  messagingSenderId: "20688611131",
+  appId: "1:20688611131:web:c0fbaa91045c538e23f91e"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+/* ADMIN CREDENTIALS (client-side for demo) */
+const ADMIN_LOGIN = "fernando_filho87";
+const ADMIN_PASSWORD = "1502";
+
+let currentUser = null; // {user,nome,localidade,isAdmin,key,ministerio}
+let produtosCache = []; // lista local de produtos
+
+/* Inicialização */
+(async function init(){
+  try{
+    const sess = sessionStorage.getItem('ccb_user');
+    if(sess){ currentUser = JSON.parse(sess); enterApp(); }
+  }catch(e){ console.warn('sem sessão', e); }
+
+  // garantir cycleStart
+  const cfgSnap = await db.ref('config/cycleStart').once('value');
+  if(!cfgSnap.exists() || !cfgSnap.val()){
+    // se não existir, inicializar com data atual
+    await db.ref('config').set({ cycleStart: Date.now() });
+  }
+
+  // seed produtos iniciais (apenas se não existirem)
+  await seedProdutos();
+  // carregar produtos na cache
+  await loadProdutos();
+})();
+
+/* ======================= Registro/Login ======================= */
+async function register(){
+  const nome = document.getElementById('regNome').value.trim();
+  const localidade = document.getElementById('regLocalidade').value.trim();
+  const user = document.getElementById('regUser').value.trim();
+  const pass = document.getElementById('regPass').value.trim();
+  const ministerio = document.getElementById('regMinisterio').value || '';
+  const msgEl = document.getElementById('registerMsg'); msgEl.textContent='';
+
+  if(!nome || !localidade || !user || !pass){ msgEl.style.color='red'; msgEl.textContent='Preencha todos os campos.'; return; }
+  if(user === ADMIN_LOGIN){ msgEl.style.color='red'; msgEl.textContent='Nome de usuário indisponível.'; return; }
+
+  try{
+    const snap = await db.ref('usuarios').orderByChild('user').equalTo(user).once('value');
+    if(snap.exists()){ msgEl.style.color='red'; msgEl.textContent='Nome de usuário já existe.'; return; }
+    const usuario = { nome, localidade, user, pass, ministerio, createdAt: Date.now() };
+    await db.ref('usuarios').push(usuario);
+    // recarregar listagens apenas se admin estiver visualizando
+    try { await renderAdminUsuarios(); } catch(e){ /* sem efeito se não estiver logado admin */ }
+    msgEl.style.color='green'; msgEl.textContent='Usuário registrado com sucesso.';
+    document.getElementById('regNome').value=''; document.getElementById('regLocalidade').value=''; document.getElementById('regUser').value=''; document.getElementById('regPass').value='';
+    setTimeout(()=> backToLogin(),900);
+  }catch(err){ console.error(err); msgEl.style.color='red'; msgEl.textContent='Erro ao salvar usuário.'; }
+}
+
+async function login(){
+  const user = document.getElementById('loginUser').value.trim();
+  const pass = document.getElementById('loginPass').value.trim();
+  const errEl = document.getElementById('loginError'); errEl.textContent='';
+  if(!user || !pass){ errEl.textContent='Preencha usuário e senha.'; return; }
+  if(user === ADMIN_LOGIN && pass === ADMIN_PASSWORD){ currentUser = { user: ADMIN_LOGIN, nome: 'Administrador', localidade:'Administração', isAdmin:true }; enterApp(); return; }
+  try{
+    const snap = await db.ref('usuarios').orderByChild('user').equalTo(user).once('value');
+    const obj = snap.val(); if(!obj){ errEl.textContent='Usuário ou senha incorretos.'; return; }
+    let found=null, foundKey=null; for(const k in obj){ if(obj[k].pass===pass){ found=obj[k]; foundKey=k; break; }}
+    if(!found){ errEl.textContent='Usuário ou senha incorretos.'; return; }
+    currentUser = { user: found.user, nome: found.nome, localidade: found.localidade, isAdmin:false, key: foundKey, ministerio: found.ministerio||'' };
+    enterApp();
+  }catch(err){ console.error(err); errEl.textContent='Erro ao autenticar. Veja console.'; }
+}
+
+function logout(){ currentUser=null; sessionStorage.removeItem('ccb_user'); // reset telas
+  const ids = ['loginScreen','pedidoScreen','registerScreen','relatorioUsuario','relatorioAdmin','adminProdutos','adminUsuarios'];
+  ids.forEach(id=>{ const el = document.getElementById(id); if(el){ if(id==='loginScreen') el.classList.remove('hidden'); else el.classList.add('hidden'); }});
+  document.getElementById('loginUser').value=''; document.getElementById('loginPass').value=''; document.getElementById('loginError').textContent=''; 
+}
+
+function showRegister(){ document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('registerScreen').classList.remove('hidden'); document.getElementById('registerMsg').textContent=''; }
+function backToLogin(){ document.getElementById('registerScreen').classList.add('hidden'); document.getElementById('loginScreen').classList.remove('hidden'); document.getElementById('registerMsg').textContent=''; }
+
+function enterApp(){ sessionStorage.setItem('ccb_user', JSON.stringify(currentUser)); // esconder login, mostrar pedido
+  document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('registerScreen').classList.add('hidden'); document.getElementById('pedidoScreen').classList.remove('hidden');
+  document.getElementById('relatorioUsuario').classList.add('hidden'); document.getElementById('relatorioAdmin').classList.add('hidden'); document.getElementById('pedidoMsg').textContent='';
+  // mostrar botões admin
+  if(currentUser.isAdmin){ document.getElementById('adminRelatorioBtn').classList.remove('hidden'); document.getElementById('adminProdutosBtn').classList.remove('hidden'); document.getElementById('adminUsuariosBtn').classList.remove('hidden'); }
+  else{ document.getElementById('adminRelatorioBtn').classList.add('hidden'); document.getElementById('adminProdutosBtn').classList.add('hidden'); document.getElementById('adminUsuariosBtn').classList.add('hidden'); }
+  updateCycleInfo();
+}
+
+/* ======================= Produtos (CRUD) ======================= */
+async function seedProdutos(){
+  const snap = await db.ref('produtos').once('value');
+  if(snap.exists()) return; // já tem produtos
+  const iniciais = [
+    { nome: 'Copo descartavel pacote com 100 unidades', unidade:'pacote' },
+    { nome: 'Toalha papel interfolha pacote com 1000 folhas', unidade:'pacote' },
+    { nome: 'Papel higienico 300 metros Rolo', unidade:'rolo' },
+    { nome: 'Toalha papel 200 metros rolo', unidade:'rolo' },
+    { nome: 'Papel higienico 60 metros pacote com 12 unidades', unidade:'pacote' }
+  ];
+  for(const p of iniciais) await db.ref('produtos').push(p);
+}
+
+async function loadProdutos(){
+  const snap = await db.ref('produtos').once('value');
+  const obj = snap.val() || {};
+  produtosCache = Object.keys(obj).map(k => ({ key:k, ...obj[k] }));
+}
+
+function filterProdutos(){
+  const q = document.getElementById('produtoSearch').value.trim().toLowerCase();
+  const list = document.getElementById('produtoList');
+  list.innerHTML='';
+  if(!q){ list.classList.add('hidden'); return; }
+  const matches = produtosCache.filter(p => p.nome.toLowerCase().includes(q));
+  if(matches.length===0){ list.innerHTML='<div>Nenhum produto</div>'; list.classList.remove('hidden'); return; }
+  matches.forEach(m=>{
+    const div = document.createElement('div'); div.textContent = m.nome + ' ('+ (m.unidade||'') +')';
+    div.onclick = ()=> selectProduto(m);
+    list.appendChild(div);
+  });
+  list.classList.remove('hidden');
+}
+
+function selectProduto(prod){
+  document.getElementById('produtoSelected').value = prod.nome + ' ('+ (prod.unidade||'') +')';
+  document.getElementById('produtoList').classList.add('hidden');
+  document.getElementById('produtoSearch').value = '';
+  // store selected key in dataset
+  document.getElementById('produtoSelected').dataset.key = prod.key;
+}
+
+async function addProduto(){
+  if(!currentUser || !currentUser.isAdmin){ alert('Acesso negado.'); return; }
+  const nome = document.getElementById('novoProdutoNome').value.trim();
+  const unidade = document.getElementById('novoProdutoUnidade').value.trim();
+  if(!nome || !unidade){ alert('Preencha nome e unidade.'); return; }
+  try{ await db.ref('produtos').push({ nome, unidade }); document.getElementById('novoProdutoNome').value=''; document.getElementById('novoProdutoUnidade').value=''; await loadProdutos(); renderProdutosAdmin(); alert('Produto adicionado.'); }catch(e){ console.error(e); alert('Erro ao adicionar produto.'); }
+}
+
+async function editProduto(key){
+  const p = produtosCache.find(x=>x.key===key); if(!p) return;
+  const novoNome = prompt('Nome do produto:', p.nome); if(novoNome===null) return;
+  const novaUnidade = prompt('Unidade:', p.unidade||''); if(novaUnidade===null) return;
+  try{ await db.ref('produtos/'+key).update({ nome:novoNome.trim(), unidade:novaUnidade.trim() }); await loadProdutos(); renderProdutosAdmin(); alert('Produto atualizado.'); }catch(e){ console.error(e); alert('Erro ao editar.'); }
+}
+async function deleteProduto(key){ if(!confirm('Excluir este produto?')) return; try{ await db.ref('produtos/'+key).remove(); await loadProdutos(); renderProdutosAdmin(); alert('Produto excluído.'); }catch(e){ console.error(e); alert('Erro ao excluir.'); } }
+
+function showAdminProdutos(){ hideAllScreens(); document.getElementById('adminProdutos').classList.remove('hidden'); renderProdutosAdmin(); }
+
+function voltarAdmin(){ document.getElementById('adminProdutos').classList.add('hidden'); document.getElementById('adminUsuarios').classList.add('hidden'); document.getElementById('pedidoScreen').classList.remove('hidden'); updateCycleInfo(); }
+
+function renderProdutosAdmin(){ const tbody = document.querySelector('#tabelaProdutosAdmin tbody'); tbody.innerHTML=''; produtosCache.forEach(p=>{ const tr=document.createElement('tr'); tr.innerHTML = `<td>${escapeHtml(p.nome)}</td><td>${escapeHtml(p.unidade||'')}</td><td class="actions"><button class="small" onclick="editProduto('${p.key}')">Editar</button><button class="small" onclick="deleteProduto('${p.key}')">Excluir</button></td>`; tbody.appendChild(tr); }); }
+
+/* ======================= Admin Usuarios (CRUD pelo admin) ======================= */
+async function adminAddUser(){ 
+  if(!currentUser || !currentUser.isAdmin){ alert('Acesso negado.'); return; }
+  const nome = document.getElementById('adminNovoNome').value.trim();
+  const user = document.getElementById('adminNovoUser').value.trim();
+  const pass = document.getElementById('adminNovoPass').value.trim();
+  const localidade = document.getElementById('adminNovoLocalidade').value.trim();
+  const ministerio = document.getElementById('adminNovoMinisterio').value||'';
+  if(!nome || !user || !pass || !localidade){ alert('Preencha todos os campos.'); return; }
+  try{
+    const snap = await db.ref('usuarios').orderByChild('user').equalTo(user).once('value');
+    if(snap.exists()){ alert('Usuário já existe.'); return; }
+    await db.ref('usuarios').push({ nome, user, pass, localidade, ministerio, createdAt: Date.now() });
+    document.getElementById('adminNovoNome').value=''; document.getElementById('adminNovoUser').value=''; document.getElementById('adminNovoPass').value=''; document.getElementById('adminNovoLocalidade').value='';
+    await renderAdminUsuarios();
+    alert('Usuário criado.');
+  }catch(e){ console.error(e); alert('Erro ao criar usuário.'); } 
+}
+
+async function renderAdminUsuarios(){ 
+  const tbody = document.querySelector('#tabelaUsuariosAdmin tbody');
+  const tbody2 = document.querySelector('#tabelaAdminUsuariosList tbody');
+  if(tbody) tbody.innerHTML=''; 
+  if(tbody2) tbody2.innerHTML='';
+  try{
+    const snap = await db.ref('usuarios').once('value'); const obj = snap.val()||{};
+    const usuarios = Object.keys(obj).map(k=>({ key:k, ...obj[k] }));
+    if(usuarios.length===0){
+      if(tbody) tbody.innerHTML='<tr><td colspan="5">Nenhum usuário encontrado.</td></tr>';
+      if(tbody2) tbody2.innerHTML='<tr><td colspan="5">Nenhum usuário encontrado.</td></tr>';
+      return;
+    }
+    usuarios.forEach(u=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${escapeHtml(u.nome)}</td><td>${escapeHtml(u.user)}</td><td>${escapeHtml(u.localidade)}</td><td>${escapeHtml(u.ministerio||'')}</td><td class="actions"><button class="small" onclick="adminEditUser('${u.key}')">Editar</button><button class="small" onclick="adminDeleteUser('${u.key}')">Excluir</button></td>`;
+      if(tbody) tbody.appendChild(tr);
+      if(tbody2) tbody2.appendChild(tr.cloneNode(true));
+    });
+  }catch(e){ console.error(e); if(tbody) tbody.innerHTML='<tr><td colspan="5">Erro ao carregar usuários.</td></tr>'; if(tbody2) tbody2.innerHTML='<tr><td colspan="5">Erro ao carregar usuários.</td></tr>'; }
+}
+
+async function showAdminUsuarios(){ 
+  if(!currentUser || !currentUser.isAdmin){ alert('Acesso negado.'); return; } 
+  hideAllScreens();
+  document.getElementById('adminUsuarios').classList.remove('hidden'); 
+  await renderAdminUsuarios(); 
+}
+
+async function adminEditUser(key){ 
+  try{
+    const snap = await db.ref('usuarios/'+key).once('value'); const u = snap.val(); if(!u) return;
+    const novoNome = prompt('Nome:', u.nome); if(novoNome===null) return;
+    const novoUser = prompt('Usuário:', u.user); if(novoUser===null) return;
+    const novaLoc = prompt('Localidade:', u.localidade||''); if(novaLoc===null) return;
+    const novaMin = prompt('Ministério:', u.ministerio||''); if(novaMin===null) return;
+    const novaPass = prompt('Senha (deixe em branco para manter):','');
+    const updates = { nome:novoNome.trim(), user:novoUser.trim(), localidade:novaLoc.trim(), ministerio:novaMin.trim() };
+    if(novaPass && novaPass.trim()) updates.pass = novaPass.trim();
+    await db.ref('usuarios/'+key).update(updates);
+    await renderAdminUsuarios();
+    alert('Usuário atualizado.');
+  }catch(e){ console.error(e); alert('Erro ao editar usuário.'); }
+}
+
+async function adminDeleteUser(key){ if(!confirm('Excluir este usuário?')) return; try{ await db.ref('usuarios/'+key).remove(); await renderAdminUsuarios(); alert('Usuário excluído.'); }catch(e){ console.error(e); alert('Erro ao excluir usuário.'); } }
+
+/* ======================= Pedidos ======================= */
+async function salvarPedido(){
+  const produtoKey = document.getElementById('produtoSelected').dataset.key;
+  const produtoText = document.getElementById('produtoSelected').value.trim();
+  const quantidade = document.getElementById('quantidade').value.trim();
+  const obs = document.getElementById('obs').value.trim();
+  const msgEl = document.getElementById('pedidoMsg'); msgEl.textContent='';
+  if(!produtoKey || !produtoText){ msgEl.style.color='red'; msgEl.textContent='Selecione um produto.'; return; }
+  if(!quantidade || parseInt(quantidade)<=0){ msgEl.style.color='red'; msgEl.textContent='Quantidade inválida.'; return; }
+  if(!currentUser){ msgEl.style.color='red'; msgEl.textContent='Você precisa estar logado para enviar pedido.'; return; }
+  const cycle = await getCycleInfo(); if(!cycle.open){ msgEl.style.color='red'; msgEl.textContent='Período de pedidos encerrado.'; return; }
+  const pedido = { produtoKey, produtoText, quantidade: parseInt(quantidade), obs, createdBy: currentUser.user, createdByName: currentUser.nome, createdByLocalidade: currentUser.localidade, createdAt: Date.now(), entregue: false };
+  try{ await db.ref('pedidos').push(pedido); msgEl.style.color='green'; msgEl.textContent='Pedido enviado com sucesso.'; document.getElementById('produtoSelected').value=''; delete document.getElementById('produtoSelected').dataset.key; document.getElementById('quantidade').value=''; document.getElementById('obs').value=''; }catch(e){ console.error(e); msgEl.style.color='red'; msgEl.textContent='Erro ao salvar pedido.'; }
+}
+
+/* Ver relatorio do usuario (apenas seus pedidos) */
+async function verRelatorioUsuario(){ 
+  if(!currentUser){ alert('Faça login primeiro.'); return; }
+  hideAllScreens();
+  document.getElementById('relatorioUsuario').classList.remove('hidden');
+  const tbody = document.querySelector('#tabelaPedidosUsuario tbody'); tbody.innerHTML = '<tr><td colspan="5">Carregando...</td></tr>';
+  try{
+    const snap = await db.ref('pedidos').orderByChild('createdBy').equalTo(currentUser.user).once('value'); 
+    const data = snap.val() || {};
+    const rows = Object.keys(data).map(k=>({ key:k, ...data[k] })); 
+    if(rows.length===0){ tbody.innerHTML = '<tr><td colspan="5">Nenhum pedido encontrado.</td></tr>'; return; }
+    tbody.innerHTML = '';
+    const cycle = await getCycleInfo();
+    rows.forEach(r=>{
+      const tr = document.createElement('tr'); if(r.entregue) tr.classList.add('delivered');
+      // só permite editar/excluir se for admin OU (autor do pedido, ciclo aberto e >5 dias restantes) E pedido NÃO entregue (exclusão)
+      const canEditOrDelete = (currentUser.isAdmin) || (r.createdBy===currentUser.user && cycle.open && cycle.daysRemaining>5);
+      let actionsHtml = '';
+      if(canEditOrDelete){
+        // editar: admin sempre pode, usuário só se autor e dentro da janela (mesma regra)
+        const canEdit = (currentUser.isAdmin) || (r.createdBy===currentUser.user && cycle.open && cycle.daysRemaining>5);
+        if(canEdit) actionsHtml += `<button class="small" onclick="editPedido('${r.key}')">Editar</button>`;
+        // excluir: só mostrar se não entregue ou se admin
+        if(!r.entregue || currentUser.isAdmin) actionsHtml += `<button class="small" onclick="deletePedido('${r.key}')">Excluir</button>`;
+      }
+      tr.innerHTML = `<td>${escapeHtml(r.produtoText)}</td><td>${escapeHtml(r.quantidade)}</td><td>${escapeHtml(r.obs||'')}</td><td>${r.entregue?'<strong>Sim</strong>':'Não'}</td><td class="actions">${actionsHtml}</td>`;
+      tbody.appendChild(tr);
+    });
+  }catch(e){ console.error(e); tbody.innerHTML = '<tr><td colspan="5">Erro ao carregar pedidos.</td></tr>'; }
+}
+
+/* Editar pedido (usuário pode editar apenas até 5 dias antes do fechamento) */
+async function editPedido(key){ 
+  try{
+    const snap = await db.ref('pedidos/'+key).once('value'); const p = snap.val(); if(!p) return; 
+    const cycle = await getCycleInfo(); 
+    const canEdit = currentUser && (currentUser.isAdmin || (p.createdBy===currentUser.user && cycle.open && cycle.daysRemaining>5));
+    if(!canEdit || (p.entregue && !currentUser.isAdmin)){ alert('Edição não permitida.'); return; }
+    const novoObs = prompt('Observações:', p.obs||''); if(novoObs===null) return;
+    const novaQtd = prompt('Quantidade:', p.quantidade); if(novaQtd===null) return; if(parseInt(novaQtd)<=0){ alert('Quantidade inválida.'); return; }
+    await db.ref('pedidos/'+key).update({ obs: novoObs, quantidade: parseInt(novaQtd) });
+    alert('Pedido atualizado.'); verRelatorioUsuario();
+  }catch(e){ console.error(e); alert('Erro ao editar pedido.'); }
+}
+
+async function deletePedido(key){ 
+  try{
+    const snap = await db.ref('pedidos/'+key).once('value'); const p = snap.val(); if(!p) return; 
+    const cycle = await getCycleInfo();
+    const canDelete = currentUser && (currentUser.isAdmin || (p.createdBy===currentUser.user && cycle.open && cycle.daysRemaining>5));
+    if(!canDelete){ alert('Exclusão não permitida.'); return; }
+    if(p.entregue && !currentUser.isAdmin){ alert('Pedido entregue não pode ser excluído. Somente o administrador pode excluir pedidos entregues.'); return; }
+    if(!confirm('Excluir este pedido?')) return;
+    await db.ref('pedidos/'+key).remove();
+    alert('Pedido excluído.'); verRelatorioUsuario();
+  }catch(e){ console.error(e); alert('Erro ao excluir pedido.'); }
+}
+
+/* ======================= Relatórios Admin ======================= */
+async function verRelatorioAdmin(){ 
+  if(!currentUser || !currentUser.isAdmin){ alert('Acesso negado.'); return; }
+  hideAllScreens();
+  document.getElementById('relatorioAdmin').classList.remove('hidden');
+  const tbodyP = document.querySelector('#tabelaPedidosAdmin tbody'); const tbodyU = document.querySelector('#tabelaUsuariosAdmin tbody'); const resumo = document.querySelector('#resumoItens tbody'); 
+  tbodyP.innerHTML = '<tr><td colspan="7">Carregando...</td></tr>'; tbodyU.innerHTML = '<tr><td colspan="5">Carregando...</td></tr>'; resumo.innerHTML = '<tr><td colspan="3">Carregando...</td></tr>';
+  try{
+    const snapP = await db.ref('pedidos').once('value'); const pedidosObj = snapP.val() || {};
+    const pedidos = Object.keys(pedidosObj).map(k=>({ key:k, ...pedidosObj[k] }));
+    if(pedidos.length===0){ tbodyP.innerHTML = '<tr><td colspan="7">Nenhum pedido encontrado.</td></tr>'; } else {
+      tbodyP.innerHTML='';
+      pedidos.forEach(p=>{
+        const tr=document.createElement('tr');
+        // montar células manualmente pra evitar problemas com escape
+        const tdUser = document.createElement('td'); tdUser.innerText = p.createdByName || p.createdBy || '';
+        const tdLocal = document.createElement('td'); tdLocal.innerText = p.createdByLocalidade || '';
+        const tdProd = document.createElement('td'); tdProd.innerText = p.produtoText || '';
+        const tdQtd = document.createElement('td'); tdQtd.innerText = p.quantidade || '';
+        const tdObs = document.createElement('td'); tdObs.innerText = p.obs || '';
+        const tdEnt = document.createElement('td'); tdEnt.innerHTML = p.entregue ? '<strong style="color:green">Sim</strong>' : 'Não';
+        const tdActions = document.createElement('td'); tdActions.className = 'actions';
+        if(p.entregue){
+          const btn = document.createElement('button'); btn.className='small'; btn.innerText='Desmarcar'; btn.onclick = ()=> toggleEntregue(p.key, false);
+          tdActions.appendChild(btn);
+          tr.classList.add('delivered');
+        } else {
+          const btn = document.createElement('button'); btn.className='small'; btn.innerText='Marcar entregue'; btn.onclick = ()=> toggleEntregue(p.key, true);
+          tdActions.appendChild(btn);
+        }
+        tr.appendChild(tdUser); tr.appendChild(tdLocal); tr.appendChild(tdProd); tr.appendChild(tdQtd); tr.appendChild(tdObs); tr.appendChild(tdEnt); tr.appendChild(tdActions);
+        tbodyP.appendChild(tr);
+      });
+    }
+
+    // resumo por item
+    const map = {};
+    pedidos.forEach(p=>{ const name = p.produtoText || 'Sem produto'; if(!map[name]) map[name] = { unidade: (p.produtoUnidade||''), total:0 }; map[name].total += Number(p.quantidade||0); });
+    resumo.innerHTML=''; Object.keys(map).forEach(name=>{ const tr = document.createElement('tr'); tr.innerHTML = `<td>${escapeHtml(name)}</td><td>${escapeHtml(map[name].unidade||'')}</td><td>${escapeHtml(map[name].total)}</td>`; resumo.appendChild(tr); });
+
+    const snapU = await db.ref('usuarios').once('value'); const usuariosObj = snapU.val()||{}; const usuarios = Object.keys(usuariosObj).map(k=>({ key:k, ...usuariosObj[k] }));
+    if(usuarios.length===0){ tbodyU.innerHTML = '<tr><td colspan="5">Nenhum usuário encontrado.</td></tr>'; } else { tbodyU.innerHTML = ''; usuarios.forEach(u=>{ const tr=document.createElement('tr'); tr.innerHTML = `<td>${escapeHtml(u.nome)}</td><td>${escapeHtml(u.user)}</td><td>${escapeHtml(u.localidade)}</td><td>${escapeHtml(u.ministerio||'')}</td><td class="actions"><button class="small" onclick="adminEditUser('${u.key}')">Editar</button><button class="small" onclick="adminDeleteUser('${u.key}')">Excluir</button></td>`; tbodyU.appendChild(tr); }); }
+  }catch(e){ console.error(e); tbodyP.innerHTML = '<tr><td colspan="7">Erro ao carregar pedidos.</td></tr>'; tbodyU.innerHTML = '<tr><td colspan="5">Erro ao carregar usuários.</td></tr>'; resumo.innerHTML = '<tr><td colspan="3">Erro ao gerar resumo.</td></tr>'; }
+}
+
+/* ======================= Marcar entregue com confirmação + senha admin ======================= */
+async function toggleEntregue(key, toState){ 
+  if(!currentUser || !currentUser.isAdmin){ alert('Acesso negado.'); return; }
+  if(!confirm('Tem certeza que deseja '+(toState?'marcar como entregue':'desmarcar entrega')+'?')) return;
+  const pass = prompt('Digite sua senha de administrador para confirmar:'); if(pass===null) return; if(pass !== ADMIN_PASSWORD){ alert('Senha incorreta.'); return; }
+  try{ await db.ref('pedidos/'+key).update({ entregue: !!toState }); alert('Atualizado.'); verRelatorioAdmin(); }catch(e){ console.error(e); alert('Erro ao atualizar.'); }
+}
+
+/* ======================= Ciclo de 30 dias e regras de edição ======================= */
+async function getCycleInfo(){ 
+  const snap = await db.ref('config/cycleStart').once('value'); 
+  const start = snap.val() || Date.now(); 
+  const now = Date.now(); 
+  const elapsed = now - start; 
+  const daysElapsed = Math.floor(elapsed / (24*60*60*1000)); 
+  const daysRemaining = 30 - daysElapsed; 
+  const open = daysElapsed < 30; 
+  return { start, now, daysElapsed, daysRemaining, open }; 
+}
+
+async function updateCycleInfo(){ 
+  const info = await getCycleInfo(); const el = document.getElementById('cycleInfo'); 
+  if(!info.open) el.textContent = `Período de 30 dias encerrado. Para novo ciclo, contate o administrador.`; 
+  else el.textContent = `Ciclo aberto. Dia ${info.daysElapsed+1} de 30. Edições permitidas até ${info.daysRemaining>5? (info.daysRemaining+' dias antes do fechamento') : 'bloqueadas (últimos 5 dias)'} .`; 
+}
+
+/* ======================= Impressão de seções ======================= */
+function printSection(id){ 
+  const el = document.getElementById(id); 
+  if(!el){ window.print(); return; } 
+  const w = window.open('','_blank'); 
+  w.document.write('<html><head><title>Imprimir</title><style>body{font-family:Arial,sans-serif;padding:20px;}table{width:100%;border-collapse:collapse;}th,td{border:1px solid #ddd;padding:6px;text-align:left;}th{background:#0056b3;color:#fff;}</style></head><body>'+el.innerHTML+'</body></html>'); 
+  w.document.close(); w.focus(); w.print(); 
+}
+
+/* ======================= Ajuda / WhatsApp ======================= */
+function openHelp(){ 
+  const text = 'Deseja contatar o administrador via WhatsApp?'; 
+  if(confirm(text)){ const phone = '5531985330656'; const url = 'https://wa.me/'+phone+'?text='+encodeURIComponent('Olá, preciso de ajuda com o sistema de compras coletivas.'); window.open(url,'_blank'); }
+}
+
+/* ======================= Voltar / Navegação ======================= */
+function hideAllScreens(){
+  const ids = ['loginScreen','registerScreen','pedidoScreen','relatorioUsuario','relatorioAdmin','adminProdutos','adminUsuarios'];
+  ids.forEach(id=>{ const el = document.getElementById(id); if(el) el.classList.add('hidden'); });
+}
+function voltarPedidos(){
+  // Oculta telas relacionadas e mostra a tela principal de pedidos
+  const sections = ['relatorioUsuario','relatorioAdmin','adminProdutos','adminUsuarios'];
+  sections.forEach(id=>{
+    const el = document.getElementById(id);
+    if(el) el.classList.add('hidden');
+  });
+  const mainScreen = document.getElementById('pedidoScreen');
+  if(mainScreen) mainScreen.classList.remove('hidden');
+  updateCycleInfo();
+}
+
+/* ======================= Utilitários ======================= */
+function escapeHtml(s){
+  if(s === null || s === undefined) return '';
+  return String(s).replace(/[&<>"']/g, function(m){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[m];
+  });
+}
+
+</script>
+</body>
+</html>
