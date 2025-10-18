@@ -1,53 +1,189 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>CCB - Compra Coletiva (v2) - Final</title>
+  <title>CCB - Compra Coletiva</title>
+
+  <!-- =======================
+       ESTILOS GERAIS (CSS)
+  ======================== -->
   <style>
-    body { font-family: Arial, sans-serif; background-color: #f0f4f8; margin:0; padding:0; }
-    header { background-color:#0056b3; color:white; text-align:center; padding:15px; font-size:22px; font-weight:bold; }
-    main { margin:20px auto; max-width:900px; background:white; padding:20px; border-radius:8px; box-shadow:0 0 10px rgba(0,0,0,0.08); }
-    h2{ color:#0056b3; }
-    input, select, button, textarea { padding:10px; margin:6px 0; font-size:16px; border-radius:4px; border:1px solid #ccc; box-sizing:border-box; width:100%; }
+    :root{
+      --pri:#0056b3;
+      --pri-700:#004080;
+      --bg:#f0f4f8;
+      --ok:#28a745;
+      --warn:#f0ad4e;
+      --err:#b30000;
+      --text:#111;
+      --muted:#6b7280;
+      --br:10px;
+      --shadow:0 6px 20px rgba(10,10,20,.06);
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{ font-family:Arial,Helvetica,sans-serif; background:var(--bg); color:var(--text); margin:0; }
+
+    header{
+      background:var(--pri); color:#fff; padding:14px 16px;
+      position:sticky; top:0; z-index:20; box-shadow:0 2px 12px rgba(0,0,0,.12);
+      display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+    }
+    header .title{ font-size:20px; font-weight:700; flex:1; }
+    header .clock{ font-size:12px; opacity:.9; }
+    header .tag{ background:rgba(255,255,255,.15); padding:4px 8px; border-radius:999px; font-size:12px; }
+
+    main{ margin:18px auto; max-width:1100px; padding:0 14px; }
+    .card{
+      background:#fff; border-radius:var(--br); box-shadow:var(--shadow);
+      padding:18px; margin:0 auto 18px; width:100%;
+    }
+
+    h2{ color:var(--pri); margin:0 0 12px 0; font-size:20px; }
+    h3{ color:#1f2937; margin:16px 0 8px 0; font-size:18px; }
+
+    input, select, button, textarea{
+      width:100%; padding:10px; margin:6px 0; font-size:16px; border-radius:6px; border:1px solid #d1d5db; background:#fff;
+    }
     input[type=number]{ -moz-appearance:textfield; }
-    button{ background:#0056b3; color:white; border:none; cursor:pointer; font-weight:bold; }
-    button:hover{ background:#004080; }
-    .hidden{ display:none; }
-    .menu{ display:flex; gap:8px; margin-top:10px; }
-    .menu button{ flex:1; }
-    table{ width:100%; border-collapse:collapse; margin-top:10px; }
-    th,td{ border:1px solid #ddd; padding:8px; text-align:left; }
-    th{ background:#0056b3; color:white; }
-    .logout-btn{ background:#b30000; }
-    .delivered { background:#e8ffe8; }
-    #produtoList{ max-height:140px; overflow:auto; border:1px solid #ccc; border-radius:4px; background:white; position:relative; z-index:2; }
-    #produtoList div{ padding:8px; cursor:pointer; border-bottom:1px solid #f0f0f0; }
-    #produtoList div:hover{ background:#f2f8ff; }
-    .actions button{ margin-right:6px; }
+    textarea{ min-height:90px; resize:vertical; }
+    button{
+      background:var(--pri); color:#fff; border:none; cursor:pointer; font-weight:700;
+      transition:.15s transform ease, .15s background ease;
+    }
+    button:hover{ background:var(--pri-700); transform:translateY(-1px); }
+    .btn-muted{ background:#e5e7eb; color:#111; }
+    .btn-muted:hover{ background:#d1d5db; }
+    .btn-danger{ background:var(--err); }
+    .btn-danger:hover{ filter:brightness(.95); }
+    .btn-ok{ background:var(--ok); }
+    .btn-warn{ background:var(--warn); color:#111; }
+
+    .menu{ display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+    .menu button{ flex:1; min-width:160px; }
     .small{ font-size:13px; padding:6px 10px; }
+
+    .hidden{ display:none !important; }
     .center{ text-align:center; }
-    .help-link{ color:#fff; text-decoration:underline; cursor:pointer; }
+    .right{ text-align:right; }
+    .muted{ color:var(--muted); }
+
+    /* Tabelas */
+    .table-wrap{ width:100%; overflow:auto; border:1px solid #e5e7eb; border-radius:8px; }
+    table{ width:100%; border-collapse:collapse; min-width:720px; }
+    th,td{ border-bottom:1px solid #eee; padding:10px; text-align:left; }
+    th{ background:var(--pri); color:#fff; position:sticky; top:0; }
+    tr:hover td{ background:#fafafa; }
+    .delivered{ background:#e8ffe8; }
+    .status-aberto{ color:#d9534f; font-weight:700; }
+    .status-entregue{ color:#28a745; font-weight:700; }
+    .actions button{ margin-right:6px; margin-bottom:6px; }
+
+    /* Busca de produtos (dropdown) */
+    #listaProdutos{
+      max-height:180px; overflow:auto; border:1px solid #e5e7eb; border-radius:8px;
+      display:none; background:#fff; margin-top:4px;
+    }
+    #listaProdutos > div{
+      padding:10px; cursor:pointer; border-bottom:1px solid #f3f4f6;
+    }
+    #listaProdutos > div:hover{ background:#f9fafb; }
+
+    /* Modal (corrigido) */
+    #modalOverlay{
+      position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:1000;
+      background:rgba(0,0,0,.55);
+    }
+    #modalOverlay.active{ display:flex; }
+    #modalBox{
+      background:#fff; width:95%; max-width:520px; border-radius:12px; padding:18px; box-shadow:0 12px 30px rgba(0,0,0,.25);
+      animation:pop .18s ease-out;
+    }
+    @keyframes pop{ from{ transform:scale(.98); opacity:.4; } to{ transform:scale(1); opacity:1; } }
+    #modalBox h3{ color:var(--pri); text-align:center; margin:0 0 10px 0; }
+
+    /* Chips / Filtros */
+    .chipbar{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:6px 0 10px; }
+    .chip{
+      display:inline-flex; align-items:center; gap:8px; border:1px solid #e5e7eb; padding:6px 10px; border-radius:999px; background:#fff;
+      font-size:13px;
+    }
+    .chip input[type=checkbox]{ width:auto; margin:0; }
+
+    /* Área de impressão (templates) */
+    .print-header{
+      display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:10px;
+    }
+    .print-meta{ font-size:12px; color:#444; }
+    .signature-grid{
+      display:grid; grid-template-columns: 1fr 1fr; gap:14px; margin-top:16px;
+    }
+    .signature-box{
+      border-top:1px solid #000; padding-top:6px; text-align:center; font-size:12px;
+    }
+    .check-col{ width:120px; text-align:center; }
+
+    /* Seção de histórico admin */
+    .history-note{ background:#fff7ed; border:1px dashed #f59e0b; padding:10px; border-radius:8px; color:#7c2d12; }
+    .kpi{
+      display:grid; grid-template-columns: repeat(4, minmax(160px,1fr)); gap:10px; margin:10px 0 6px;
+    }
+    .kpi .item{
+      background:#f8fafc; border:1px solid #e5e7eb; padding:12px; border-radius:10px;
+    }
+    .kpi .val{ font-weight:800; font-size:18px; }
+
+    /* Rodapé */
+    footer{ text-align:center; color:#6b7280; font-size:12px; padding:14px 0 24px; }
+
+    /* Responsivo */
+    @media (max-width:640px){
+      header .title{ width:100%; }
+      .menu{ flex-direction:column; }
+      table{ min-width:640px; }
+      .signature-grid{ grid-template-columns:1fr; }
+    }
   </style>
 </head>
 <body>
-  <header>CCB - Compra Coletiva</header>
-  <main>
-    <div id="loginScreen">
-      <h2>Login</h2>
-      <input type="text" id="loginUser" placeholder="Usuário" />
-      <input type="password" id="loginPass" placeholder="Senha" />
-      <div class="menu">
-        <button onclick="login()">Entrar</button>
-        <button onclick="showRegister()">Criar conta</button>
-      </div>
-      <p id="ajuda" class="center"><span class="help-link" onclick="openHelp()">Ajuda / Contato</span></p>
-      <p id="loginError" style="color:red; text-align:center;"></p>
-    </div>
 
-    <div id="registerScreen" class="hidden">
+  <!-- =======================
+       CABEÇALHO
+  ======================== -->
+  <header>
+    <div class="title">CCB - Compra Coletiva</div>
+    <div class="tag" id="cycleTag">Carregando ciclo…</div>
+    <div class="clock" id="nowClock">--/--/---- --:--</div>
+  </header>
+
+  <main>
+
+    <!-- =======================
+         TELA: LOGIN
+    ======================== -->
+    <section id="loginScreen" class="card">
+      <h2>Login</h2>
+      <input type="text" id="loginUser" placeholder="Usuário" autocomplete="username"/>
+      <input type="password" id="loginPass" placeholder="Senha" autocomplete="current-password"/>
+      <div class="menu">
+        <button id="btnLogin">Entrar</button>
+        <button class="btn-muted" id="btnShowRegister">Criar conta</button>
+      </div>
+      <p class="center muted" style="margin-top:6px;">
+        Precisa de ajuda?
+        <span style="color:var(--pri);cursor:pointer;text-decoration:underline;" id="btnWhatsapp">Contato pelo WhatsApp</span>
+      </p>
+      <p id="loginError" class="center" style="color:var(--err); min-height:18px;"></p>
+    </section>
+
+    <!-- =======================
+         TELA: REGISTRO
+    ======================== -->
+    <section id="registerScreen" class="card hidden">
       <h2>Criar Conta</h2>
-      <input type="text" id="regNome" placeholder="Nome completo" />
+      <input type="text" id="regNome" placeholder="Nome completo"/>
       <select id="regMinisterio">
         <option value="">-- Selecione o ministério --</option>
         <option>Ancião</option>
@@ -56,106 +192,188 @@
         <option>Auxiliar da escrita</option>
         <option>Outros</option>
       </select>
-      <input type="text" id="regLocalidade" placeholder="Localidade" />
-      <input type="text" id="regUser" placeholder="Usuário" />
-      <input type="password" id="regPass" placeholder="Senha" />
+      <input type="text" id="regLocalidade" placeholder="Localidade"/>
       <div class="menu">
-        <button onclick="register()">Registrar</button>
-        <button onclick="backToLogin()">Voltar</button>
+        <input type="text" id="regUser" placeholder="Usuário"/>
+        <input type="password" id="regPass" placeholder="Senha"/>
       </div>
-      <p id="registerMsg" class="center" style="color:green;"></p>
-    </div>
+      <div class="menu">
+        <button id="btnRegister">Registrar</button>
+        <button class="btn-muted" id="btnBackLogin">Voltar</button>
+      </div>
+      <p id="registerMsg" class="center" style="color:var(--ok); min-height:18px;"></p>
+    </section>
 
-    <div id="pedidoScreen" class="hidden">
+    <!-- =======================
+         TELA: PEDIDO (HOME)
+    ======================== -->
+    <section id="pedidoScreen" class="card hidden">
       <h2>Fazer Pedido</h2>
-      <label>Buscar produto</label>
-      <input type="text" id="produtoSearch" placeholder="Digite para buscar..." oninput="filterProdutos()" autocomplete="off" />
-      <div id="produtoList" class="hidden"></div>
 
-      <label>Produto selecionado</label>
-      <input type="text" id="produtoSelected" placeholder="Nenhum produto selecionado" readonly />
-      <label>Quantidade (unidades)</label>
-      <input type="number" id="quantidade" placeholder="Quantidade" min="1" />
-      <label>Observações</label>
-      <input type="text" id="obs" placeholder="Observações" />
+      <div class="chipbar" style="display:none;">
+  <span class="chip">
+    <input type="checkbox" id="toggleOcultarEntreguesUsuario"/>
+    <label for="toggleOcultarEntreguesUsuario">Ocultar pedidos entregues (meus)</label>
+  </span>
+</div>
+
+      <input type="text" id="buscaProduto" placeholder="Buscar produto..." autocomplete="off"/>
+      <div id="listaProdutos"></div>
 
       <div class="menu">
-        <button onclick="salvarPedido()">Enviar Pedido</button>
-        <button onclick="verRelatorioUsuario()">Meus Pedidos</button>
+        <input type="number" id="quantidade" placeholder="Quantidade" min="1"/>
+        <input type="text" id="obs" placeholder="Observações"/>
       </div>
 
       <div class="menu">
-        <button id="adminRelatorioBtn" class="hidden" onclick="verRelatorioAdmin()">Relatórios (Admin)</button>
-        <button id="adminProdutosBtn" class="hidden" onclick="showAdminProdutos()">Produtos (Admin)</button>
-        <button id="adminUsuariosBtn" class="hidden" onclick="showAdminUsuarios()">Usuários (Admin)</button>
+        <button id="btnSalvarPedido">Enviar Pedido</button>
+        <button class="btn-muted" id="btnMeusPedidos">Meus Pedidos</button>
       </div>
 
-      <button class="logout-btn" onclick="logout()">Sair</button>
-      <p id="pedidoMsg" class="center" style="color:green;"></p>
-      <p id="cycleInfo" class="center" style="color:#333;"></p>
-    </div>
+      <div class="menu" style="margin-top:8px;">
+        <button id="adminRelatorioBtn" class="hidden">Relatórios (Admin)</button>
+        <button id="adminProdutosBtn" class="hidden">Produtos (Admin)</button>
+        <button id="adminUsuariosBtn" class="hidden">Usuários (Admin)</button>
+        <button id="adminHistoricoBtn" class="hidden">Histórico (Admin)</button>
+      </div>
 
-    <div id="relatorioUsuario" class="hidden">
-      <h2>Meus Pedidos</h2>
-      <button onclick="printSection('relatorioUsuario')" class="small">Imprimir meus pedidos</button>
-      <table id="tabelaPedidosUsuario">
-        <thead><tr><th>Produto</th><th>Quantidade</th><th>Observações</th><th>Entregue</th><th>Ações</th></tr></thead>
-        <tbody></tbody>
-      </table>
-      <button onclick="voltarPedidos()">Voltar</button>
-    </div>
+      <div class="menu" style="margin-top:6px;">
+        <button class="btn-danger" id="btnLogout">Sair</button>
+      </div>
 
-    <div id="relatorioAdmin" class="hidden">
-      <h2>Relatórios (Administrador)</h2>
-      <div class="menu">
-        <button onclick="printSection('relatorioAdmin')" class="small">Imprimir relatórios</button>
-        <button onclick="showAdminProdutos()" class="small">Gerenciar produtos</button>
-        <button onclick="showAdminUsuarios()" class="small">Gerenciar usuários</button>
+      <p id="pedidoMsg" class="center" style="color:var(--ok); min-height:18px;"></p>
+      <p id="cycleInfo" class="center muted" style="margin-top:6px;"></p>
+    </section>
+
+    <!-- =======================
+         TELA: RELATÓRIO DO USUÁRIO
+    ======================== -->
+    <section id="relatorioUsuario" class="card hidden">
+      <div class="print-header">
+        <h2>Meus Pedidos</h2>
+        <div>
+          <button id="btnImprimirRelUsuario" title="Imprimir">🖨️ Imprimir</button>
+        </div>
+      </div>
+      <div class="chipbar">
+        <label class="chip">Status:
+          <select id="filtroUsuario" style="border:none;">
+            <option value="todos">Todos</option>
+            <option value="aberto">Em aberto</option>
+            <option value="entregue">Entregues</option>
+          </select>
+        </label>
+        <span class="chip">
+          <input type="checkbox" id="toggleOcultarEntreguesUsuario2"/>
+          <label for="toggleOcultarEntreguesUsuario2">Ocultar entregues</label>
+        </span>
+      </div>
+      <div class="table-wrap">
+        <table id="tabelaPedidosUsuario">
+          <thead>
+            <tr>
+              <th>Produto</th><th>Qtd</th><th>Obs</th><th>Status</th><th>Ações</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="center" style="margin-top:10px;">
+        <button class="btn-muted" id="btnVoltarUsuario">Voltar</button>
+      </div>
+    </section>
+
+    <!-- =======================
+         TELA: RELATÓRIO ADMIN
+    ======================== -->
+    <section id="relatorioAdmin" class="card hidden">
+      <div class="print-header">
+        <h2>Relatórios (Administrador)</h2>
+        <div class="chipbar right">
+          <button id="btnImprimirRelGeral">🖨️ Imprimir Geral</button>
+          <button id="btnImprimirRelLocalidade">🖨️ Por Localidade</button>
+          <button id="btnImprimirResumoItens">🖨️ Resumo Itens</button>
+        </div>
+      </div>
+
+      <div class="chipbar">
+        <label class="chip">Status:
+          <select id="filtroAdmin" style="border:none;">
+            <option value="todos">Todos</option>
+            <option value="aberto">Em aberto</option>
+            <option value="entregue">Entregues</option>
+          </select>
+        </label>
+        <span class="chip">
+          <input type="checkbox" id="toggleOcultarEntreguesAdmin"/>
+          <label for="toggleOcultarEntreguesAdmin">Ocultar entregues</label>
+        </span>
       </div>
 
       <h3>Pedidos</h3>
-      <table id="tabelaPedidosAdmin">
-        <thead><tr><th>Usuário</th><th>Localidade</th><th>Produto</th><th>Qtd</th><th>Obs</th><th>Entregue</th><th>Ações</th></tr></thead>
-        <tbody></tbody>
-      </table>
-
-      <h3>Resumo por Item</h3>
-      <table id="resumoItens">
-        <thead><tr><th>Produto</th><th>Unidade</th><th>Quantidade Total</th></tr></thead>
-        <tbody></tbody>
-      </table>
-
-      <h3>Usuários Cadastrados</h3>
-      <table id="tabelaUsuariosAdmin">
-        <thead><tr><th>Nome</th><th>Usuário</th><th>Localidade</th><th>Ministério</th><th>Ações</th></tr></thead>
-        <tbody></tbody>
-      </table>
-
-      <button onclick="voltarPedidos()">Voltar</button>
-    </div>
-
-    <!-- Admin Produtos -->
-    <div id="adminProdutos" class="hidden">
-      <h2>Produtos (Admin)</h2>
-      <input type="text" id="novoProdutoNome" placeholder="Nome do produto" />
-      <input type="text" id="novoProdutoUnidade" placeholder="Unidade (ex: pacote, rolo, unidade)" />
-      <div class="menu">
-        <button onclick="addProduto()">Adicionar Produto</button>
-        <button onclick="voltarAdmin()">Voltar</button>
+      <div class="table-wrap">
+        <table id="tabelaPedidosAdmin">
+          <thead>
+            <tr>
+              <th>Usuário</th><th>Localidade</th><th>Produto</th><th>Qtd</th><th>Obs</th><th>Status</th><th>Ações</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
       </div>
-      <table id="tabelaProdutosAdmin">
-        <thead><tr><th>Produto</th><th>Unidade</th><th>Ações</th></tr></thead>
-        <tbody></tbody>
-      </table>
-    </div>
 
-    <!-- Admin Usuarios -->
-    <div id="adminUsuarios" class="hidden">
-      <h2>Usuários (Admin)</h2>
-      <input type="text" id="adminNovoNome" placeholder="Nome completo" />
-      <input type="text" id="adminNovoUser" placeholder="Usuário" />
-      <input type="password" id="adminNovoPass" placeholder="Senha" />
-      <input type="text" id="adminNovoLocalidade" placeholder="Localidade" />
+      <h3 style="margin-top:16px;">Usuários Cadastrados</h3>
+<div style="text-align:right; margin-bottom:10px;">
+  <button id="btnToggleUsuarios" class="btn btn-secondary">👤 Ocultar usuários cadastrados</button>
+</div>
+
+      <div class="table-wrap">
+        <table id="tabelaUsuariosAdmin">
+          <thead>
+            <tr>
+              <th>Nome</th><th>Usuário</th><th>Localidade</th><th>Ministério</th><th>Ações</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <h3 style="margin-top:16px;">Produtos</h3>
+<div style="text-align:right; margin-bottom:10px;">
+  <button id="btnToggleProdutos" class="btn btn-secondary">📦 Ocultar produtos cadastrados</button>
+</div>
+
+      <div class="table-wrap">
+        <table id="tabelaProdutosAdmin">
+          <thead>
+            <tr>
+              <th>Produto</th><th>Ações</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div style="margin-top:12px;" class="menu">
+        <button id="btnAbrirCadastroUsuarioAdmin">Adicionar Usuário (Admin)</button>
+        <button id="btnAbrirCadastroProduto">Adicionar Produto (Admin)</button>
+        <button class="btn-muted" id="btnVoltarAdmin">Voltar</button>
+      </div>
+    </section>
+
+    <!-- =======================
+         TELA: ADMIN / USUÁRIOS
+    ======================== -->
+    <section id="adminUsuarios" class="card hidden">
+      <h2>Adicionar Usuário (Admin)</h2>
+      <div class="menu">
+        <input id="adminNovoNome" placeholder="Nome completo"/>
+        <input id="adminNovoUser" placeholder="Usuário"/>
+      </div>
+      <div class="menu">
+        <input id="adminNovoPass" placeholder="Senha" type="password"/>
+        <input id="adminNovoLocalidade" placeholder="Localidade"/>
+      </div>
       <select id="adminNovoMinisterio">
         <option value="">-- Selecionar ministério --</option>
         <option>Ancião</option>
@@ -165,21 +383,202 @@
         <option>Outros</option>
       </select>
       <div class="menu">
-        <button onclick="adminAddUser()">Adicionar Usuário</button>
-        <button onclick="voltarAdmin()">Voltar</button>
+        <button id="btnAdminAddUser">Adicionar Usuário</button>
+        <button class="btn-muted" id="btnVoltarAdminUsr">Voltar</button>
       </div>
-      <table id="tabelaAdminUsuariosList">
-        <thead><tr><th>Nome</th><th>Usuário</th><th>Localidade</th><th>Ministério</th><th>Ações</th></tr></thead>
-        <tbody></tbody>
-      </table>
+
+      <div class="table-wrap" style="margin-top:10px;">
+        <table id="tabelaAdminUsuariosList">
+          <thead>
+            <tr>
+              <th>Nome</th><th>Usuário</th><th>Localidade</th><th>Ministério</th><th>Ações</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- =======================
+         TELA: ADMIN / PRODUTOS
+    ======================== -->
+    <section id="adminProdutos" class="card hidden">
+      <h2>Produtos (Admin)</h2>
+      <div class="menu">
+        <input id="novoProdutoNome" placeholder="Nome do produto"/>
+        <input id="novoProdutoUnidade" placeholder="Unidade (ex: pacote, rolo, unidade)"/>
+      </div>
+      <div class="menu">
+        <button id="btnAddProduto">Adicionar Produto</button>
+        <button class="btn-muted" id="btnVoltarAdminProd">Voltar</button>
+      </div>
+      <div class="table-wrap" style="margin-top:10px;">
+        <table id="tabelaProdutosAdminList">
+          <thead>
+            <tr><th>Produto</th><th>Ações</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- =======================
+         TELA: HISTÓRICO (ADMIN)
+    ======================== -->
+    <section id="historicoAdmin" class="card hidden">
+      <h2>Histórico do Sistema (Admin)</h2>
+      <p class="history-note">
+        Apenas administradores visualizam. Aqui constam: logins, logouts, criação/edição/exclusão de pedidos, alterações de senha e demais eventos.
+      </p>
+
+      <div class="kpi">
+        <div class="item"><div class="label muted">Eventos (30 dias)</div><div class="val" id="kpiEvt30">--</div></div>
+        <div class="item"><div class="label muted">Logins hoje</div><div class="val" id="kpiLoginHoje">--</div></div>
+        <div class="item"><div class="label muted">Pedidos criados hoje</div><div class="val" id="kpiPedidosHoje">--</div></div>
+        <div class="item"><div class="label muted">Alterações de senha (30 dias)</div><div class="val" id="kpiPwd30">--</div></div>
+      </div>
+
+      <div class="chipbar">
+        <span class="chip">
+          <input type="checkbox" id="toggleOcultarHistorico"/>
+          <label for="toggleOcultarHistorico">Ocultar histórico</label>
+        </span>
+        <label class="chip">Tipo:
+          <select id="filtroHistoricoTipo" style="border:none;">
+            <option value="todos">Todos</option>
+            <option value="login">Login</option>
+            <option value="logout">Logout</option>
+            <option value="pedido">Pedidos</option>
+            <option value="perfil">Perfil</option>
+            <option value="sistema">Sistema</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="table-wrap">
+        <table id="tabelaHistoricoAdmin">
+          <thead>
+            <tr>
+              <th>Data/Hora</th><th>Usuário</th><th>Tipo</th><th>Descrição</th><th>Detalhes</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="menu">
+        <button class="btn-muted" id="btnVoltarHistorico">Voltar</button>
+      </div>
+    </section>
+
+    <!-- =======================
+         MODAL (GENÉRICO)
+    ======================== -->
+    <div id="modalOverlay" class="hidden">
+      <div id="modalBox">
+        <h3 id="modalTitulo"></h3>
+        <div id="modalConteudo"></div>
+        <div class="center" style="margin-top:12px;">
+          <button class="btn-muted" id="btnFecharModal">Fechar</button>
+        </div>
+      </div>
     </div>
+
+    <!-- =======================
+         TEMPLATES DE IMPRESSÃO
+    ======================== -->
+    <template id="tpl-impressao-usuario">
+      <div>
+        <div class="print-header">
+          <div>
+            <h3 style="margin:0;">Meus Pedidos</h3>
+            <div class="print-meta" id="print-meta-usuario">Gerado em --/--/---- --:--</div>
+            <div class="print-meta" id="print-solicitante">Solicitante: --</div>
+            <div class="print-meta" id="print-localidade">Localidade: --</div>
+            <div class="print-meta" id="print-ministerio">Ministério: --</div>
+          </div>
+          <div class="print-meta">
+            <div id="print-ciclo">Ciclo: --</div>
+          </div>
+        </div>
+
+        <table style="width:100%; border-collapse:collapse;">
+          <thead>
+            <tr style="background:var(--pri); color:#fff;">
+              <th style="text-align:left;padding:8px;border:1px solid #ddd;">Produto</th>
+              <th style="text-align:left;padding:8px;border:1px solid #ddd;">Qtd</th>
+              <th style="text-align:left;padding:8px;border:1px solid #ddd;">Obs</th>
+              <th class="check-col" style="border:1px solid #ddd;">Visto ✓</th>
+            </tr>
+          </thead>
+          <tbody id="print-tbody-usuario"></tbody>
+        </table>
+
+        <div class="signature-grid">
+          <div class="signature-box">Assinatura do Solicitante</div>
+          <div class="signature-box">Conferente / Visto</div>
+        </div>
+      </div>
+    </template>
+
+    <template id="tpl-impressao-geral">
+      <div>
+        <div class="print-header">
+          <div>
+            <h3 style="margin:0;">Relatório Geral de Pedidos</h3>
+            <div class="print-meta" id="print-meta-geral">Gerado em --/--/---- --:--</div>
+          </div>
+          <div class="print-meta">
+            <div id="print-ciclo-geral">Ciclo: --</div>
+          </div>
+        </div>
+        <table style="width:100%; border-collapse:collapse;">
+          <thead>
+            <tr style="background:var(--pri); color:#fff;">
+              <th style="text-align:left;padding:8px;border:1px solid #ddd;">Usuário</th>
+              <th style="text-align:left;padding:8px;border:1px solid #ddd;">Localidade</th>
+              <th style="text-align:left;padding:8px;border:1px solid #ddd;">Produto</th>
+              <th style="text-align:left;padding:8px;border:1px solid #ddd;">Qtd</th>
+              <th style="text-align:left;padding:8px;border:1px solid #ddd;">Obs</th>
+              <th style="text-align:left;padding:8px;border:1px solid #ddd;">Status</th>
+              <th class="check-col" style="border:1px solid #ddd;">Visto ✓</th>
+            </tr>
+          </thead>
+          <tbody id="print-tbody-geral"></tbody>
+        </table>
+        <div class="signature-grid">
+          <div class="signature-box">Responsável / Assinatura</div>
+          <div class="signature-box">Conferente / Visto</div>
+        </div>
+      </div>
+    </template>
 
   </main>
 
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-<script>
-/* ======================= CONFIGURAÇÃO FIREBASE (seu novo projeto) ======================= */
+  <footer>
+    <div>© <span id="yearFooter"></span> CCB - Compra Coletiva. Todos os direitos reservados.</div>
+  </footer>
+
+  <!-- =======================
+       SCRIPTS DE TERCEIROS
+       (Firebase V8 - mantido)
+  ======================== -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+  <!-- =======================
+       PARTE 2 (JS) ENTRA AQUI
+       – será colado no próximo passo
+  ======================== -->
+  <script>
+/* ===============================
+   PARTE 2 – Lógica do Aplicativo
+   – Firebase v8 mantido
+   – Logs no Firebase
+   – Correções & Melhorias
+================================ */
+
+/* ========= CONFIG / VARS ========= */
 const firebaseConfig = {
   apiKey: "AIzaSyB940reXNqw_xfne8uaeh5PwjgA-tzMeGg",
   authDomain: "compra-coletiva-ccb-web.firebaseapp.com",
@@ -189,410 +588,1154 @@ const firebaseConfig = {
   messagingSenderId: "20688611131",
   appId: "1:20688611131:web:c0fbaa91045c538e23f91e"
 };
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+try{ if(!firebase.apps.length) firebase.initializeApp(firebaseConfig); }catch(e){}
 
-/* ADMIN CREDENTIALS (client-side for demo) */
+const db = firebase.database();
 const ADMIN_LOGIN = "fernando_filho87";
 const ADMIN_PASSWORD = "1502";
+const WHATSAPP_PHONE = "5531985330656";
 
-let currentUser = null; // {user,nome,localidade,isAdmin,key,ministerio}
-let produtosCache = []; // lista local de produtos
+let currentUser = null;
+let produtosCache = [];
+let selectedProductKey = null;
+let lastScreen = "loginScreen"; // para manter a navegação pós-ações
+let ocultarEntreguesUsuario = false;
+let ocultarEntreguesAdmin = false;
 
-/* Inicialização */
-(async function init(){
-  try{
-    const sess = sessionStorage.getItem('ccb_user');
-    if(sess){ currentUser = JSON.parse(sess); enterApp(); }
-  }catch(e){ console.warn('sem sessão', e); }
+/* ========= HELPERS ========= */
+const $ = sel => document.querySelector(sel);
+const $$ = sel => Array.from(document.querySelectorAll(sel));
 
-  // garantir cycleStart
-  const cfgSnap = await db.ref('config/cycleStart').once('value');
-  if(!cfgSnap.exists() || !cfgSnap.val()){
-    // se não existir, inicializar com data atual
-    await db.ref('config').set({ cycleStart: Date.now() });
+function escapeHtml(s){
+  if(s === null || s === undefined) return '';
+  return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[m]));
+}
+function fmtDateTime(ts){
+  const d = new Date(ts);
+  const dd = String(d.getDate()).padStart(2,'0');
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const yyyy = d.getFullYear();
+  const hh = String(d.getHours()).padStart(2,'0');
+  const min = String(d.getMinutes()).padStart(2,'0');
+  return `${dd}/${mm}/${yyyy} ${hh}:${min}`;
+}
+function monthIdFrom(ts){
+  const d = new Date(ts);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+function showToast(msg, type='info', duration=4000){
+  const id='ccb_toast';
+  let root=document.getElementById(id);
+  if(!root){
+    root=document.createElement('div'); 
+    root.id=id;
+    root.style.position='fixed';
+    root.style.left='0';
+    root.style.top='0';
+    root.style.width='100%';
+    root.style.height='100%';
+    root.style.display='flex';
+    root.style.alignItems='flex-end';
+    root.style.justifyContent='center';
+    root.style.paddingBottom='120px';
+    root.style.zIndex='10000';
+    root.style.pointerEvents='none';
+    document.body.appendChild(root);
   }
 
-  // seed produtos iniciais (apenas se não existirem)
-  await seedProdutos();
-  // carregar produtos na cache
-  await loadProdutos();
-})();
+  const box=document.createElement('div');
+  box.style.background= type==='error' ? '#b30000cc' : (type==='warn'?'#f0ad4ecc':'#0056b3cc');
+  box.style.color='#fff';
+  box.style.padding='25px 35px';
+  box.style.borderRadius='16px';
+  box.style.fontSize='30px';
+  box.style.fontWeight='bold';
+  box.style.textAlign='center';
+  box.style.maxWidth='90%';
+  box.style.boxShadow='0 4px 12px rgba(0,0,0,0.3)';
+  box.style.animation='toastFadeIn 0.3s ease-out';
+  box.style.transition='opacity 0.3s ease';
+  box.innerText=msg;
 
-/* ======================= Registro/Login ======================= */
+  root.innerHTML='';
+  root.appendChild(box);
+
+  /* 🔔 sons diferentes (login e logout) */
+  let soundUrl = "https://cdn.pixabay.com/download/audio/2021/09/13/audio_39dcdf0d25.mp3?filename=soft-notification-25572.mp3";
+  if (msg.toLowerCase().includes("santa paz") || msg.toLowerCase().includes("saúda")) {
+    soundUrl = "https://cdn.pixabay.com/download/audio/2022/03/15/audio_9c6cda2f3c.mp3?filename=angelic-tone-19436.mp3";
+  }
+
+  // cria o objeto de áudio
+  const audio = new Audio(soundUrl);
+  audio.volume = 0.6;
+
+  // garante que o som será liberado após o primeiro clique
+  if (!window.__ccbSoundEnabled) {
+    const enableAudio = () => {
+      const test = new Audio();
+      test.play().catch(()=>{});
+      window.__ccbSoundEnabled = true;
+      document.removeEventListener('click', enableAudio);
+    };
+    document.addEventListener('click', enableAudio);
+  }
+
+  // tenta tocar o som agora (se já estiver liberado)
+  audio.play().catch(()=>{});
+
+  setTimeout(()=>{
+    box.style.opacity='0';
+    setTimeout(()=>root.innerHTML='', 400);
+  }, duration);
+
+  if(!document.getElementById('toastAnimStyle')){
+    const style = document.createElement('style');
+    style.id = 'toastAnimStyle';
+    style.textContent = `
+      @keyframes toastFadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }`;
+    document.head.appendChild(style);
+  }
+}
+
+
+/* ========= MODAL ========= */
+function abrirModal(titulo, conteudoHtml){
+  const overlay = $('#modalOverlay');
+  $('#modalTitulo').innerText = titulo || '';
+  $('#modalConteudo').innerHTML = conteudoHtml || '';
+  overlay.classList.remove('hidden');
+  overlay.classList.add('active');
+}
+function fecharModal(){
+  const overlay = $('#modalOverlay');
+  overlay.classList.remove('active');
+  overlay.classList.add('hidden');
+  $('#modalTitulo').innerText='';
+  $('#modalConteudo').innerHTML='';
+}
+function promptModal(titulo,label,defaultVal=''){
+  return new Promise(resolve=>{
+    const html = `
+      <label>${label}</label>
+      <input id="__modal_input" value="${escapeHtml(defaultVal)}"/>
+      <div class="center" style="margin-top:10px;">
+        <button id="ok">OK</button>
+        <button class="btn-muted" id="cancel">Cancelar</button>
+      </div>`;
+    abrirModal(titulo, html);
+    $('#ok').onclick = ()=>{ const v = $('#__modal_input').value; fecharModal(); resolve(v); };
+    $('#cancel').onclick = ()=>{ fecharModal(); resolve(null); };
+  });
+}
+function confirmModal(titulo, msg){
+  return new Promise(resolve=>{
+    const html = `
+      <p>${msg}</p>
+      <div class="center" style="margin-top:10px;">
+        <button id="yes">Sim</button>
+        <button class="btn-muted" id="no">Não</button>
+      </div>`;
+    abrirModal(titulo, html);
+    $('#yes').onclick = ()=>{ fecharModal(); resolve(true); };
+    $('#no').onclick = ()=>{ fecharModal(); resolve(false); };
+  });
+}
+function senhaModal(titulo){
+  return new Promise(resolve=>{
+    const html = `
+      <label>Senha:</label>
+      <input id="__modal_pass" type="password"/>
+      <div class="center" style="margin-top:10px;">
+        <button id="ok2">Confirmar</button>
+        <button class="btn-muted" id="cancel2">Cancelar</button>
+      </div>`;
+    abrirModal(titulo, html);
+    $('#ok2').onclick = ()=>{ const v = $('#__modal_pass').value; fecharModal(); resolve(v); };
+    $('#cancel2').onclick = ()=>{ fecharModal(); resolve(null); };
+  });
+}
+$('#btnFecharModal').addEventListener('click', fecharModal);
+
+/* ========= NAVEGAÇÃO ========= */
+function hideAllScreens(){
+  ['loginScreen','registerScreen','pedidoScreen','relatorioUsuario','relatorioAdmin','adminProdutos','adminUsuarios','historicoAdmin']
+    .forEach(id => $('#'+id)?.classList.add('hidden'));
+}
+function go(screenId){
+  hideAllScreens();
+  $('#'+screenId)?.classList.remove('hidden');
+  lastScreen = screenId;
+}
+
+/* ========= CICLO (30 dias) ========= */
+async function getCycleInfo(){
+  try{
+    const snap = await db.ref('config/cycleStart').once('value');
+    const start = snap.val() || Date.now();
+    const now = Date.now();
+    const elapsed = now - start;
+    const daysElapsed = Math.floor(elapsed / (24*60*60*1000));
+    const daysRemaining = 30 - daysElapsed;
+    const open = daysElapsed < 30;
+    return { start, now, daysElapsed, daysRemaining, open, cycleId: monthIdFrom(start) };
+  }catch(e){
+    return { start: Date.now(), now: Date.now(), daysElapsed:0, daysRemaining:30, open:true, cycleId: monthIdFrom(Date.now()) };
+  }
+}
+async function updateCycleInfoUI(){
+  const info = await getCycleInfo();
+  const el = $('#cycleInfo');
+  const tag = $('#cycleTag');
+  if(el){
+    if(!info.open) el.textContent = `Período de 30 dias encerrado. Para novo ciclo, contate o administrador.`;
+    else el.textContent = `Ciclo aberto. Dia ${info.daysElapsed+1} de 30. Edições permitidas até ${info.daysRemaining>5 ? (info.daysRemaining+' dias antes do fechamento') : 'bloqueadas (últimos 5 dias)'}.`;
+  }
+  if(tag){
+    tag.textContent = info.open ? `Ciclo ${info.cycleId} (aberto)` : `Ciclo ${info.cycleId} (encerrado)`;
+  }
+}
+
+/* ========= LOGS (somente admin visualiza) ========= */
+async function logEvent(tipo, descricao, detalhes={}){
+  const payload = {
+    tipo, // 'login' | 'logout' | 'pedido' | 'perfil' | 'sistema'
+    descricao,
+    detalhes: detalhes || {},
+    user: currentUser?.user || 'anon',
+    userNome: currentUser?.nome || 'Anônimo',
+    ts: Date.now()
+  };
+  try{ await db.ref('logs').push(payload); }catch(e){ console.warn('log fail', e); }
+}
+
+/* ========= PRODUTOS ========= */
+async function seedProdutos(){
+  try{
+    const snap = await db.ref('produtos').once('value');
+    if(snap.exists()) return;
+    const iniciais = [
+      { nome: 'Copo descartavel pacote com 100 unidades', unidade:'pacote' },
+      { nome: 'Toalha papel interfolha pacote com 1000 folhas', unidade:'pacote' },
+      { nome: 'Papel higienico 300 metros Rolo', unidade:'rolo' },
+      { nome: 'Toalha papel 200 metros rolo', unidade:'rolo' },
+      { nome: 'Papel higienico 60 metros pacote com 12 unidades', unidade:'pacote' }
+    ];
+    for(const p of iniciais) await db.ref('produtos').push(p);
+  }catch(e){ console.error('seed error', e); }
+}
+async function loadProdutos(){
+  try{
+    const snap = await db.ref('produtos').once('value');
+    const obj = snap.val() || {};
+    produtosCache = Object.keys(obj).map(k => ({ key:k, ...obj[k] }));
+    renderTabelaProdutosAdmin();
+  }catch(e){ console.error('loadProdutos', e); }
+}
+function renderTabelaProdutosAdmin(){
+  const tbody = $('#tabelaProdutosAdmin tbody');
+  if(tbody){
+    tbody.innerHTML='';
+    produtosCache.forEach(p=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML = `<td>${escapeHtml(p.nome)} (${escapeHtml(p.unidade||'')})</td>
+        <td class="actions">
+          <button class="small" onclick="adminEditProduto('${p.key}')">Editar</button>
+          <button class="small" onclick="adminDeleteProduto('${p.key}')">Excluir</button>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+  }
+  const tbodyList = $('#tabelaProdutosAdminList tbody');
+  if(tbodyList){
+    tbodyList.innerHTML='';
+    produtosCache.forEach(p=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML = `<td>${escapeHtml(p.nome)} (${escapeHtml(p.unidade||'')})</td>
+        <td class="actions">
+          <button class="small" onclick="adminEditProduto('${p.key}')">Editar</button>
+          <button class="small" onclick="adminDeleteProduto('${p.key}')">Excluir</button>
+        </td>`;
+      tbodyList.appendChild(tr);
+    });
+  }
+}
+window.adminEditProduto = async function(key){
+  try{
+    const p = produtosCache.find(x=>x.key===key); if(!p) return;
+    const novoNome = await promptModal('Editar Produto','Nome:', p.nome); if(novoNome===null) return;
+    const novaUn = await promptModal('Editar Produto','Unidade:', p.unidade||''); if(novaUn===null) return;
+    await db.ref('produtos/'+key).update({ nome: novoNome.trim(), unidade: novaUn.trim() });
+    await loadProdutos(); showToast('Produto atualizado','info'); await logEvent('sistema','Produto atualizado',{produto:key});
+  }catch(e){ console.error('adminEditProduto', e); showToast('Erro ao editar produto','error'); }
+};
+window.adminDeleteProduto = async function(key){
+  try{
+    const ok = await confirmModal('Confirmar','Deseja excluir este produto?'); if(!ok) return;
+    await db.ref('produtos/'+key).remove();
+    await loadProdutos(); showToast('Produto excluído','info'); await logEvent('sistema','Produto excluído',{produto:key});
+  }catch(e){ console.error('adminDeleteProduto', e); showToast('Erro ao excluir produto','error'); }
+};
+
+/* ========= AUTENTICAÇÃO (simples v8/Realtime) ========= */
 async function register(){
-  const nome = document.getElementById('regNome').value.trim();
-  const localidade = document.getElementById('regLocalidade').value.trim();
-  const user = document.getElementById('regUser').value.trim();
-  const pass = document.getElementById('regPass').value.trim();
-  const ministerio = document.getElementById('regMinisterio').value || '';
-  const msgEl = document.getElementById('registerMsg'); msgEl.textContent='';
+  const nome = $('#regNome').value.trim();
+  const localidade = $('#regLocalidade').value.trim();
+  const user = $('#regUser').value.trim();
+  const pass = $('#regPass').value.trim();
+  const ministerio = $('#regMinisterio').value || '';
+  const msgEl = $('#registerMsg'); msgEl.textContent='';
 
-  if(!nome || !localidade || !user || !pass){ msgEl.style.color='red'; msgEl.textContent='Preencha todos os campos.'; return; }
-  if(user === ADMIN_LOGIN){ msgEl.style.color='red'; msgEl.textContent='Nome de usuário indisponível.'; return; }
-
+  if(!nome || !localidade || !user || !pass){
+    msgEl.style.color='red'; msgEl.textContent='Preencha todos os campos.'; return;
+  }
+  if(user === ADMIN_LOGIN){
+    msgEl.style.color='red'; msgEl.textContent='Nome de usuário indisponível.'; return;
+  }
   try{
     const snap = await db.ref('usuarios').orderByChild('user').equalTo(user).once('value');
     if(snap.exists()){ msgEl.style.color='red'; msgEl.textContent='Nome de usuário já existe.'; return; }
-    const usuario = { nome, localidade, user, pass, ministerio, createdAt: Date.now() };
-    await db.ref('usuarios').push(usuario);
-    // recarregar listagens apenas se admin estiver visualizando
-    try { await renderAdminUsuarios(); } catch(e){ /* sem efeito se não estiver logado admin */ }
+    await db.ref('usuarios').push({ nome, localidade, user, pass, ministerio, createdAt: Date.now() });
     msgEl.style.color='green'; msgEl.textContent='Usuário registrado com sucesso.';
-    document.getElementById('regNome').value=''; document.getElementById('regLocalidade').value=''; document.getElementById('regUser').value=''; document.getElementById('regPass').value='';
-    setTimeout(()=> backToLogin(),900);
-  }catch(err){ console.error(err); msgEl.style.color='red'; msgEl.textContent='Erro ao salvar usuário.'; }
+    $('#regNome').value=''; $('#regLocalidade').value=''; $('#regUser').value=''; $('#regPass').value='';
+    await logEvent('perfil','Novo usuário registrado',{user});
+    setTimeout(()=> backToLogin(), 900);
+  }catch(e){
+    console.error('erro register', e);
+    msgEl.style.color='red'; msgEl.textContent='Erro ao salvar usuário.';
+  }
 }
-
 async function login(){
-  const user = document.getElementById('loginUser').value.trim();
-  const pass = document.getElementById('loginPass').value.trim();
-  const errEl = document.getElementById('loginError'); errEl.textContent='';
+  const user = $('#loginUser').value.trim();
+  const pass = $('#loginPass').value.trim();
+  const errEl = $('#loginError'); errEl.textContent='';
+
   if(!user || !pass){ errEl.textContent='Preencha usuário e senha.'; return; }
-  if(user === ADMIN_LOGIN && pass === ADMIN_PASSWORD){ currentUser = { user: ADMIN_LOGIN, nome: 'Administrador', localidade:'Administração', isAdmin:true }; enterApp(); return; }
-  try{
-    const snap = await db.ref('usuarios').orderByChild('user').equalTo(user).once('value');
-    const obj = snap.val(); if(!obj){ errEl.textContent='Usuário ou senha incorretos.'; return; }
-    let found=null, foundKey=null; for(const k in obj){ if(obj[k].pass===pass){ found=obj[k]; foundKey=k; break; }}
-    if(!found){ errEl.textContent='Usuário ou senha incorretos.'; return; }
-    currentUser = { user: found.user, nome: found.nome, localidade: found.localidade, isAdmin:false, key: foundKey, ministerio: found.ministerio||'' };
+
+  // Admin direto
+  if(user === ADMIN_LOGIN && pass === ADMIN_PASSWORD){
+    currentUser = { user: ADMIN_LOGIN, nome: 'Administrador', localidade: 'Administração', isAdmin: true };
     enterApp();
-  }catch(err){ console.error(err); errEl.textContent='Erro ao autenticar. Veja console.'; }
-}
+    showToast(`🕊️ A paz de Deus, irmão Administrador!`, 'info', 4000);
+    await logEvent('login','Administrador logou',{user});
+    return;
+  }
 
-function logout(){ currentUser=null; sessionStorage.removeItem('ccb_user'); // reset telas
-  const ids = ['loginScreen','pedidoScreen','registerScreen','relatorioUsuario','relatorioAdmin','adminProdutos','adminUsuarios'];
-  ids.forEach(id=>{ const el = document.getElementById(id); if(el){ if(id==='loginScreen') el.classList.remove('hidden'); else el.classList.add('hidden'); }});
-  document.getElementById('loginUser').value=''; document.getElementById('loginPass').value=''; document.getElementById('loginError').textContent=''; 
-}
-
-function showRegister(){ document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('registerScreen').classList.remove('hidden'); document.getElementById('registerMsg').textContent=''; }
-function backToLogin(){ document.getElementById('registerScreen').classList.add('hidden'); document.getElementById('loginScreen').classList.remove('hidden'); document.getElementById('registerMsg').textContent=''; }
-
-function enterApp(){ sessionStorage.setItem('ccb_user', JSON.stringify(currentUser)); // esconder login, mostrar pedido
-  document.getElementById('loginScreen').classList.add('hidden'); document.getElementById('registerScreen').classList.add('hidden'); document.getElementById('pedidoScreen').classList.remove('hidden');
-  document.getElementById('relatorioUsuario').classList.add('hidden'); document.getElementById('relatorioAdmin').classList.add('hidden'); document.getElementById('pedidoMsg').textContent='';
-  // mostrar botões admin
-  if(currentUser.isAdmin){ document.getElementById('adminRelatorioBtn').classList.remove('hidden'); document.getElementById('adminProdutosBtn').classList.remove('hidden'); document.getElementById('adminUsuariosBtn').classList.remove('hidden'); }
-  else{ document.getElementById('adminRelatorioBtn').classList.add('hidden'); document.getElementById('adminProdutosBtn').classList.add('hidden'); document.getElementById('adminUsuariosBtn').classList.add('hidden'); }
-  updateCycleInfo();
-}
-
-/* ======================= Produtos (CRUD) ======================= */
-async function seedProdutos(){
-  const snap = await db.ref('produtos').once('value');
-  if(snap.exists()) return; // já tem produtos
-  const iniciais = [
-    { nome: 'Copo descartavel pacote com 100 unidades', unidade:'pacote' },
-    { nome: 'Toalha papel interfolha pacote com 1000 folhas', unidade:'pacote' },
-    { nome: 'Papel higienico 300 metros Rolo', unidade:'rolo' },
-    { nome: 'Toalha papel 200 metros rolo', unidade:'rolo' },
-    { nome: 'Papel higienico 60 metros pacote com 12 unidades', unidade:'pacote' }
-  ];
-  for(const p of iniciais) await db.ref('produtos').push(p);
-}
-
-async function loadProdutos(){
-  const snap = await db.ref('produtos').once('value');
-  const obj = snap.val() || {};
-  produtosCache = Object.keys(obj).map(k => ({ key:k, ...obj[k] }));
-}
-
-function filterProdutos(){
-  const q = document.getElementById('produtoSearch').value.trim().toLowerCase();
-  const list = document.getElementById('produtoList');
-  list.innerHTML='';
-  if(!q){ list.classList.add('hidden'); return; }
-  const matches = produtosCache.filter(p => p.nome.toLowerCase().includes(q));
-  if(matches.length===0){ list.innerHTML='<div>Nenhum produto</div>'; list.classList.remove('hidden'); return; }
-  matches.forEach(m=>{
-    const div = document.createElement('div'); div.textContent = m.nome + ' ('+ (m.unidade||'') +')';
-    div.onclick = ()=> selectProduto(m);
-    list.appendChild(div);
-  });
-  list.classList.remove('hidden');
-}
-
-function selectProduto(prod){
-  document.getElementById('produtoSelected').value = prod.nome + ' ('+ (prod.unidade||'') +')';
-  document.getElementById('produtoList').classList.add('hidden');
-  document.getElementById('produtoSearch').value = '';
-  // store selected key in dataset
-  document.getElementById('produtoSelected').dataset.key = prod.key;
-}
-
-async function addProduto(){
-  if(!currentUser || !currentUser.isAdmin){ alert('Acesso negado.'); return; }
-  const nome = document.getElementById('novoProdutoNome').value.trim();
-  const unidade = document.getElementById('novoProdutoUnidade').value.trim();
-  if(!nome || !unidade){ alert('Preencha nome e unidade.'); return; }
-  try{ await db.ref('produtos').push({ nome, unidade }); document.getElementById('novoProdutoNome').value=''; document.getElementById('novoProdutoUnidade').value=''; await loadProdutos(); renderProdutosAdmin(); alert('Produto adicionado.'); }catch(e){ console.error(e); alert('Erro ao adicionar produto.'); }
-}
-
-async function editProduto(key){
-  const p = produtosCache.find(x=>x.key===key); if(!p) return;
-  const novoNome = prompt('Nome do produto:', p.nome); if(novoNome===null) return;
-  const novaUnidade = prompt('Unidade:', p.unidade||''); if(novaUnidade===null) return;
-  try{ await db.ref('produtos/'+key).update({ nome:novoNome.trim(), unidade:novaUnidade.trim() }); await loadProdutos(); renderProdutosAdmin(); alert('Produto atualizado.'); }catch(e){ console.error(e); alert('Erro ao editar.'); }
-}
-async function deleteProduto(key){ if(!confirm('Excluir este produto?')) return; try{ await db.ref('produtos/'+key).remove(); await loadProdutos(); renderProdutosAdmin(); alert('Produto excluído.'); }catch(e){ console.error(e); alert('Erro ao excluir.'); } }
-
-function showAdminProdutos(){ hideAllScreens(); document.getElementById('adminProdutos').classList.remove('hidden'); renderProdutosAdmin(); }
-
-function voltarAdmin(){ document.getElementById('adminProdutos').classList.add('hidden'); document.getElementById('adminUsuarios').classList.add('hidden'); document.getElementById('pedidoScreen').classList.remove('hidden'); updateCycleInfo(); }
-
-function renderProdutosAdmin(){ const tbody = document.querySelector('#tabelaProdutosAdmin tbody'); tbody.innerHTML=''; produtosCache.forEach(p=>{ const tr=document.createElement('tr'); tr.innerHTML = `<td>${escapeHtml(p.nome)}</td><td>${escapeHtml(p.unidade||'')}</td><td class="actions"><button class="small" onclick="editProduto('${p.key}')">Editar</button><button class="small" onclick="deleteProduto('${p.key}')">Excluir</button></td>`; tbody.appendChild(tr); }); }
-
-/* ======================= Admin Usuarios (CRUD pelo admin) ======================= */
-async function adminAddUser(){ 
-  if(!currentUser || !currentUser.isAdmin){ alert('Acesso negado.'); return; }
-  const nome = document.getElementById('adminNovoNome').value.trim();
-  const user = document.getElementById('adminNovoUser').value.trim();
-  const pass = document.getElementById('adminNovoPass').value.trim();
-  const localidade = document.getElementById('adminNovoLocalidade').value.trim();
-  const ministerio = document.getElementById('adminNovoMinisterio').value||'';
-  if(!nome || !user || !pass || !localidade){ alert('Preencha todos os campos.'); return; }
   try{
     const snap = await db.ref('usuarios').orderByChild('user').equalTo(user).once('value');
-    if(snap.exists()){ alert('Usuário já existe.'); return; }
-    await db.ref('usuarios').push({ nome, user, pass, localidade, ministerio, createdAt: Date.now() });
-    document.getElementById('adminNovoNome').value=''; document.getElementById('adminNovoUser').value=''; document.getElementById('adminNovoPass').value=''; document.getElementById('adminNovoLocalidade').value='';
-    await renderAdminUsuarios();
-    alert('Usuário criado.');
-  }catch(e){ console.error(e); alert('Erro ao criar usuário.'); } 
+    const obj = snap.val();
+    if(!obj){ errEl.textContent='Usuário ou senha incorretos.'; return; }
+
+    let found=null, foundKey=null;
+    for(const k in obj){ if(obj[k].pass === pass){ found=obj[k]; foundKey=k; break; } }
+    if(!found){ errEl.textContent='Usuário ou senha incorretos.'; return; }
+
+    currentUser = {
+      user: found.user, nome: found.nome, localidade: found.localidade,
+      isAdmin: false, key: foundKey, ministerio: found.ministerio||''
+    };
+    enterApp();
+    showToast(`🕊️ A paz de Deus, irmão ${found.nome}!`, 'info', 4000);
+    await logEvent('login','Usuário logou',{user:found.user});
+  }catch(e){
+    console.error('erro login', e);
+    errEl.textContent='Erro ao autenticar. Veja console.';
+  }
+}
+function logout(){
+  const name = currentUser?.nome || '';
+  currentUser = null; sessionStorage.removeItem('ccb_user');
+  go('loginScreen');
+  $('#loginUser').value=''; $('#loginPass').value=''; $('#loginError').textContent='';
+  showToast('🙏 Deus abençoe, meu irmão! Saúda em casa com a santa paz de Deus!', 'info', 4500);
+  logEvent('logout','Usuário saiu',{nome:name});
+}
+function enterApp(){
+  sessionStorage.setItem('ccb_user', JSON.stringify(currentUser));
+  go('pedidoScreen');
+  $('#pedidoMsg').textContent='';
+  if(currentUser.isAdmin){
+    ['adminRelatorioBtn','adminProdutosBtn','adminUsuariosBtn','adminHistoricoBtn'].forEach(id=> $('#'+id)?.classList.remove('hidden'));
+  } else {
+    ['adminRelatorioBtn','adminProdutosBtn','adminUsuariosBtn','adminHistoricoBtn'].forEach(id=> $('#'+id)?.classList.add('hidden'));
+  }
+  updateCycleInfoUI();
+}
+function showRegister(){ go('registerScreen'); }
+function backToLogin(){ go('loginScreen'); }
+function abrirWhatsapp(){
+  if(confirm('Deseja contatar o administrador via WhatsApp?')){
+    const url='https://wa.me/'+WHATSAPP_PHONE+'?text='+encodeURIComponent('Olá, preciso de ajuda com o sistema de compras coletivas.');
+    window.open(url,'_blank');
+  }
 }
 
-async function renderAdminUsuarios(){ 
-  const tbody = document.querySelector('#tabelaUsuariosAdmin tbody');
-  const tbody2 = document.querySelector('#tabelaAdminUsuariosList tbody');
-  if(tbody) tbody.innerHTML=''; 
-  if(tbody2) tbody2.innerHTML='';
-  try{
-    const snap = await db.ref('usuarios').once('value'); const obj = snap.val()||{};
-    const usuarios = Object.keys(obj).map(k=>({ key:k, ...obj[k] }));
-    if(usuarios.length===0){
-      if(tbody) tbody.innerHTML='<tr><td colspan="5">Nenhum usuário encontrado.</td></tr>';
-      if(tbody2) tbody2.innerHTML='<tr><td colspan="5">Nenhum usuário encontrado.</td></tr>';
-      return;
-    }
-    usuarios.forEach(u=>{
-      const tr=document.createElement('tr');
-      tr.innerHTML=`<td>${escapeHtml(u.nome)}</td><td>${escapeHtml(u.user)}</td><td>${escapeHtml(u.localidade)}</td><td>${escapeHtml(u.ministerio||'')}</td><td class="actions"><button class="small" onclick="adminEditUser('${u.key}')">Editar</button><button class="small" onclick="adminDeleteUser('${u.key}')">Excluir</button></td>`;
-      if(tbody) tbody.appendChild(tr);
-      if(tbody2) tbody2.appendChild(tr.cloneNode(true));
-    });
-  }catch(e){ console.error(e); if(tbody) tbody.innerHTML='<tr><td colspan="5">Erro ao carregar usuários.</td></tr>'; if(tbody2) tbody2.innerHTML='<tr><td colspan="5">Erro ao carregar usuários.</td></tr>'; }
+/* ========= BUSCA PRODUTOS ========= */
+function filtrarProdutos(){
+  const q = $('#buscaProduto').value.trim().toLowerCase();
+  const lista = $('#listaProdutos'); lista.innerHTML=''; selectedProductKey = null;
+  if(!q){ lista.style.display='none'; return; }
+  const matches = produtosCache.filter(p => (p.nome||'').toLowerCase().includes(q));
+  if(matches.length === 0){ lista.innerHTML = '<div>Nenhum produto</div>'; lista.style.display='block'; return; }
+  matches.forEach(m=>{
+    const div = document.createElement('div');
+    div.textContent = `${m.nome} (${m.unidade||''})`;
+    div.onclick = ()=>{
+      selectedProductKey = m.key;
+      $('#buscaProduto').value = `${m.nome} (${m.unidade||''})`;
+      lista.style.display='none';
+      showToast('Produto selecionado: '+m.nome, 'info', 1200);
+    };
+    lista.appendChild(div);
+  });
+  lista.style.display='block';
 }
 
-async function showAdminUsuarios(){ 
-  if(!currentUser || !currentUser.isAdmin){ alert('Acesso negado.'); return; } 
-  hideAllScreens();
-  document.getElementById('adminUsuarios').classList.remove('hidden'); 
-  await renderAdminUsuarios(); 
-}
-
-async function adminEditUser(key){ 
-  try{
-    const snap = await db.ref('usuarios/'+key).once('value'); const u = snap.val(); if(!u) return;
-    const novoNome = prompt('Nome:', u.nome); if(novoNome===null) return;
-    const novoUser = prompt('Usuário:', u.user); if(novoUser===null) return;
-    const novaLoc = prompt('Localidade:', u.localidade||''); if(novaLoc===null) return;
-    const novaMin = prompt('Ministério:', u.ministerio||''); if(novaMin===null) return;
-    const novaPass = prompt('Senha (deixe em branco para manter):','');
-    const updates = { nome:novoNome.trim(), user:novoUser.trim(), localidade:novaLoc.trim(), ministerio:novaMin.trim() };
-    if(novaPass && novaPass.trim()) updates.pass = novaPass.trim();
-    await db.ref('usuarios/'+key).update(updates);
-    await renderAdminUsuarios();
-    alert('Usuário atualizado.');
-  }catch(e){ console.error(e); alert('Erro ao editar usuário.'); }
-}
-
-async function adminDeleteUser(key){ if(!confirm('Excluir este usuário?')) return; try{ await db.ref('usuarios/'+key).remove(); await renderAdminUsuarios(); alert('Usuário excluído.'); }catch(e){ console.error(e); alert('Erro ao excluir usuário.'); } }
-
-/* ======================= Pedidos ======================= */
+/* ========= PEDIDOS ========= */
+// Regra de soma automática: mesmo usuário + mesmo produto + mesmo ciclo + não entregue
 async function salvarPedido(){
-  const produtoKey = document.getElementById('produtoSelected').dataset.key;
-  const produtoText = document.getElementById('produtoSelected').value.trim();
-  const quantidade = document.getElementById('quantidade').value.trim();
-  const obs = document.getElementById('obs').value.trim();
-  const msgEl = document.getElementById('pedidoMsg'); msgEl.textContent='';
+  const produtoKey = selectedProductKey;
+  const produtoText = $('#buscaProduto').value.trim();
+  const quantidade = $('#quantidade').value.trim();
+  const obs = $('#obs').value.trim();
+  const msgEl = $('#pedidoMsg'); msgEl.textContent='';
+
   if(!produtoKey || !produtoText){ msgEl.style.color='red'; msgEl.textContent='Selecione um produto.'; return; }
-  if(!quantidade || parseInt(quantidade)<=0){ msgEl.style.color='red'; msgEl.textContent='Quantidade inválida.'; return; }
+  if(!quantidade || parseInt(quantidade) <= 0){ msgEl.style.color='red'; msgEl.textContent='Quantidade inválida.'; return; }
   if(!currentUser){ msgEl.style.color='red'; msgEl.textContent='Você precisa estar logado para enviar pedido.'; return; }
-  const cycle = await getCycleInfo(); if(!cycle.open){ msgEl.style.color='red'; msgEl.textContent='Período de pedidos encerrado.'; return; }
-  const pedido = { produtoKey, produtoText, quantidade: parseInt(quantidade), obs, createdBy: currentUser.user, createdByName: currentUser.nome, createdByLocalidade: currentUser.localidade, createdAt: Date.now(), entregue: false };
-  try{ await db.ref('pedidos').push(pedido); msgEl.style.color='green'; msgEl.textContent='Pedido enviado com sucesso.'; document.getElementById('produtoSelected').value=''; delete document.getElementById('produtoSelected').dataset.key; document.getElementById('quantidade').value=''; document.getElementById('obs').value=''; }catch(e){ console.error(e); msgEl.style.color='red'; msgEl.textContent='Erro ao salvar pedido.'; }
+
+  const cycle = await getCycleInfo();
+  if(!cycle.open){ msgEl.style.color='red'; msgEl.textContent='Período de pedidos encerrado.'; return; }
+  if(cycle.daysRemaining <= 5){ msgEl.style.color='red'; msgEl.textContent='Não é possível criar/editar pedidos nos últimos 5 dias do ciclo.'; return; }
+
+  try{
+    // Busca pedidos do usuário e aplica filtro em memória
+    const snap = await db.ref('pedidos').orderByChild('createdBy').equalTo(currentUser.user).once('value');
+    const data = snap.val() || {};
+    const rows = Object.keys(data).map(k=>({ key:k, ...data[k] }));
+    const same = rows.find(r =>
+      r.produtoKey === produtoKey &&
+      !r.entregue &&
+      (r.cycleId || monthIdFrom(r.createdAt||Date.now())) === cycle.cycleId
+    );
+
+    if(same){
+      // Somar quantidade
+      const novaQtd = Number(same.quantidade||0) + Number(quantidade);
+      await db.ref('pedidos/'+same.key).update({
+        quantidade: novaQtd,
+        obs: obs ? (same.obs ? `${same.obs}; ${obs}` : obs) : (same.obs||''),
+        updatedAt: Date.now()
+      });
+      await logEvent('pedido','Quantidade somada a pedido existente',{
+        pedidoKey: same.key, produtoKey, addQtd:Number(quantidade), total:novaQtd
+      });
+      msgEl.style.color='green'; msgEl.textContent='Quantidade somada ao pedido em aberto.';
+    }else{
+      // Criar novo
+      const pedido = {
+        produtoKey,
+        produtoText,
+        quantidade: parseInt(quantidade),
+        obs,
+        createdBy: currentUser.user,
+        createdByName: currentUser.nome,
+        createdByLocalidade: currentUser.localidade,
+        createdAt: Date.now(),
+        entregue: false,
+        deliveredAt: null,
+        cycleId: cycle.cycleId,
+        cycleStart: cycle.start
+      };
+      await db.ref('pedidos').push(pedido);
+      await logEvent('pedido','Pedido criado',{produtoKey, quantidade:Number(quantidade)});
+      msgEl.style.color='green'; msgEl.textContent='Pedido enviado com sucesso.';
+    }
+
+    // limpar UI
+    $('#buscaProduto').value=''; selectedProductKey=null; $('#quantidade').value=''; $('#obs').value='';
+    showToast('Pedido salvo', 'info');
+  }catch(e){ console.error('erro salvarPedido', e); msgEl.style.color='red'; msgEl.textContent='Erro ao salvar pedido.'; }
 }
 
-/* Ver relatorio do usuario (apenas seus pedidos) */
-async function verRelatorioUsuario(){ 
+async function mostrarPedidosUsuario(status='todos'){
   if(!currentUser){ alert('Faça login primeiro.'); return; }
-  hideAllScreens();
-  document.getElementById('relatorioUsuario').classList.remove('hidden');
-  const tbody = document.querySelector('#tabelaPedidosUsuario tbody'); tbody.innerHTML = '<tr><td colspan="5">Carregando...</td></tr>';
+  go('relatorioUsuario');
+
+  const tbody = $('#tabelaPedidosUsuario tbody'); tbody.innerHTML = '<tr><td colspan="5">Carregando...</td></tr>';
+
   try{
-    const snap = await db.ref('pedidos').orderByChild('createdBy').equalTo(currentUser.user).once('value'); 
+    const [snap, cycle] = await Promise.all([
+      db.ref('pedidos').orderByChild('createdBy').equalTo(currentUser.user).once('value'),
+      getCycleInfo()
+    ]);
     const data = snap.val() || {};
-    const rows = Object.keys(data).map(k=>({ key:k, ...data[k] })); 
-    if(rows.length===0){ tbody.innerHTML = '<tr><td colspan="5">Nenhum pedido encontrado.</td></tr>'; return; }
-    tbody.innerHTML = '';
-    const cycle = await getCycleInfo();
+    let rows = Object.keys(data).map(k=>({ key:k, ...data[k] }));
+
+    // filtros
+    if(status === 'aberto') rows = rows.filter(r => !r.entregue);
+    if(status === 'entregue') rows = rows.filter(r => r.entregue);
+    if($('#toggleOcultarEntreguesUsuario').checked || $('#toggleOcultarEntreguesUsuario2').checked){
+      rows = rows.filter(r=> !r.entregue);
+    }
+
+    tbody.innerHTML = rows.length ? '' : '<tr><td colspan="5">Nenhum pedido encontrado.</td></tr>';
+
+    const canEditByCycle = cycle.open && cycle.daysRemaining > 5;
+
     rows.forEach(r=>{
       const tr = document.createElement('tr'); if(r.entregue) tr.classList.add('delivered');
-      // só permite editar/excluir se for admin OU (autor do pedido, ciclo aberto e >5 dias restantes) E pedido NÃO entregue (exclusão)
-      const canEditOrDelete = (currentUser.isAdmin) || (r.createdBy===currentUser.user && cycle.open && cycle.daysRemaining>5);
-      let actionsHtml = '';
-      if(canEditOrDelete){
-        // editar: admin sempre pode, usuário só se autor e dentro da janela (mesma regra)
-        const canEdit = (currentUser.isAdmin) || (r.createdBy===currentUser.user && cycle.open && cycle.daysRemaining>5);
-        if(canEdit) actionsHtml += `<button class="small" onclick="editPedido('${r.key}')">Editar</button>`;
-        // excluir: só mostrar se não entregue ou se admin
-        if(!r.entregue || currentUser.isAdmin) actionsHtml += `<button class="small" onclick="deletePedido('${r.key}')">Excluir</button>`;
+      const tdProd = document.createElement('td'); tdProd.innerText = r.produtoText || '';
+      const tdQtd = document.createElement('td'); tdQtd.innerText = r.quantidade || '';
+      const tdObs = document.createElement('td'); tdObs.innerText = r.obs || '';
+      const tdStatus = document.createElement('td'); tdStatus.innerHTML = r.entregue ? '<span class="status-entregue">Entregue</span>' : '<span class="status-aberto">Aberto</span>';
+      const tdActions = document.createElement('td'); tdActions.className='actions';
+
+      const canEdit = (r.createdBy === currentUser.user) && canEditByCycle && !r.entregue;
+      const canDelete = (r.createdBy === currentUser.user) && canEditByCycle && !r.entregue;
+
+      if(canEdit){
+        const btnE = document.createElement('button'); btnE.className='small'; btnE.innerText='Editar'; btnE.onclick = ()=> editPedido(r.key);
+        tdActions.appendChild(btnE);
       }
-      tr.innerHTML = `<td>${escapeHtml(r.produtoText)}</td><td>${escapeHtml(r.quantidade)}</td><td>${escapeHtml(r.obs||'')}</td><td>${r.entregue?'<strong>Sim</strong>':'Não'}</td><td class="actions">${actionsHtml}</td>`;
+      if(canDelete){
+        const btnD = document.createElement('button'); btnD.className='small'; btnD.innerText='Excluir'; btnD.onclick = ()=> deletePedido(r.key, {origin:'user'});
+        tdActions.appendChild(btnD);
+      }
+
+      tr.appendChild(tdProd); tr.appendChild(tdQtd); tr.appendChild(tdObs); tr.appendChild(tdStatus); tr.appendChild(tdActions);
       tbody.appendChild(tr);
     });
-  }catch(e){ console.error(e); tbody.innerHTML = '<tr><td colspan="5">Erro ao carregar pedidos.</td></tr>'; }
+  }catch(e){
+    console.error('mostrarPedidosUsuario', e);
+    tbody.innerHTML = '<tr><td colspan="5">Erro ao carregar pedidos.</td></tr>';
+  }
 }
 
-/* Editar pedido (usuário pode editar apenas até 5 dias antes do fechamento) */
-async function editPedido(key){ 
+async function editPedido(key){
   try{
-    const snap = await db.ref('pedidos/'+key).once('value'); const p = snap.val(); if(!p) return; 
-    const cycle = await getCycleInfo(); 
-    const canEdit = currentUser && (currentUser.isAdmin || (p.createdBy===currentUser.user && cycle.open && cycle.daysRemaining>5));
-    if(!canEdit || (p.entregue && !currentUser.isAdmin)){ alert('Edição não permitida.'); return; }
-    const novoObs = prompt('Observações:', p.obs||''); if(novoObs===null) return;
-    const novaQtd = prompt('Quantidade:', p.quantidade); if(novaQtd===null) return; if(parseInt(novaQtd)<=0){ alert('Quantidade inválida.'); return; }
-    await db.ref('pedidos/'+key).update({ obs: novoObs, quantidade: parseInt(novaQtd) });
-    alert('Pedido atualizado.'); verRelatorioUsuario();
-  }catch(e){ console.error(e); alert('Erro ao editar pedido.'); }
-}
-
-async function deletePedido(key){ 
-  try{
-    const snap = await db.ref('pedidos/'+key).once('value'); const p = snap.val(); if(!p) return; 
+    const snap = await db.ref('pedidos/'+key).once('value'); const p = snap.val(); if(!p) return;
     const cycle = await getCycleInfo();
-    const canDelete = currentUser && (currentUser.isAdmin || (p.createdBy===currentUser.user && cycle.open && cycle.daysRemaining>5));
-    if(!canDelete){ alert('Exclusão não permitida.'); return; }
-    if(p.entregue && !currentUser.isAdmin){ alert('Pedido entregue não pode ser excluído. Somente o administrador pode excluir pedidos entregues.'); return; }
-    if(!confirm('Excluir este pedido?')) return;
-    await db.ref('pedidos/'+key).remove();
-    alert('Pedido excluído.'); verRelatorioUsuario();
-  }catch(e){ console.error(e); alert('Erro ao excluir pedido.'); }
+    const canEdit = currentUser && (p.createdBy === currentUser.user) && cycle.open && cycle.daysRemaining > 5 && !p.entregue;
+    if(!canEdit){ showToast('Edição não permitida','error'); return; }
+
+    const novaQtd = await promptModal('Editar quantidade','Quantidade:', p.quantidade || '');
+    if(novaQtd === null) return; if(parseInt(novaQtd) <= 0){ showToast('Quantidade inválida','error'); return; }
+    const novoObs = await promptModal('Editar observações','Observações:', p.obs || '');
+    if(novoObs === null) return;
+
+    await db.ref('pedidos/'+key).update({ quantidade: parseInt(novaQtd), obs: novoObs, updatedAt: Date.now() });
+    await logEvent('pedido','Pedido atualizado',{pedidoKey:key});
+    showToast('Pedido atualizado','info'); mostrarPedidosUsuario($('#filtroUsuario').value || 'todos');
+  }catch(e){ console.error('editPedido', e); showToast('Erro ao editar pedido','error'); }
 }
 
-/* ======================= Relatórios Admin ======================= */
-async function verRelatorioAdmin(){ 
-  if(!currentUser || !currentUser.isAdmin){ alert('Acesso negado.'); return; }
-  hideAllScreens();
-  document.getElementById('relatorioAdmin').classList.remove('hidden');
-  const tbodyP = document.querySelector('#tabelaPedidosAdmin tbody'); const tbodyU = document.querySelector('#tabelaUsuariosAdmin tbody'); const resumo = document.querySelector('#resumoItens tbody'); 
-  tbodyP.innerHTML = '<tr><td colspan="7">Carregando...</td></tr>'; tbodyU.innerHTML = '<tr><td colspan="5">Carregando...</td></tr>'; resumo.innerHTML = '<tr><td colspan="3">Carregando...</td></tr>';
+async function deletePedido(key, opts={origin:'user'}){
   try{
-    const snapP = await db.ref('pedidos').once('value'); const pedidosObj = snapP.val() || {};
-    const pedidos = Object.keys(pedidosObj).map(k=>({ key:k, ...pedidosObj[k] }));
-    if(pedidos.length===0){ tbodyP.innerHTML = '<tr><td colspan="7">Nenhum pedido encontrado.</td></tr>'; } else {
-      tbodyP.innerHTML='';
+    const snap = await db.ref('pedidos/'+key).once('value'); const p = snap.val(); if(!p) return;
+    const cycle = await getCycleInfo();
+    const isAdmin = !!currentUser?.isAdmin;
+
+    // Permissões:
+    // - Usuário pode excluir só se não entregue e ainda dentro da janela do ciclo.
+    // - Admin pode excluir qualquer pedido entregue SOMENTE se entregou há 1 ano ou mais.
+    let allowed = false;
+    let reason = '';
+
+    if(!p.entregue){
+      if((p.createdBy === currentUser?.user) && cycle.open && cycle.daysRemaining > 5){ allowed = true; }
+      if(isAdmin){ allowed = true; }
+    }else{
+      if(isAdmin){
+        const deliveredAt = p.deliveredAt || 0;
+        const aYearMs = 365*24*60*60*1000;
+        if(Date.now() - deliveredAt >= aYearMs) allowed = true;
+        else reason = 'Pedido entregue há menos de 1 ano.';
+      } else {
+        reason = 'Pedidos entregues só podem ser excluídos pelo administrador.';
+      }
+    }
+
+    if(!allowed){ showToast(`Exclusão não permitida${reason?': '+reason:''}`,'error'); return; }
+
+    const ok = await confirmModal('Confirmar exclusão','Deseja realmente excluir este pedido?');
+    if(!ok) return;
+
+    await db.ref('pedidos/'+key).remove();
+    await logEvent('pedido','Pedido excluído',{pedidoKey:key});
+
+    showToast('Pedido excluído','info');
+
+    // 🔧 Correção: não chamar verRelatorioAdmin quando origem for usuário, para não gerar “Acesso negado”
+    if(opts.origin === 'admin'){
+      if(lastScreen === 'relatorioAdmin'){ verRelatorioAdmin($('#filtroAdmin').value || 'todos'); }
+    }else{
+      mostrarPedidosUsuario($('#filtroUsuario').value || 'todos');
+    }
+
+  }catch(e){ console.error('deletePedido', e); showToast('Erro ao excluir pedido','error'); }
+}
+
+/* ========= RELATÓRIOS (ADMIN) ========= */
+async function verRelatorioAdmin(status='todos'){
+  if(!currentUser || !currentUser.isAdmin){ alert('Acesso negado.'); return; }
+  go('relatorioAdmin');
+
+  const tbodyP = $('#tabelaPedidosAdmin tbody');
+  const tbodyU = $('#tabelaUsuariosAdmin tbody');
+  const tabelaProdutos = $('#tabelaProdutosAdmin tbody');
+  tbodyP.innerHTML = '<tr><td colspan="7">Carregando...</td></tr>';
+  tbodyU.innerHTML = '<tr><td colspan="5">Carregando...</td></tr>';
+  tabelaProdutos.innerHTML = '<tr><td colspan="2">Carregando...</td></tr>';
+
+  try{
+    const [snapP, snapU] = await Promise.all([ db.ref('pedidos').once('value'), db.ref('usuarios').once('value') ]);
+
+    const pedidosObj = snapP.val() || {};
+    let pedidos = Object.keys(pedidosObj).map(k=>({ key:k, ...pedidosObj[k] }));
+
+    // filtro status
+    if(status === 'aberto') pedidos = pedidos.filter(p=> !p.entregue);
+    if(status === 'entregue') pedidos = pedidos.filter(p=> p.entregue);
+
+    // ocultar entregues (checkbox)
+    if($('#toggleOcultarEntreguesAdmin').checked){ pedidos = pedidos.filter(p=> !p.entregue); }
+
+    // tabela pedidos
+    if(pedidos.length === 0){
+      tbodyP.innerHTML = '<tr><td colspan="7">Nenhum pedido encontrado.</td></tr>';
+    } else {
+      tbodyP.innerHTML = '';
       pedidos.forEach(p=>{
-        const tr=document.createElement('tr');
-        // montar células manualmente pra evitar problemas com escape
-        const tdUser = document.createElement('td'); tdUser.innerText = p.createdByName || p.createdBy || '';
-        const tdLocal = document.createElement('td'); tdLocal.innerText = p.createdByLocalidade || '';
-        const tdProd = document.createElement('td'); tdProd.innerText = p.produtoText || '';
-        const tdQtd = document.createElement('td'); tdQtd.innerText = p.quantidade || '';
-        const tdObs = document.createElement('td'); tdObs.innerText = p.obs || '';
-        const tdEnt = document.createElement('td'); tdEnt.innerHTML = p.entregue ? '<strong style="color:green">Sim</strong>' : 'Não';
-        const tdActions = document.createElement('td'); tdActions.className = 'actions';
-        if(p.entregue){
-          const btn = document.createElement('button'); btn.className='small'; btn.innerText='Desmarcar'; btn.onclick = ()=> toggleEntregue(p.key, false);
-          tdActions.appendChild(btn);
-          tr.classList.add('delivered');
-        } else {
-          const btn = document.createElement('button'); btn.className='small'; btn.innerText='Marcar entregue'; btn.onclick = ()=> toggleEntregue(p.key, true);
-          tdActions.appendChild(btn);
+        const tr = document.createElement('tr'); if(p.entregue) tr.classList.add('delivered');
+        const tdUser=document.createElement('td'); tdUser.innerText = p.createdByName || p.createdBy || '';
+        const tdLocal=document.createElement('td'); tdLocal.innerText = p.createdByLocalidade || '';
+        const tdProd=document.createElement('td'); tdProd.innerText = p.produtoText || '';
+        const tdQtd=document.createElement('td'); tdQtd.innerText = p.quantidade || '';
+        const tdObs=document.createElement('td'); tdObs.innerText = p.obs || '';
+        const tdStatus=document.createElement('td');
+        let statusHtml = p.entregue? '<span class="status-entregue">Entregue</span>' : '<span class="status-aberto">Aberto</span>';
+        // dica de 1 ano
+        if(p.entregue && p.deliveredAt){
+          const aYearMs = 365*24*60*60*1000;
+          if(Date.now() - p.deliveredAt >= aYearMs){
+            statusHtml += ' • 🕊️ Pode ser excluído (entregue há 1 ano)';
+          }
         }
-        tr.appendChild(tdUser); tr.appendChild(tdLocal); tr.appendChild(tdProd); tr.appendChild(tdQtd); tr.appendChild(tdObs); tr.appendChild(tdEnt); tr.appendChild(tdActions);
+        tdStatus.innerHTML = statusHtml;
+
+        const tdActions=document.createElement('td'); tdActions.className='actions';
+        const btnToggle = document.createElement('button'); btnToggle.className='small';
+        if(p.entregue){ btnToggle.innerText='Desmarcar'; btnToggle.onclick = ()=> toggleEntregue(p.key, false); }
+        else { btnToggle.innerText='Marcar entregue'; btnToggle.onclick = ()=> toggleEntregue(p.key, true); }
+        tdActions.appendChild(btnToggle);
+
+        // botão excluir (admin): só se aberto OU se entregue há 1 ano
+        const canDeleteDelivered = p.entregue && p.deliveredAt && (Date.now() - p.deliveredAt >= 365*24*60*60*1000);
+        const canDeleteOpen = !p.entregue;
+        if(canDeleteOpen || canDeleteDelivered){
+          const btnDel = document.createElement('button'); btnDel.className='small'; btnDel.innerText='Excluir';
+          btnDel.onclick = ()=> deletePedido(p.key, {origin:'admin'});
+          tdActions.appendChild(btnDel);
+        }
+
+        tr.appendChild(tdUser); tr.appendChild(tdLocal); tr.appendChild(tdProd); tr.appendChild(tdQtd); tr.appendChild(tdObs); tr.appendChild(tdStatus); tr.appendChild(tdActions);
         tbodyP.appendChild(tr);
       });
     }
 
-    // resumo por item
+    // tabela usuários
+    const usuariosObj = snapU.val()||{};
+    const usuarios = Object.keys(usuariosObj).map(k=>({ key:k, ...usuariosObj[k] }));
+    if(usuarios.length===0){
+      tbodyU.innerHTML = '<tr><td colspan="5">Nenhum usuário encontrado.</td></tr>';
+    } else {
+      tbodyU.innerHTML='';
+      usuarios.forEach(u=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML = `<td>${escapeHtml(u.nome)}</td><td>${escapeHtml(u.user)}</td><td>${escapeHtml(u.localidade)}</td><td>${escapeHtml(u.ministerio||'')}</td><td class="actions"><button class="small" onclick="adminEditUser('${u.key}')">Editar</button><button class="small" onclick="adminDeleteUser('${u.key}')">Excluir</button></td>`;
+        tbodyU.appendChild(tr);
+      });
+    }
+
+    // Resumo por item
     const map = {};
-    pedidos.forEach(p=>{ const name = p.produtoText || 'Sem produto'; if(!map[name]) map[name] = { unidade: (p.produtoUnidade||''), total:0 }; map[name].total += Number(p.quantidade||0); });
-    resumo.innerHTML=''; Object.keys(map).forEach(name=>{ const tr = document.createElement('tr'); tr.innerHTML = `<td>${escapeHtml(name)}</td><td>${escapeHtml(map[name].unidade||'')}</td><td>${escapeHtml(map[name].total)}</td>`; resumo.appendChild(tr); });
-
-    const snapU = await db.ref('usuarios').once('value'); const usuariosObj = snapU.val()||{}; const usuarios = Object.keys(usuariosObj).map(k=>({ key:k, ...usuariosObj[k] }));
-    if(usuarios.length===0){ tbodyU.innerHTML = '<tr><td colspan="5">Nenhum usuário encontrado.</td></tr>'; } else { tbodyU.innerHTML = ''; usuarios.forEach(u=>{ const tr=document.createElement('tr'); tr.innerHTML = `<td>${escapeHtml(u.nome)}</td><td>${escapeHtml(u.user)}</td><td>${escapeHtml(u.localidade)}</td><td>${escapeHtml(u.ministerio||'')}</td><td class="actions"><button class="small" onclick="adminEditUser('${u.key}')">Editar</button><button class="small" onclick="adminDeleteUser('${u.key}')">Excluir</button></td>`; tbodyU.appendChild(tr); }); }
-  }catch(e){ console.error(e); tbodyP.innerHTML = '<tr><td colspan="7">Erro ao carregar pedidos.</td></tr>'; tbodyU.innerHTML = '<tr><td colspan="5">Erro ao carregar usuários.</td></tr>'; resumo.innerHTML = '<tr><td colspan="3">Erro ao gerar resumo.</td></tr>'; }
+    pedidos.forEach(p=>{ const name = p.produtoText || 'Sem produto'; if(!map[name]) map[name] = 0; map[name] += Number(p.quantidade||0); });
+    tabelaProdutos.innerHTML = '';
+    Object.keys(map).forEach(name=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML = `<td>${escapeHtml(name)}</td><td>${escapeHtml(map[name])}</td>`;
+      tabelaProdutos.appendChild(tr);
+    });
+  }catch(e){
+    console.error('verRelatorioAdmin', e);
+    tbodyP.innerHTML = '<tr><td colspan="7">Erro ao carregar pedidos.</td></tr>';
+    tbodyU.innerHTML = '<tr><td colspan="5">Erro ao carregar usuários.</td></tr>';
+    tabelaProdutos.innerHTML = '<tr><td colspan="2">Erro.</td></tr>';
+  }
 }
 
-/* ======================= Marcar entregue com confirmação + senha admin ======================= */
-async function toggleEntregue(key, toState){ 
-  if(!currentUser || !currentUser.isAdmin){ alert('Acesso negado.'); return; }
-  if(!confirm('Tem certeza que deseja '+(toState?'marcar como entregue':'desmarcar entrega')+'?')) return;
-  const pass = prompt('Digite sua senha de administrador para confirmar:'); if(pass===null) return; if(pass !== ADMIN_PASSWORD){ alert('Senha incorreta.'); return; }
-  try{ await db.ref('pedidos/'+key).update({ entregue: !!toState }); alert('Atualizado.'); verRelatorioAdmin(); }catch(e){ console.error(e); alert('Erro ao atualizar.'); }
+async function toggleEntregue(key, toState){
+  if(!currentUser || !currentUser.isAdmin){ showToast('Acesso negado','error'); return; }
+  const ok = await confirmModal('Confirmar','Tem certeza?'); if(!ok) return;
+  const senha = await senhaModal('Senha administrador'); if(senha === null) return;
+  if(senha !== ADMIN_PASSWORD){ showToast('Senha incorreta','error'); return; }
+
+  try{
+    const updates = { entregue: !!toState };
+    if(toState){ updates.deliveredAt = Date.now(); } else { updates.deliveredAt = null; }
+    await db.ref('pedidos/'+key).update(updates);
+    await logEvent('pedido', toState?'Pedido marcado entregue':'Pedido desmarcado entregue',{pedidoKey:key});
+
+    // 🔧 Correção: permanecer na mesma página (não redirecionar para “Meus Pedidos”)
+    if(lastScreen === 'relatorioAdmin') verRelatorioAdmin($('#filtroAdmin').value || 'todos');
+    else if(lastScreen === 'relatorioUsuario') mostrarPedidosUsuario($('#filtroUsuario').value || 'todos');
+    else go('pedidoScreen');
+
+    showToast('Atualizado','info');
+  }catch(e){ console.error('toggleEntregue', e); showToast('Erro ao atualizar','error'); }
 }
 
-/* ======================= Ciclo de 30 dias e regras de edição ======================= */
-async function getCycleInfo(){ 
-  const snap = await db.ref('config/cycleStart').once('value'); 
-  const start = snap.val() || Date.now(); 
-  const now = Date.now(); 
-  const elapsed = now - start; 
-  const daysElapsed = Math.floor(elapsed / (24*60*60*1000)); 
-  const daysRemaining = 30 - daysElapsed; 
-  const open = daysElapsed < 30; 
-  return { start, now, daysElapsed, daysRemaining, open }; 
-}
+/* ========= ADMIN: USUÁRIOS ========= */
+function abrirCadastroUsuarioAdmin(){ go('adminUsuarios'); renderAdminUsuarios(); }
+function abrirCadastroProduto(){ go('adminProdutos'); }
 
-async function updateCycleInfo(){ 
-  const info = await getCycleInfo(); const el = document.getElementById('cycleInfo'); 
-  if(!info.open) el.textContent = `Período de 30 dias encerrado. Para novo ciclo, contate o administrador.`; 
-  else el.textContent = `Ciclo aberto. Dia ${info.daysElapsed+1} de 30. Edições permitidas até ${info.daysRemaining>5? (info.daysRemaining+' dias antes do fechamento') : 'bloqueadas (últimos 5 dias)'} .`; 
+async function adminAddUser(){
+  if(!currentUser || !currentUser.isAdmin){ showToast('Acesso negado','error'); return; }
+  const nome = $('#adminNovoNome').value.trim();
+  const user = $('#adminNovoUser').value.trim();
+  const pass = $('#adminNovoPass').value.trim();
+  const localidade = $('#adminNovoLocalidade').value.trim();
+  const ministerio = $('#adminNovoMinisterio').value || '';
+  if(!nome || !user || !pass || !localidade){ showToast('Preencha todos os campos','error'); return; }
+  try{
+    const snap = await db.ref('usuarios').orderByChild('user').equalTo(user).once('value');
+    if(snap.exists()){ showToast('Usuário já existe','error'); return; }
+    await db.ref('usuarios').push({ nome, user, pass, localidade, ministerio, createdAt: Date.now() });
+    $('#adminNovoNome').value=''; $('#adminNovoUser').value=''; $('#adminNovoPass').value=''; $('#adminNovoLocalidade').value='';
+    await renderAdminUsuarios(); showToast('Usuário criado','info');
+    await logEvent('perfil','Usuário criado (admin)',{user});
+  }catch(e){ console.error('adminAddUser', e); showToast('Erro ao criar usuário','error'); }
 }
+async function renderAdminUsuarios(){
+  try{
+    const tbody = $('#tabelaUsuariosAdmin tbody'); if(!tbody) return;
+    const snap = await db.ref('usuarios').once('value'); const obj = snap.val()||{}; const usuarios = Object.keys(obj).map(k=>({ key:k, ...obj[k] }));
+    tbody.innerHTML = '';
+    usuarios.forEach(u=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML = `<td>${escapeHtml(u.nome)}</td><td>${escapeHtml(u.user)}</td><td>${escapeHtml(u.localidade)}</td><td>${escapeHtml(u.ministerio||'')}</td><td class="actions"><button class="small" onclick="adminEditUser('${u.key}')">Editar</button><button class="small" onclick="adminDeleteUser('${u.key}')">Excluir</button></td>`;
+      tbody.appendChild(tr);
+    });
 
-/* ======================= Impressão de seções ======================= */
-function printSection(id){ 
-  const el = document.getElementById(id); 
-  if(!el){ window.print(); return; } 
-  const w = window.open('','_blank'); 
-  w.document.write('<html><head><title>Imprimir</title><style>body{font-family:Arial,sans-serif;padding:20px;}table{width:100%;border-collapse:collapse;}th,td{border:1px solid #ddd;padding:6px;text-align:left;}th{background:#0056b3;color:#fff;}</style></head><body>'+el.innerHTML+'</body></html>'); 
-  w.document.close(); w.focus(); w.print(); 
+    const tbody2 = $('#tabelaAdminUsuariosList tbody');
+    if(tbody2){
+      tbody2.innerHTML='';
+      usuarios.forEach(u=>{
+        const tr2=document.createElement('tr');
+        tr2.innerHTML = `<td>${escapeHtml(u.nome)}</td><td>${escapeHtml(u.user)}</td><td>${escapeHtml(u.localidade)}</td><td>${escapeHtml(u.ministerio||'')}</td><td class="actions"><button class="small" onclick="adminEditUser('${u.key}')">Editar</button><button class="small" onclick="adminDeleteUser('${u.key}')">Excluir</button></td>`;
+        tbody2.appendChild(tr2);
+      });
+    }
+  }catch(e){ console.error('renderAdminUsuarios', e); }
 }
+window.adminEditUser = async function(key){
+  try{
+    const snap = await db.ref('usuarios/'+key).once('value'); const u = snap.val(); if(!u) return;
+    const novoNome = await promptModal('Editar Usuário','Nome:', u.nome); if(novoNome === null) return;
+    const novoUser = await promptModal('Editar Usuário','Usuário:', u.user); if(novoUser === null) return;
+    const novaLoc = await promptModal('Editar Usuário','Localidade:', u.localidade||''); if(novaLoc === null) return;
+    const novaMin = await promptModal('Editar Usuário','Ministério:', u.ministerio||''); if(novaMin === null) return;
+    const novaPass = await promptModal('Editar Usuário','Senha (deixe em branco para manter):', '');
+    const updates = { nome: novoNome.trim(), user: novoUser.trim(), localidade: novaLoc.trim(), ministerio: novaMin.trim(), updatedAt: Date.now() };
+    if(novaPass && novaPass.trim()) { updates.pass = novaPass.trim(); await logEvent('perfil','Senha alterada (admin)',{user:novoUser.trim()}); }
+    await db.ref('usuarios/'+key).update(updates); await renderAdminUsuarios(); showToast('Usuário atualizado','info');
+  }catch(e){ console.error('adminEditUser', e); showToast('Erro ao editar usuário','error'); }
+};
+window.adminDeleteUser = async function(key){
+  try{
+    const ok = await confirmModal('Confirmar','Deseja excluir este usuário?'); if(!ok) return;
+    await db.ref('usuarios/'+key).remove(); await renderAdminUsuarios(); showToast('Usuário excluído','info');
+    await logEvent('perfil','Usuário excluído (admin)',{userKey:key});
+  }catch(e){ console.error('adminDeleteUser', e); showToast('Erro ao excluir usuário','error'); }
+};
 
-/* ======================= Ajuda / WhatsApp ======================= */
-function openHelp(){ 
-  const text = 'Deseja contatar o administrador via WhatsApp?'; 
-  if(confirm(text)){ const phone = '5531985330656'; const url = 'https://wa.me/'+phone+'?text='+encodeURIComponent('Olá, preciso de ajuda com o sistema de compras coletivas.'); window.open(url,'_blank'); }
+/* ========= IMPRESSÃO ========= */
+function printHtml(html, title='Impressão'){
+  const w = window.open('','_blank');
+  const totalCss = `
+    body{font-family:Arial,sans-serif;padding:20px;}
+    table{width:100%;border-collapse:collapse;}
+    th,td{border:1px solid #ddd;padding:6px;text-align:left;}
+    th{background:#0056b3;color:#fff;}
+    .check-col{width:120px;text-align:center;}
+    .signature-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px;}
+    .signature-box{border-top:1px solid #000;padding-top:6px;text-align:center;font-size:12px;}
+    @media print {.no-print{display:none}}
+  `;
+  const doc = `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(title)}</title><style>${totalCss}</style></head><body>${html}</body></html>`;
+  w.document.write(doc); w.document.close(); w.focus(); setTimeout(()=> w.print(), 300);
 }
-
-/* ======================= Voltar / Navegação ======================= */
-function hideAllScreens(){
-  const ids = ['loginScreen','registerScreen','pedidoScreen','relatorioUsuario','relatorioAdmin','adminProdutos','adminUsuarios'];
-  ids.forEach(id=>{ const el = document.getElementById(id); if(el) el.classList.add('hidden'); });
-}
-function voltarPedidos(){
-  // Oculta telas relacionadas e mostra a tela principal de pedidos
-  const sections = ['relatorioUsuario','relatorioAdmin','adminProdutos','adminUsuarios'];
-  sections.forEach(id=>{
-    const el = document.getElementById(id);
-    if(el) el.classList.add('hidden');
+function imprimirRelatorioUsuario(){
+  if(!currentUser){ showToast('Faça login','error'); return; }
+  const tpl = $('#tpl-impressao-usuario').content.cloneNode(true);
+  tpl.querySelector('#print-meta-usuario').textContent = `Gerado em ${fmtDateTime(Date.now())}`;
+  tpl.querySelector('#print-solicitante').textContent = `Solicitante: ${currentUser.nome} (${currentUser.user})`;
+  tpl.querySelector('#print-localidade').textContent = `Localidade: ${currentUser.localidade||'-'}`;
+  tpl.querySelector('#print-ministerio').textContent = `Ministério: ${currentUser.ministerio||'-'}`;
+  getCycleInfo().then(info=>{
+    tpl.querySelector('#print-ciclo').textContent = `Ciclo: ${info.cycleId}`;
   });
-  const mainScreen = document.getElementById('pedidoScreen');
-  if(mainScreen) mainScreen.classList.remove('hidden');
-  updateCycleInfo();
-}
 
-/* ======================= Utilitários ======================= */
-function escapeHtml(s){
-  if(s === null || s === undefined) return '';
-  return String(s).replace(/[&<>"']/g, function(m){
-    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[m];
+  const rows = $$('#tabelaPedidosUsuario tbody tr');
+  const tbody = tpl.querySelector('#print-tbody-usuario');
+  if(rows.length===0){ tbody.innerHTML = `<tr><td colspan="4">Sem dados</td></tr>`; }
+  else{
+    rows.forEach(r=>{
+      const cols = r.querySelectorAll('td');
+      if(cols.length>=4){
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(cols[0].innerText)}</td>
+          <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(cols[1].innerText)}</td>
+          <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(cols[2].innerText)}</td>
+          <td class="check-col" style="border:1px solid #ddd;">[  ]</td>`;
+        tbody.appendChild(tr);
+      }
+    });
+  }
+  printHtml(tpl.firstElementChild.outerHTML, 'Meus Pedidos');
+}
+function imprimirRelatorioAdmin(){
+  const table = $('#tabelaPedidosAdmin');
+  if(!table){ showToast('Tabela não encontrada','error'); return; }
+  const tpl = $('#tpl-impressao-geral').content.cloneNode(true);
+  tpl.querySelector('#print-meta-geral').textContent = `Gerado em ${fmtDateTime(Date.now())}`;
+  getCycleInfo().then(info=>{
+    tpl.querySelector('#print-ciclo-geral').textContent = `Ciclo: ${info.cycleId}`;
   });
+
+  const tbody = tpl.querySelector('#print-tbody-geral');
+  const rows = $$('#tabelaPedidosAdmin tbody tr');
+  if(rows.length===0){ tbody.innerHTML = `<tr><td colspan="7">Sem dados</td></tr>`; }
+  else{
+    rows.forEach(r=>{
+      const cols = r.querySelectorAll('td');
+      if(cols.length>=6){
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(cols[0].innerText)}</td>
+          <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(cols[1].innerText)}</td>
+          <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(cols[2].innerText)}</td>
+          <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(cols[3].innerText)}</td>
+          <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(cols[4].innerText)}</td>
+          <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(cols[5].innerText)}</td>
+          <td class="check-col" style="border:1px solid #ddd;">[  ]</td>`;
+        tbody.appendChild(tr);
+      }
+    });
+  }
+  printHtml(tpl.firstElementChild.outerHTML, 'Relatório de Pedidos - Geral');
+}
+async function imprimirRelatorioPorLocalidade(){
+  try{
+    const snap = await db.ref('usuarios').once('value'); const obj = snap.val() || {};
+    const usuarios = Object.keys(obj).map(k=>({ key:k, ...obj[k] }));
+    const localidades = Array.from(new Set(usuarios.map(u=>u.localidade||'').filter(Boolean)));
+    if(localidades.length===0){ showToast('Nenhuma localidade encontrada','error'); return; }
+    let options=''; localidades.forEach(loc=> options += `<option value="${escapeHtml(loc)}">${escapeHtml(loc)}</option>`);
+    const html = `<label>Localidade:</label><select id="__sel_localidade">${options}</select>
+      <div style="text-align:center;margin-top:12px;"><button id="__print_local">Imprimir</button> <button class="btn-muted" id="__cancel_local">Cancelar</button></div>`;
+    abrirModal('Imprimir por Localidade', html);
+    $('#__print_local').onclick = async ()=>{
+      const loc = $('#__sel_localidade').value; fecharModal();
+      const snapP = await db.ref('pedidos').once('value');
+      const pedidosObj = snapP.val() || {};
+      const pedidos = Object.keys(pedidosObj).map(k=>({ key:k, ...pedidosObj[k] }));
+      const filtered = pedidos.filter(p => (p.createdByLocalidade||'') === loc);
+      if(filtered.length===0){ showToast('Nenhum pedido para essa localidade.','error'); return; }
+
+      let bodyRows = '';
+      filtered.forEach(p=>{
+        bodyRows += `<tr>
+          <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(p.createdByName||p.createdBy||'')}</td>
+          <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(p.produtoText)}</td>
+          <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(p.quantidade)}</td>
+          <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(p.obs||'')}</td>
+          <td style="border:1px solid #ddd;padding:6px;">${p.entregue? 'Entregue':'Aberto'}</td>
+          <td class="check-col" style="border:1px solid #ddd;">[  ]</td>
+        </tr>`;
+      });
+
+      const htmlDoc = `
+        <div class="print-header">
+          <div>
+            <h3 style="margin:0;">Pedidos - ${escapeHtml(loc)}</h3>
+            <div class="print-meta">Gerado em ${fmtDateTime(Date.now())}</div>
+          </div>
+        </div>
+        <table style="width:100%; border-collapse:collapse;">
+          <thead>
+            <tr style="background:#0056b3; color:#fff;">
+              <th style="text-align:left;padding:8px;border:1px solid #ddd;">Usuário</th>
+              <th style="text-align:left;padding:8px;border:1px solid #ddd;">Produto</th>
+              <th style="text-align:left;padding:8px;border:1px solid #ddd;">Qtd</th>
+              <th style="text-align:left;padding:8px;border:1px solid #ddd;">Obs</th>
+              <th style="text-align:left;padding:8px;border:1px solid #ddd;">Status</th>
+              <th class="check-col" style="border:1px solid #ddd;">Visto ✓</th>
+            </tr>
+          </thead>
+          <tbody>${bodyRows}</tbody>
+        </table>
+        <div class="signature-grid">
+          <div class="signature-box">Responsável / Assinatura</div>
+          <div class="signature-box">Conferente / Visto</div>
+        </div>`;
+      printHtml(htmlDoc, `Pedidos - ${loc}`);
+    };
+    $('#__cancel_local').onclick = ()=> fecharModal();
+  }catch(e){ console.error('imprimirRelatorioPorLocalidade', e); showToast('Erro ao preparar impressão por localidade','error'); }
+}
+async function imprimirResumoItensGeral(){
+  try{
+    const snapP = await db.ref('pedidos').once('value');
+    const pedidosObj = snapP.val() || {};
+    const pedidos = Object.keys(pedidosObj).map(k=>({ key:k, ...pedidosObj[k] }));
+    const map={};
+    pedidos.forEach(p=>{ const name = p.produtoText || 'Sem produto'; if(!map[name]) map[name]=0; map[name]+= Number(p.quantidade||0); });
+
+    let bodyRows = '';
+    Object.keys(map).forEach(name=>{
+      bodyRows += `<tr>
+        <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(name)}</td>
+        <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(map[name])}</td>
+        <td class="check-col" style="border:1px solid #ddd;">[  ]</td>
+      </tr>`;
+    });
+
+    const htmlDoc = `
+      <div class="print-header">
+        <div>
+          <h3 style="margin:0;">Resumo de Itens - Total Geral</h3>
+          <div class="print-meta">Gerado em ${fmtDateTime(Date.now())}</div>
+        </div>
+      </div>
+      <table style="width:100%; border-collapse:collapse;">
+        <thead>
+          <tr style="background:#0056b3; color:#fff;">
+            <th style="text-align:left;padding:8px;border:1px solid #ddd;">Produto</th>
+            <th style="text-align:left;padding:8px;border:1px solid #ddd;">Quantidade Total</th>
+            <th class="check-col" style="border:1px solid #ddd;">Visto ✓</th>
+          </tr>
+        </thead>
+        <tbody>${bodyRows || '<tr><td colspan="3">Sem dados</td></tr>'}</tbody>
+      </table>
+      <div class="signature-grid">
+        <div class="signature-box">Responsável / Assinatura</div>
+        <div class="signature-box">Conferente / Visto</div>
+      </div>`;
+    printHtml(htmlDoc, 'Resumo de Itens - Total Geral');
+  }catch(e){ console.error('imprimirResumoItensGeral', e); showToast('Erro ao imprimir resumo de itens','error'); }
 }
 
+/* ========= HISTÓRICO (ADMIN) ========= */
+async function abrirHistoricoAdmin(){
+  if(!currentUser?.isAdmin){ alert('Acesso negado.'); return; }
+  go('historicoAdmin');
+  await carregarHistoricoAdmin();
+}
+async function carregarHistoricoAdmin(){
+  const tbody = $('#tabelaHistoricoAdmin tbody');
+  tbody.innerHTML = '<tr><td colspan="5">Carregando…</td></tr>';
+  try{
+    const snap = await db.ref('logs').orderByChild('ts').limitToLast(500).once('value');
+    const obj = snap.val() || {};
+    let rows = Object.keys(obj).map(k=>({ key:k, ...obj[k] })).sort((a,b)=> b.ts - a.ts);
+
+    // filtro tipo
+    const tipoSel = $('#filtroHistoricoTipo').value || 'todos';
+    if(tipoSel !== 'todos') rows = rows.filter(r=> r.tipo === tipoSel);
+
+    // ocultar histórico
+    if($('#toggleOcultarHistorico').checked){ rows = []; }
+
+    tbody.innerHTML = rows.length ? '' : '<tr><td colspan="5">Sem eventos</td></tr>';
+    rows.forEach(r=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${fmtDateTime(r.ts)}</td>
+        <td>${escapeHtml(r.userNome||r.user||'-')}</td>
+        <td>${escapeHtml(r.tipo||'-')}</td>
+        <td>${escapeHtml(r.descricao||'-')}</td>
+        <td><pre style="white-space:pre-wrap;margin:0;">${escapeHtml(JSON.stringify(r.detalhes||{},null,0))}</pre></td>`;
+      tbody.appendChild(tr);
+    });
+
+    // KPIs
+    const now = Date.now();
+    const dayStart = new Date(); dayStart.setHours(0,0,0,0);
+    const last30 = now - 30*24*60*60*1000;
+    $('#kpiEvt30').textContent = rows.filter(r=> r.ts >= last30).length;
+    $('#kpiLoginHoje').textContent = rows.filter(r=> r.tipo==='login' && r.ts>=dayStart.getTime()).length;
+    $('#kpiPedidosHoje').textContent = rows.filter(r=> r.tipo==='pedido' && r.descricao.includes('Pedido criado') && r.ts>=dayStart.getTime()).length;
+    $('#kpiPwd30').textContent = rows.filter(r=> r.tipo==='perfil' && r.descricao.toLowerCase().includes('senha') && r.ts>=last30).length;
+
+  }catch(e){
+    console.error('carregarHistoricoAdmin', e);
+    tbody.innerHTML = '<tr><td colspan="5">Erro ao carregar.</td></tr>';
+  }
+}
+
+/* ========= UI EVENTOS ========= */
+function wireUI(){
+  // Header clock & footer year
+  $('#yearFooter').textContent = new Date().getFullYear();
+  setInterval(()=>{ $('#nowClock').textContent = fmtDateTime(Date.now()); }, 1000);
+
+  // Login/Registro
+  $('#btnLogin').onclick = login;
+  $('#btnShowRegister').onclick = showRegister;
+  $('#btnBackLogin').onclick = backToLogin;
+  $('#btnRegister').onclick = register;
+  $('#btnWhatsapp').onclick = abrirWhatsapp;
+  $('#btnLogout').onclick = logout;
+
+  // Pedido/Home
+  $('#buscaProduto').addEventListener('input', filtrarProdutos);
+  $('#btnSalvarPedido').onclick = salvarPedido;
+  $('#btnMeusPedidos').onclick = ()=> mostrarPedidosUsuario($('#filtroUsuario').value || 'todos');
+
+  // Admin nav
+  $('#adminRelatorioBtn').onclick = ()=> verRelatorioAdmin($('#filtroAdmin').value || 'todos');
+  $('#adminProdutosBtn').onclick = abrirCadastroProduto;
+  $('#adminUsuariosBtn').onclick = abrirCadastroUsuarioAdmin;
+  $('#adminHistoricoBtn').onclick = abrirHistoricoAdmin;
+
+  // Relatório Usuário
+  $('#filtroUsuario').onchange = e=> mostrarPedidosUsuario(e.target.value);
+  $('#toggleOcultarEntreguesUsuario').onchange = ()=> mostrarPedidosUsuario($('#filtroUsuario').value || 'todos');
+  $('#toggleOcultarEntreguesUsuario2').onchange = ()=> mostrarPedidosUsuario($('#filtroUsuario').value || 'todos');
+  $('#btnImprimirRelUsuario').onclick = imprimirRelatorioUsuario;
+  $('#btnVoltarUsuario').onclick = ()=> go('pedidoScreen');
+
+  // Relatório Admin
+  $('#filtroAdmin').onchange = e=> verRelatorioAdmin(e.target.value);
+  $('#toggleOcultarEntreguesAdmin').onchange = ()=> verRelatorioAdmin($('#filtroAdmin').value || 'todos');
+  $('#btnImprimirRelGeral').onclick = imprimirRelatorioAdmin;
+  $('#btnImprimirRelLocalidade').onclick = imprimirRelatorioPorLocalidade;
+  $('#btnImprimirResumoItens').onclick = imprimirResumoItensGeral;
+  $('#btnVoltarAdmin').onclick = ()=> go('pedidoScreen');
+  $('#btnAbrirCadastroUsuarioAdmin').onclick = abrirCadastroUsuarioAdmin;
+  $('#btnAbrirCadastroProduto').onclick = abrirCadastroProduto;
+
+  // Admin Usuários
+  $('#btnAdminAddUser').onclick = adminAddUser;
+  $('#btnVoltarAdminUsr').onclick = ()=> go('pedidoScreen');
+
+  // Admin Produtos
+  $('#btnAddProduto').onclick = addProduto;
+  $('#btnVoltarAdminProd').onclick = ()=> go('pedidoScreen');
+
+  // Histórico Admin
+  $('#btnVoltarHistorico').onclick = ()=> go('pedidoScreen');
+  $('#filtroHistoricoTipo').onchange = carregarHistoricoAdmin;
+  $('#toggleOcultarHistorico').onchange = carregarHistoricoAdmin;
+}
+
+/* ========= Admin: addProduto (exposto) ========= */
+async function addProduto(){
+  if(!currentUser || !currentUser.isAdmin){ showToast('Acesso negado','error'); return; }
+  const nome = $('#novoProdutoNome').value.trim();
+  const unidade = $('#novoProdutoUnidade').value.trim();
+  if(!nome || !unidade){ showToast('Preencha nome e unidade','error'); return; }
+  try{
+    await db.ref('produtos').push({ nome, unidade });
+    $('#novoProdutoNome').value=''; $('#novoProdutoUnidade').value='';
+    await loadProdutos();
+    showToast('Produto adicionado','info');
+    await logEvent('sistema','Produto adicionado',{nome,unidade});
+  }catch(e){ console.error('addProduto', e); showToast('Erro ao adicionar produto','error'); }
+}
+
+/* ========= Inicialização ========= */
+(async function init(){
+  try{
+    // sessão
+    const sess = sessionStorage.getItem('ccb_user');
+    if(sess){ currentUser = JSON.parse(sess); enterApp(); }
+
+    // ensure cycleStart
+    const cfg = await db.ref('config/cycleStart').once('value');
+    if(!cfg.exists() || !cfg.val()) await db.ref('config').set({ cycleStart: Date.now() });
+  }catch(e){ console.error('init cfg/sess', e); }
+
+  wireUI();
+  await seedProdutos();
+  await loadProdutos();
+  await updateCycleInfoUI();
+
+  // refresh ao focar a aba
+  let __focusRefreshTimer = null;
+  window.addEventListener('focus', ()=>{
+    clearTimeout(__focusRefreshTimer);
+    __focusRefreshTimer = setTimeout(async ()=>{
+      try{ await loadProdutos(); await renderAdminUsuarios(); await updateCycleInfoUI(); if(lastScreen==='historicoAdmin') await carregarHistoricoAdmin(); }catch(e){}
+    }, 150);
+  });
+})();// ===================== GARANTIR CARREGAMENTO DE PRODUTOS NO RELATÓRIO ADMIN =====================
+(async function garantirProdutosAdmin(){
+  try {
+    // pequeno atraso pra garantir que Firebase e init já rodaram
+    await new Promise(res => setTimeout(res, 800));
+    if (typeof loadProdutos === 'function') {
+      await loadProdutos(); // busca produtos no Firebase
+      if (typeof renderTabelaProdutosAdmin === 'function') {
+        renderTabelaProdutosAdmin(); // exibe na tabela do relatório admin
+        console.log('✅ Produtos carregados no relatório admin');
+      }
+    }
+  } catch(e) {
+    console.warn('Falha ao carregar produtos no relatório admin:', e);
+  }
+})();
+
+
+// ===================== CONTROLE DE EXIBIÇÃO (Admin) =====================
+document.addEventListener('DOMContentLoaded', ()=>{
+  // Ocultar/Mostrar Usuários
+  const btnUsuarios = document.getElementById('btnToggleUsuarios');
+  const tabelaUsuarios = document.getElementById('tabelaUsuariosAdmin');
+  if(btnUsuarios && tabelaUsuarios){
+    btnUsuarios.addEventListener('click', ()=>{
+      if(tabelaUsuarios.style.display==='none'){
+        tabelaUsuarios.style.display='table';
+        btnUsuarios.textContent = '👤 Ocultar usuários cadastrados';
+      }else{
+        tabelaUsuarios.style.display='none';
+        btnUsuarios.textContent = '👁️ Mostrar usuários cadastrados';
+      }
+    });
+  }
+
+  // Ocultar/Mostrar Produtos
+  const btnProdutos = document.getElementById('btnToggleProdutos');
+  const tabelaProdutos = document.getElementById('tabelaProdutosAdmin');
+  if(btnProdutos && tabelaProdutos){
+    btnProdutos.addEventListener('click', ()=>{
+      if(tabelaProdutos.style.display==='none'){
+        tabelaProdutos.style.display='table';
+        btnProdutos.textContent = '📦 Ocultar produtos cadastrados';
+      }else{
+        tabelaProdutos.style.display='none';
+        btnProdutos.textContent = '👁️ Mostrar produtos cadastrados';
+      }
+    });
+  }
+});
 </script>
 </body>
 </html>
+
