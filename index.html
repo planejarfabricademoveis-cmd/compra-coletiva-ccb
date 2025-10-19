@@ -1736,7 +1736,74 @@ document.addEventListener('DOMContentLoaded', ()=>{
   }
 });
 </script>
+  <!-- ===================== AUTENTICAÇÃO FIREBASE ===================== -->
+<script type="module">
+  // Importar módulos do Firebase
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+  import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
+
+  // Configuração do seu projeto
+  const firebaseConfig = {
+    apiKey: "AIzaSyDwpb9gdYL8qzJfaref3bi0miXiJhiH1Ds",
+    authDomain: "compra-coletiva-ccb-web.firebaseapp.com",
+    databaseURL: "https://compra-coletiva-ccb-web-default-rtdb.firebaseio.com",
+    projectId: "compra-coletiva-ccb-web",
+    storageBucket: "compra-coletiva-ccb-web.firebasestorage.app",
+    messagingSenderId: "20688611131",
+    appId: "1:20688611131:web:c0fbaa91045c538e23f91e"
+  };
+
+  // Inicializar Firebase
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getDatabase(app);
+
+  // Função de login
+  async function login(email, senha) {
+    try {
+      const userCred = await signInWithEmailAndPassword(auth, email, senha);
+      const uid = userCred.user.uid;
+
+      // Verifica se o UID está na lista de administradores
+      const dbRef = ref(db);
+      const adminSnap = await get(child(dbRef, `admins/${uid}`));
+      if (adminSnap.exists() && adminSnap.val() === true) {
+        alert("✅ Login de administrador bem-sucedido!");
+        sessionStorage.setItem("adminUID", uid);
+      } else {
+        alert("✅ Login comum bem-sucedido!");
+        sessionStorage.removeItem("adminUID");
+      }
+    } catch (error) {
+      alert("❌ Erro ao fazer login: " + error.message);
+    }
+  }
+
+  // Função de logout
+  async function logout() {
+    await signOut(auth);
+    alert("Você saiu do sistema!");
+    sessionStorage.clear();
+  }
+
+  // Verifica status do usuário logado
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      console.log("Usuário autenticado:", user.email);
+    } else {
+      console.log("Nenhum usuário logado");
+    }
+  });
+
+  // Exemplo: você pode chamar login() assim:
+  // login('fernando_filho87@hotmail.com', 'SUA_SENHA_AQUI');
+  // ou adaptar ao botão de login da sua página.
+
+</script>
+
 </body>
 </html>
+
 
 
