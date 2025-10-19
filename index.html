@@ -898,7 +898,11 @@ async function register(){
   try{
     const snap = await db.ref('usuarios').orderByChild('user').equalTo(user).once('value');
     if(snap.exists()){ msgEl.style.color='red'; msgEl.textContent='Nome de usuário já existe.'; return; }
-    await db.ref('usuarios').push({ nome, localidade, user, pass, ministerio, createdAt: Date.now() });
+    const uid = Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
+await db.ref('usuarios').push({
+  nome, localidade, user, pass, ministerio, uid, createdAt: Date.now()
+});
+
     msgEl.style.color='green'; msgEl.textContent='Usuário registrado com sucesso.';
     $('#regNome').value=''; $('#regLocalidade').value=''; $('#regUser').value=''; $('#regPass').value='';
     await logEvent('perfil','Novo usuário registrado',{user});
@@ -934,9 +938,15 @@ async function login(){
     if(!found){ errEl.textContent='Usuário ou senha incorretos.'; return; }
 
     currentUser = {
-      user: found.user, nome: found.nome, localidade: found.localidade,
-      isAdmin: false, key: foundKey, ministerio: found.ministerio||''
-    };
+  user: found.user,
+  nome: found.nome,
+  localidade: found.localidade,
+  isAdmin: false,
+  key: foundKey,
+  uid: found.uid || foundKey, // garante compatibilidade com cadastros antigos
+  ministerio: found.ministerio || ''
+};
+
     enterApp();
     showToast(`🕊️ A paz de Deus, irmão ${found.nome}!`, 'info', 4000);
     await logEvent('login','Usuário logou',{user:found.user});
@@ -1042,6 +1052,7 @@ async function salvarPedido(){
         quantidade: parseInt(quantidade),
         obs,
         createdBy: currentUser.user,
+        createdByUid: currentUser.uid,
         createdByName: currentUser.nome,
         createdByLocalidade: currentUser.localidade,
         createdAt: Date.now(),
@@ -1069,9 +1080,10 @@ async function mostrarPedidosUsuario(status='todos'){
 
   try{
     const [snap, cycle] = await Promise.all([
-      db.ref('pedidos').orderByChild('createdBy').equalTo(currentUser.user).once('value'),
-      getCycleInfo()
-    ]);
+  db.ref('pedidos').orderByChild('createdByUid').equalTo(currentUser.uid).once('value'),
+  getCycleInfo()
+]);
+
     const data = snap.val() || {};
     let rows = Object.keys(data).map(k=>({ key:k, ...data[k] }));
 
@@ -1736,145 +1748,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
   }
 });
 </script>
-  <!-- ===================== AUTENTICAÇÃO FIREBASE (ADMIN + USUÁRIOS) ===================== -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-  import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-  import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
-
-  // === CONFIGURAÇÃO FIREBASE ===
-  const firebaseConfig = {
-    apiKey: "AIzaSyDwpb9gdYL8qzJfaref3bi0miXiJhiH1Ds",
-    authDomain: "compra-coletiva-ccb-web.firebaseapp.com",
-    databaseURL: "https://compra-coletiva-ccb-web-default-rtdb.firebaseio.com",
-    projectId: "compra-coletiva-ccb-web",
-    storageBucket: "compra-coletiva-ccb-web.firebasestorage.app",
-    messagingSenderId: "20688611131",
-    appId: "1:20688611131:web:c0fbaa91045c538e23f91e"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const dbv10 = getDatabase(app);
-
-  // === REDEFINIÇÃO DE SENHA ===
-  const forgotBtn = document.createElement("button");
-  forgotBtn.textContent = "Esqueci minha senha";
-  forgotBtn.className = "btn-muted";
-  forgotBtn.style.marginTop = "8px";
-  document.querySelector("#loginScreen .menu").after(forgotBtn);
-
-  forgotBtn.addEventListener("click", async () => {
-    const email = document.getElementById("loginUser").value.trim();
-    if (!email.includes("@")) {
-      alert("Recuperação de senha disponível apenas para administradores.");
-      return;
-    }
-    try {
-      await sendPasswordResetEmail(auth, email);
-      alert("📧 Um link de redefinição de senha foi enviado para o seu e-mail.");
-    } catch (e) {
-      alert("Erro ao enviar o e-mail: " + e.message);
-    }
-  });
-
-  // === AJUSTE DO BOTÃO ENTRAR ===
-  const btnLogin = document.getElementById("btnLogin");
-  const errEl = document.getElementById("loginError");
-
-  btnLogin.addEventListener("click", async (ev) => {
-    ev.preventDefault();
-    const loginVal = document.getElementById("loginUser").value.trim();
-    const senhaVal = document.getElementById("loginPass").value.trim();
-
-    if (!loginVal || !senhaVal) {
-      errEl.textContent = "Preencha usuário e senha.";
-      return;
-    }
-
-    // Se tiver @ => tenta login como ADMIN (Firebase Auth)
-    if (loginVal.includes("@")) {
-      try {
-        const cred = await signInWithEmailAndPassword(auth, loginVal, senhaVal);
-        const user = cred.user;
-        alert("✅ Login de administrador bem-sucedido!");
-        sessionStorage.setItem("ccb_user", JSON.stringify({
-          user: user.email,
-          nome: "Administrador",
-          localidade: "Administração",
-          isAdmin: true
-        }));
-        location.reload();
-      } catch (e) {
-        console.error(e);
-        errEl.textContent = "Erro ao autenticar administrador.";
-      }
-    } else {
-      // Caso contrário, segue o login simples (v8 já cuida disso)
-      try {
-        window.login(); // chama a função login() já existente no seu JS
-      } catch (e) {
-        console.error(e);
-        errEl.textContent = "Erro ao autenticar usuário comum.";
-      }
-    }
-  });
-
-  // === GERAÇÃO DE CÓDIGO ÚNICO DE USUÁRIO NO CADASTRO ===
-  const originalRegister = window.register;
-  window.register = async function() {
-    const nome = document.getElementById("regNome").value.trim();
-    const localidade = document.getElementById("regLocalidade").value.trim();
-    const user = document.getElementById("regUser").value.trim();
-    const pass = document.getElementById("regPass").value.trim();
-    const ministerio = document.getElementById("regMinisterio").value || "";
-    const msgEl = document.getElementById("registerMsg");
-
-    if (!nome || !localidade || !user || !pass) {
-      msgEl.style.color = "red";
-      msgEl.textContent = "Preencha todos os campos.";
-      return;
-    }
-
-    // Gera código único
-    const uniqueCode = "ccb_" + Date.now().toString(36) + "_" + Math.random().toString(36).substr(2, 5);
-
-    // Salva com o código no Realtime Database
-    try {
-      const snap = await firebase.database().ref("usuarios").orderByChild("user").equalTo(user).once("value");
-      if (snap.exists()) {
-        msgEl.style.color = "red";
-        msgEl.textContent = "Nome de usuário já existe.";
-        return;
-      }
-
-      await firebase.database().ref("usuarios").push({
-        nome,
-        localidade,
-        user,
-        pass,
-        ministerio,
-        userCode: uniqueCode,
-        createdAt: Date.now()
-      });
-
-      msgEl.style.color = "green";
-      msgEl.textContent = `Usuário registrado com sucesso. Código: ${uniqueCode}`;
-      document.getElementById("regNome").value = "";
-      document.getElementById("regLocalidade").value = "";
-      document.getElementById("regUser").value = "";
-      document.getElementById("regPass").value = "";
-
-      if (typeof logEvent === "function")
-        await logEvent("perfil", "Novo usuário registrado", { user, userCode: uniqueCode });
-
-      setTimeout(() => window.backToLogin(), 1200);
-    } catch (e) {
-      console.error(e);
-      msgEl.style.color = "red";
-      msgEl.textContent = "Erro ao registrar usuário.";
-    }
-  };
-</script>
 </body>
 </html>
+
