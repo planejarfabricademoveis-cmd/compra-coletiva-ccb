@@ -1736,14 +1736,13 @@ document.addEventListener('DOMContentLoaded', ()=>{
   }
 });
 </script>
-  <!-- ===================== AUTENTICAÇÃO FIREBASE ===================== -->
+  <!-- ===================== AUTENTICAÇÃO FIREBASE (ADMIN + USUÁRIOS) ===================== -->
 <script type="module">
-  // Importar módulos do Firebase
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-  import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+  import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
   import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
 
-  // Configuração do seu projeto
+  // === CONFIGURAÇÃO FIREBASE ===
   const firebaseConfig = {
     apiKey: "AIzaSyDwpb9gdYL8qzJfaref3bi0miXiJhiH1Ds",
     authDomain: "compra-coletiva-ccb-web.firebaseapp.com",
@@ -1754,56 +1753,128 @@ document.addEventListener('DOMContentLoaded', ()=>{
     appId: "1:20688611131:web:c0fbaa91045c538e23f91e"
   };
 
-  // Inicializar Firebase
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
-  const db = getDatabase(app);
+  const dbv10 = getDatabase(app);
 
-  // Função de login
-  async function login(email, senha) {
-    try {
-      const userCred = await signInWithEmailAndPassword(auth, email, senha);
-      const uid = userCred.user.uid;
+  // === REDEFINIÇÃO DE SENHA ===
+  const forgotBtn = document.createElement("button");
+  forgotBtn.textContent = "Esqueci minha senha";
+  forgotBtn.className = "btn-muted";
+  forgotBtn.style.marginTop = "8px";
+  document.querySelector("#loginScreen .menu").after(forgotBtn);
 
-      // Verifica se o UID está na lista de administradores
-      const dbRef = ref(db);
-      const adminSnap = await get(child(dbRef, `admins/${uid}`));
-      if (adminSnap.exists() && adminSnap.val() === true) {
-        alert("✅ Login de administrador bem-sucedido!");
-        sessionStorage.setItem("adminUID", uid);
-      } else {
-        alert("✅ Login comum bem-sucedido!");
-        sessionStorage.removeItem("adminUID");
-      }
-    } catch (error) {
-      alert("❌ Erro ao fazer login: " + error.message);
+  forgotBtn.addEventListener("click", async () => {
+    const email = document.getElementById("loginUser").value.trim();
+    if (!email.includes("@")) {
+      alert("Recuperação de senha disponível apenas para administradores.");
+      return;
     }
-  }
-
-  // Função de logout
-  async function logout() {
-    await signOut(auth);
-    alert("Você saiu do sistema!");
-    sessionStorage.clear();
-  }
-
-  // Verifica status do usuário logado
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      console.log("Usuário autenticado:", user.email);
-    } else {
-      console.log("Nenhum usuário logado");
+    try {
+      await sendPasswordResetEmail(auth, email);
+      alert("📧 Um link de redefinição de senha foi enviado para o seu e-mail.");
+    } catch (e) {
+      alert("Erro ao enviar o e-mail: " + e.message);
     }
   });
 
-  // Exemplo: você pode chamar login() assim:
-  // login('fernando_filho87@hotmail.com', 'SUA_SENHA_AQUI');
-  // ou adaptar ao botão de login da sua página.
+  // === AJUSTE DO BOTÃO ENTRAR ===
+  const btnLogin = document.getElementById("btnLogin");
+  const errEl = document.getElementById("loginError");
 
+  btnLogin.addEventListener("click", async (ev) => {
+    ev.preventDefault();
+    const loginVal = document.getElementById("loginUser").value.trim();
+    const senhaVal = document.getElementById("loginPass").value.trim();
+
+    if (!loginVal || !senhaVal) {
+      errEl.textContent = "Preencha usuário e senha.";
+      return;
+    }
+
+    // Se tiver @ => tenta login como ADMIN (Firebase Auth)
+    if (loginVal.includes("@")) {
+      try {
+        const cred = await signInWithEmailAndPassword(auth, loginVal, senhaVal);
+        const user = cred.user;
+        alert("✅ Login de administrador bem-sucedido!");
+        sessionStorage.setItem("ccb_user", JSON.stringify({
+          user: user.email,
+          nome: "Administrador",
+          localidade: "Administração",
+          isAdmin: true
+        }));
+        location.reload();
+      } catch (e) {
+        console.error(e);
+        errEl.textContent = "Erro ao autenticar administrador.";
+      }
+    } else {
+      // Caso contrário, segue o login simples (v8 já cuida disso)
+      try {
+        window.login(); // chama a função login() já existente no seu JS
+      } catch (e) {
+        console.error(e);
+        errEl.textContent = "Erro ao autenticar usuário comum.";
+      }
+    }
+  });
+
+  // === GERAÇÃO DE CÓDIGO ÚNICO DE USUÁRIO NO CADASTRO ===
+  const originalRegister = window.register;
+  window.register = async function() {
+    const nome = document.getElementById("regNome").value.trim();
+    const localidade = document.getElementById("regLocalidade").value.trim();
+    const user = document.getElementById("regUser").value.trim();
+    const pass = document.getElementById("regPass").value.trim();
+    const ministerio = document.getElementById("regMinisterio").value || "";
+    const msgEl = document.getElementById("registerMsg");
+
+    if (!nome || !localidade || !user || !pass) {
+      msgEl.style.color = "red";
+      msgEl.textContent = "Preencha todos os campos.";
+      return;
+    }
+
+    // Gera código único
+    const uniqueCode = "ccb_" + Date.now().toString(36) + "_" + Math.random().toString(36).substr(2, 5);
+
+    // Salva com o código no Realtime Database
+    try {
+      const snap = await firebase.database().ref("usuarios").orderByChild("user").equalTo(user).once("value");
+      if (snap.exists()) {
+        msgEl.style.color = "red";
+        msgEl.textContent = "Nome de usuário já existe.";
+        return;
+      }
+
+      await firebase.database().ref("usuarios").push({
+        nome,
+        localidade,
+        user,
+        pass,
+        ministerio,
+        userCode: uniqueCode,
+        createdAt: Date.now()
+      });
+
+      msgEl.style.color = "green";
+      msgEl.textContent = `Usuário registrado com sucesso. Código: ${uniqueCode}`;
+      document.getElementById("regNome").value = "";
+      document.getElementById("regLocalidade").value = "";
+      document.getElementById("regUser").value = "";
+      document.getElementById("regPass").value = "";
+
+      if (typeof logEvent === "function")
+        await logEvent("perfil", "Novo usuário registrado", { user, userCode: uniqueCode });
+
+      setTimeout(() => window.backToLogin(), 1200);
+    } catch (e) {
+      console.error(e);
+      msgEl.style.color = "red";
+      msgEl.textContent = "Erro ao registrar usuário.";
+    }
+  };
 </script>
-
 </body>
 </html>
-
-
-
