@@ -5,9 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>CCB - Compra Coletiva</title>
 
-  <!-- =======================
-       ESTILOS GERAIS (CSS)
-  ======================== -->
   <style>
     :root{
       --pri:#0056b3;
@@ -70,7 +67,6 @@
     .right{ text-align:right; }
     .muted{ color:var(--muted); }
 
-    /* Tabelas */
     .table-wrap{ width:100%; overflow:auto; border:1px solid #e5e7eb; border-radius:8px; }
     table{ width:100%; border-collapse:collapse; min-width:720px; }
     th,td{ border-bottom:1px solid #eee; padding:10px; text-align:left; }
@@ -81,17 +77,15 @@
     .status-entregue{ color:#28a745; font-weight:700; }
     .actions button{ margin-right:6px; margin-bottom:6px; }
 
-    /* Busca de produtos (dropdown) */
+    /* Dropdown busca produto */
     #listaProdutos{
       max-height:180px; overflow:auto; border:1px solid #e5e7eb; border-radius:8px;
       display:none; background:#fff; margin-top:4px;
     }
-    #listaProdutos > div{
-      padding:10px; cursor:pointer; border-bottom:1px solid #f3f4f6;
-    }
+    #listaProdutos > div{ padding:10px; cursor:pointer; border-bottom:1px solid #f3f4f6; }
     #listaProdutos > div:hover{ background:#f9fafb; }
 
-    /* Modal (corrigido) */
+    /* Modal */
     #modalOverlay{
       position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:1000;
       background:rgba(0,0,0,.55);
@@ -104,7 +98,6 @@
     @keyframes pop{ from{ transform:scale(.98); opacity:.4; } to{ transform:scale(1); opacity:1; } }
     #modalBox h3{ color:var(--pri); text-align:center; margin:0 0 10px 0; }
 
-    /* Chips / Filtros */
     .chipbar{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:6px 0 10px; }
     .chip{
       display:inline-flex; align-items:center; gap:8px; border:1px solid #e5e7eb; padding:6px 10px; border-radius:999px; background:#fff;
@@ -112,46 +105,58 @@
     }
     .chip input[type=checkbox]{ width:auto; margin:0; }
 
-    /* Área de impressão (templates) */
-    .print-header{
-      display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:10px;
-    }
+    .print-header{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:10px; }
     .print-meta{ font-size:12px; color:#444; }
-    .signature-grid{
-      display:grid; grid-template-columns: 1fr 1fr; gap:14px; margin-top:16px;
-    }
-    .signature-box{
-      border-top:1px solid #000; padding-top:6px; text-align:center; font-size:12px;
-    }
+    .signature-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:14px; margin-top:16px; }
+    .signature-box{ border-top:1px solid #000; padding-top:6px; text-align:center; font-size:12px; }
     .check-col{ width:120px; text-align:center; }
 
-    /* Seção de histórico admin */
     .history-note{ background:#fff7ed; border:1px dashed #f59e0b; padding:10px; border-radius:8px; color:#7c2d12; }
-    .kpi{
-      display:grid; grid-template-columns: repeat(4, minmax(160px,1fr)); gap:10px; margin:10px 0 6px;
-    }
-    .kpi .item{
-      background:#f8fafc; border:1px solid #e5e7eb; padding:12px; border-radius:10px;
-    }
+    .kpi{ display:grid; grid-template-columns: repeat(4, minmax(160px,1fr)); gap:10px; margin:10px 0 6px; }
+    .kpi .item{ background:#f8fafc; border:1px solid #e5e7eb; padding:12px; border-radius:10px; }
     .kpi .val{ font-weight:800; font-size:18px; }
 
-    /* Rodapé */
     footer{ text-align:center; color:#6b7280; font-size:12px; padding:14px 0 24px; }
 
-    /* Responsivo */
+    /* Toast */
+    #toast{
+      position:fixed; bottom:18px; left:50%; transform:translateX(-50%);
+      background:#111; color:#fff; padding:10px 14px; border-radius:999px; box-shadow:var(--shadow);
+      font-size:14px; z-index:2000; opacity:0; pointer-events:none; transition:opacity .2s ease, transform .2s ease;
+    }
+    #toast.show{ opacity:1; transform:translateX(-50%) translateY(-4px); }
+
+    /* Overlay (mensagens 10s) */
+    #transitionOverlay{
+      position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:3000;
+      background: radial-gradient(1200px 600px at 50% -20%, rgba(255,255,255,.25), rgba(255,255,255,0) 40%) ,
+                  linear-gradient(135deg, #0a4cc7 0%, #004aa0 40%, #052e6c 100%);
+      color:#fff; text-align:center; padding:24px;
+    }
+    #transitionOverlay.active{ display:flex; animation:fadein .4s ease-out; }
+    #transitionBox{
+      max-width:880px;
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.18);
+      border-radius:16px; padding:24px 22px; box-shadow:0 16px 40px rgba(0,0,0,.35);
+      backdrop-filter: blur(3px);
+    }
+    #transitionTitle{ font-size:28px; font-weight:800; margin:0 0 8px; letter-spacing:.2px; }
+    #transitionMsg{ font-size:16px; opacity:.95; line-height:1.5; white-space:pre-line; }
+    @keyframes fadein{ from{ opacity:.3; transform:scale(.995);} to{ opacity:1; transform:scale(1);} }
+
     @media (max-width:640px){
       header .title{ width:100%; }
       .menu{ flex-direction:column; }
       table{ min-width:640px; }
       .signature-grid{ grid-template-columns:1fr; }
+      #transitionTitle{ font-size:22px; }
+      #transitionMsg{ font-size:14px; }
     }
   </style>
 </head>
 <body>
 
-  <!-- =======================
-       CABEÇALHO
-  ======================== -->
   <header>
     <div class="title">CCB - Compra Coletiva</div>
     <div class="tag" id="cycleTag">Carregando ciclo…</div>
@@ -159,10 +164,7 @@
   </header>
 
   <main>
-
-    <!-- =======================
-         TELA: LOGIN
-    ======================== -->
+    <!-- LOGIN -->
     <section id="loginScreen" class="card">
       <h2>Login</h2>
       <input type="text" id="loginUser" placeholder="Usuário" autocomplete="username"/>
@@ -178,9 +180,7 @@
       <p id="loginError" class="center" style="color:var(--err); min-height:18px;"></p>
     </section>
 
-    <!-- =======================
-         TELA: REGISTRO
-    ======================== -->
+    <!-- REGISTRO -->
     <section id="registerScreen" class="card hidden">
       <h2>Criar Conta</h2>
       <input type="text" id="regNome" placeholder="Nome completo"/>
@@ -204,18 +204,16 @@
       <p id="registerMsg" class="center" style="color:var(--ok); min-height:18px;"></p>
     </section>
 
-    <!-- =======================
-         TELA: PEDIDO (HOME)
-    ======================== -->
+    <!-- PEDIDO -->
     <section id="pedidoScreen" class="card hidden">
       <h2>Fazer Pedido</h2>
 
       <div class="chipbar" style="display:none;">
-  <span class="chip">
-    <input type="checkbox" id="toggleOcultarEntreguesUsuario"/>
-    <label for="toggleOcultarEntreguesUsuario">Ocultar pedidos entregues (meus)</label>
-  </span>
-</div>
+        <span class="chip">
+          <input type="checkbox" id="toggleOcultarEntreguesUsuario"/>
+          <label for="toggleOcultarEntreguesUsuario">Ocultar pedidos entregues (meus)</label>
+        </span>
+      </div>
 
       <input type="text" id="buscaProduto" placeholder="Buscar produto..." autocomplete="off"/>
       <div id="listaProdutos"></div>
@@ -245,9 +243,7 @@
       <p id="cycleInfo" class="center muted" style="margin-top:6px;"></p>
     </section>
 
-    <!-- =======================
-         TELA: RELATÓRIO DO USUÁRIO
-    ======================== -->
+    <!-- RELATÓRIO USUÁRIO -->
     <section id="relatorioUsuario" class="card hidden">
       <div class="print-header">
         <h2>Meus Pedidos</h2>
@@ -283,9 +279,7 @@
       </div>
     </section>
 
-    <!-- =======================
-         TELA: RELATÓRIO ADMIN
-    ======================== -->
+    <!-- RELATÓRIO ADMIN -->
     <section id="relatorioAdmin" class="card hidden">
       <div class="print-header">
         <h2>Relatórios (Administrador)</h2>
@@ -323,9 +317,9 @@
       </div>
 
       <h3 style="margin-top:16px;">Usuários Cadastrados</h3>
-<div style="text-align:right; margin-bottom:10px;">
-  <button id="btnToggleUsuarios" class="btn btn-secondary">👤 Ocultar usuários cadastrados</button>
-</div>
+      <div style="text-align:right; margin-bottom:10px;">
+        <button id="btnToggleUsuarios" class="btn btn-secondary">👤 Ocultar usuários cadastrados</button>
+      </div>
 
       <div class="table-wrap">
         <table id="tabelaUsuariosAdmin">
@@ -339,9 +333,9 @@
       </div>
 
       <h3 style="margin-top:16px;">Produtos</h3>
-<div style="text-align:right; margin-bottom:10px;">
-  <button id="btnToggleProdutos" class="btn btn-secondary">📦 Ocultar produtos cadastrados</button>
-</div>
+      <div style="text-align:right; margin-bottom:10px;">
+        <button id="btnToggleProdutos" class="btn btn-secondary">📦 Ocultar produtos cadastrados</button>
+      </div>
 
       <div class="table-wrap">
         <table id="tabelaProdutosAdmin">
@@ -361,9 +355,7 @@
       </div>
     </section>
 
-    <!-- =======================
-         TELA: ADMIN / USUÁRIOS
-    ======================== -->
+    <!-- ADMIN / USUÁRIOS -->
     <section id="adminUsuarios" class="card hidden">
       <h2>Adicionar Usuário (Admin)</h2>
       <div class="menu">
@@ -399,9 +391,7 @@
       </div>
     </section>
 
-    <!-- =======================
-         TELA: ADMIN / PRODUTOS
-    ======================== -->
+    <!-- ADMIN / PRODUTOS -->
     <section id="adminProdutos" class="card hidden">
       <h2>Produtos (Admin)</h2>
       <div class="menu">
@@ -422,9 +412,7 @@
       </div>
     </section>
 
-    <!-- =======================
-         TELA: HISTÓRICO (ADMIN)
-    ======================== -->
+    <!-- HISTÓRICO ADMIN -->
     <section id="historicoAdmin" class="card hidden">
       <h2>Histórico do Sistema (Admin)</h2>
       <p class="history-note">
@@ -471,9 +459,7 @@
       </div>
     </section>
 
-    <!-- =======================
-         MODAL (GENÉRICO)
-    ======================== -->
+    <!-- MODAL GENÉRICO -->
     <div id="modalOverlay" class="hidden">
       <div id="modalBox">
         <h3 id="modalTitulo"></h3>
@@ -484,74 +470,13 @@
       </div>
     </div>
 
-    <!-- =======================
-         TEMPLATES DE IMPRESSÃO
-    ======================== -->
-    <template id="tpl-impressao-usuario">
-      <div>
-        <div class="print-header">
-          <div>
-            <h3 style="margin:0;">Meus Pedidos</h3>
-            <div class="print-meta" id="print-meta-usuario">Gerado em --/--/---- --:--</div>
-            <div class="print-meta" id="print-solicitante">Solicitante: --</div>
-            <div class="print-meta" id="print-localidade">Localidade: --</div>
-            <div class="print-meta" id="print-ministerio">Ministério: --</div>
-          </div>
-          <div class="print-meta">
-            <div id="print-ciclo">Ciclo: --</div>
-          </div>
-        </div>
-
-        <table style="width:100%; border-collapse:collapse;">
-          <thead>
-            <tr style="background:var(--pri); color:#fff;">
-              <th style="text-align:left;padding:8px;border:1px solid #ddd;">Produto</th>
-              <th style="text-align:left;padding:8px;border:1px solid #ddd;">Qtd</th>
-              <th style="text-align:left;padding:8px;border:1px solid #ddd;">Obs</th>
-              <th class="check-col" style="border:1px solid #ddd;">Visto ✓</th>
-            </tr>
-          </thead>
-          <tbody id="print-tbody-usuario"></tbody>
-        </table>
-
-        <div class="signature-grid">
-          <div class="signature-box">Assinatura do Solicitante</div>
-          <div class="signature-box">Conferente / Visto</div>
-        </div>
+    <!-- OVERLAY DE TRANSIÇÃO (10s) -->
+    <div id="transitionOverlay">
+      <div id="transitionBox">
+        <div id="transitionTitle">Carregando…</div>
+        <div id="transitionMsg">Aguarde um instante…</div>
       </div>
-    </template>
-
-    <template id="tpl-impressao-geral">
-      <div>
-        <div class="print-header">
-          <div>
-            <h3 style="margin:0;">Relatório Geral de Pedidos</h3>
-            <div class="print-meta" id="print-meta-geral">Gerado em --/--/---- --:--</div>
-          </div>
-          <div class="print-meta">
-            <div id="print-ciclo-geral">Ciclo: --</div>
-          </div>
-        </div>
-        <table style="width:100%; border-collapse:collapse;">
-          <thead>
-            <tr style="background:var(--pri); color:#fff;">
-              <th style="text-align:left;padding:8px;border:1px solid #ddd;">Usuário</th>
-              <th style="text-align:left;padding:8px;border:1px solid #ddd;">Localidade</th>
-              <th style="text-align:left;padding:8px;border:1px solid #ddd;">Produto</th>
-              <th style="text-align:left;padding:8px;border:1px solid #ddd;">Qtd</th>
-              <th style="text-align:left;padding:8px;border:1px solid #ddd;">Obs</th>
-              <th style="text-align:left;padding:8px;border:1px solid #ddd;">Status</th>
-              <th class="check-col" style="border:1px solid #ddd;">Visto ✓</th>
-            </tr>
-          </thead>
-          <tbody id="print-tbody-geral"></tbody>
-        </table>
-        <div class="signature-grid">
-          <div class="signature-box">Responsável / Assinatura</div>
-          <div class="signature-box">Conferente / Visto</div>
-        </div>
-      </div>
-    </template>
+    </div>
 
   </main>
 
@@ -559,26 +484,19 @@
     <div>© <span id="yearFooter"></span> CCB - Compra Coletiva. Todos os direitos reservados.</div>
   </footer>
 
-  <!-- =======================
-       SCRIPTS DE TERCEIROS
-       (Firebase V8 - mantido)
-  ======================== -->
+  <!-- Firebase v8 -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-  <!-- =======================
-       PARTE 2 (JS) ENTRA AQUI
-       – será colado no próximo passo
-  ======================== -->
+  <div id="toast"></div>
+
   <script>
 /* ===============================
-   PARTE 2 – Lógica do Aplicativo
-   – Firebase v8 mantido
-   – Logs no Firebase
-   – Correções & Melhorias
+   APP – Firebase v8 + Realtime DB
+   Mensagens de transição (10s) personalizadas
+   Correções de login, toasts e handlers
 ================================ */
 
-/* ========= CONFIG / VARS ========= */
 const firebaseConfig = {
   apiKey: "AIzaSyDwpb9gdYL8qzJfaref3bi0miXiJhiH1Ds",
   authDomain: "compra-coletiva-ccb-web.firebaseapp.com",
@@ -589,8 +507,8 @@ const firebaseConfig = {
   appId: "1:20688611131:web:c0fbaa91045c538e23f91e"
 };
 try{ if(!firebase.apps.length) firebase.initializeApp(firebaseConfig); }catch(e){}
-
 const db = firebase.database();
+
 const ADMIN_LOGIN = "fernando_filho87";
 const ADMIN_PASSWORD = "1502";
 const WHATSAPP_PHONE = "5531985330656";
@@ -598,9 +516,7 @@ const WHATSAPP_PHONE = "5531985330656";
 let currentUser = null;
 let produtosCache = [];
 let selectedProductKey = null;
-let lastScreen = "loginScreen"; // para manter a navegação pós-ações
-let ocultarEntreguesUsuario = false;
-let ocultarEntreguesAdmin = false;
+let lastScreen = "loginScreen";
 
 /* ========= HELPERS ========= */
 const $ = sel => document.querySelector(sel);
@@ -623,84 +539,34 @@ function monthIdFrom(ts){
   const d = new Date(ts);
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
 }
-function showToast(msg, type='info', duration=4000){
-  const id='ccb_toast';
-  let root=document.getElementById(id);
-  if(!root){
-    root=document.createElement('div'); 
-    root.id=id;
-    root.style.position='fixed';
-    root.style.left='0';
-    root.style.top='0';
-    root.style.width='100%';
-    root.style.height='100%';
-    root.style.display='flex';
-    root.style.alignItems='flex-end';
-    root.style.justifyContent='center';
-    root.style.paddingBottom='120px';
-    root.style.zIndex='10000';
-    root.style.pointerEvents='none';
-    document.body.appendChild(root);
-  }
 
-  const box=document.createElement('div');
-  box.style.background= type==='error' ? '#b30000cc' : (type==='warn'?'#f0ad4ecc':'#0056b3cc');
-  box.style.color='#fff';
-  box.style.padding='25px 35px';
-  box.style.borderRadius='16px';
-  box.style.fontSize='30px';
-  box.style.fontWeight='bold';
-  box.style.textAlign='center';
-  box.style.maxWidth='90%';
-  box.style.boxShadow='0 4px 12px rgba(0,0,0,0.3)';
-  box.style.animation='toastFadeIn 0.3s ease-out';
-  box.style.transition='opacity 0.3s ease';
-  box.innerText=msg;
-
-  root.innerHTML='';
-  root.appendChild(box);
-
-  /* 🔔 sons diferentes (login e logout) */
-  let soundUrl = "https://cdn.pixabay.com/download/audio/2021/09/13/audio_39dcdf0d25.mp3?filename=soft-notification-25572.mp3";
-  if (msg.toLowerCase().includes("santa paz") || msg.toLowerCase().includes("saúda")) {
-    soundUrl = "https://cdn.pixabay.com/download/audio/2022/03/15/audio_9c6cda2f3c.mp3?filename=angelic-tone-19436.mp3";
-  }
-
-  // cria o objeto de áudio
-  const audio = new Audio(soundUrl);
-  audio.volume = 0.6;
-
-  // garante que o som será liberado após o primeiro clique
-  if (!window.__ccbSoundEnabled) {
-    const enableAudio = () => {
-      const test = new Audio();
-      test.play().catch(()=>{});
-      window.__ccbSoundEnabled = true;
-      document.removeEventListener('click', enableAudio);
-    };
-    document.addEventListener('click', enableAudio);
-  }
-
-  // tenta tocar o som agora (se já estiver liberado)
-  audio.play().catch(()=>{});
-
-  setTimeout(()=>{
-    box.style.opacity='0';
-    setTimeout(()=>root.innerHTML='', 400);
-  }, duration);
-
-  if(!document.getElementById('toastAnimStyle')){
-    const style = document.createElement('style');
-    style.id = 'toastAnimStyle';
-    style.textContent = `
-      @keyframes toastFadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-      }`;
-    document.head.appendChild(style);
-  }
+/* ========= TOAST ========= */
+let toastTimer = null;
+function showToast(msg, type="info", ms=2500){
+  const el = $("#toast");
+  if(!el) return;
+  el.textContent = msg;
+  el.style.background = (type==="error")?"#b30000":(type==="warn")?"#8a6d3b":"#111";
+  clearTimeout(toastTimer);
+  el.classList.add("show");
+  toastTimer = setTimeout(()=> el.classList.remove("show"), ms);
 }
 
+/* ========= OVERLAY (10s) ========= */
+function mostrarTransicao(titulo, mensagem, duracao=10000){
+  const ov = $("#transitionOverlay");
+  const tTitle = $("#transitionTitle");
+  const tMsg = $("#transitionMsg");
+  tTitle.textContent = titulo || "Carregando…";
+  tMsg.textContent = mensagem || "Aguarde um instante…";
+  ov.classList.add("active");
+  return new Promise(resolve=>{
+    setTimeout(()=>{
+      ov.classList.remove("active");
+      resolve();
+    }, duracao);
+  });
+}
 
 /* ========= MODAL ========= */
 function abrirModal(titulo, conteudoHtml){
@@ -799,7 +665,7 @@ async function updateCycleInfoUI(){
   }
 }
 
-/* ========= LOGS (somente admin visualiza) ========= */
+/* ========= LOGS ========= */
 async function logEvent(tipo, descricao, detalhes={}){
   const payload = {
     tipo, // 'login' | 'logout' | 'pedido' | 'perfil' | 'sistema'
@@ -818,11 +684,11 @@ async function seedProdutos(){
     const snap = await db.ref('produtos').once('value');
     if(snap.exists()) return;
     const iniciais = [
-      { nome: 'Copo descartavel pacote com 100 unidades', unidade:'pacote' },
+      { nome: 'Copo descartável pacote com 100 unidades', unidade:'pacote' },
       { nome: 'Toalha papel interfolha pacote com 1000 folhas', unidade:'pacote' },
-      { nome: 'Papel higienico 300 metros Rolo', unidade:'rolo' },
-      { nome: 'Toalha papel 200 metros rolo', unidade:'rolo' },
-      { nome: 'Papel higienico 60 metros pacote com 12 unidades', unidade:'pacote' }
+      { nome: 'Papel higiênico 300 metros (rolo)', unidade:'rolo' },
+      { nome: 'Toalha papel 200 metros (rolo)', unidade:'rolo' },
+      { nome: 'Papel higiênico 60 metros pacote com 12 unidades', unidade:'pacote' }
     ];
     for(const p of iniciais) await db.ref('produtos').push(p);
   }catch(e){ console.error('seed error', e); }
@@ -880,7 +746,7 @@ window.adminDeleteProduto = async function(key){
   }catch(e){ console.error('adminDeleteProduto', e); showToast('Erro ao excluir produto','error'); }
 };
 
-/* ========= AUTENTICAÇÃO (simples v8/Realtime) ========= */
+/* ========= AUTENTICAÇÃO ========= */
 async function register(){
   const nome = $('#regNome').value.trim();
   const localidade = $('#regLocalidade').value.trim();
@@ -899,9 +765,9 @@ async function register(){
     const snap = await db.ref('usuarios').orderByChild('user').equalTo(user).once('value');
     if(snap.exists()){ msgEl.style.color='red'; msgEl.textContent='Nome de usuário já existe.'; return; }
     const uid = Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
-await db.ref('usuarios').push({
-  nome, localidade, user, pass, ministerio, uid, createdAt: Date.now()
-});
+    await db.ref('usuarios').push({
+      nome, localidade, user, pass, ministerio, uid, createdAt: Date.now()
+    });
 
     msgEl.style.color='green'; msgEl.textContent='Usuário registrado com sucesso.';
     $('#regNome').value=''; $('#regLocalidade').value=''; $('#regUser').value=''; $('#regPass').value='';
@@ -912,61 +778,102 @@ await db.ref('usuarios').push({
     msgEl.style.color='red'; msgEl.textContent='Erro ao salvar usuário.';
   }
 }
-async function login(){
+
+async function login() {
   const user = $('#loginUser').value.trim();
   const pass = $('#loginPass').value.trim();
-  const errEl = $('#loginError'); errEl.textContent='';
-
-  if(!user || !pass){ errEl.textContent='Preencha usuário e senha.'; return; }
-
-  // Admin direto
-  if(user === ADMIN_LOGIN && pass === ADMIN_PASSWORD){
-    currentUser = { user: ADMIN_LOGIN, nome: 'Administrador', localidade: 'Administração', isAdmin: true };
-    enterApp();
-    showToast(`🕊️ A paz de Deus, irmão Administrador!`, 'info', 4000);
-    await logEvent('login','Administrador logou',{user});
+  if (!user || !pass) {
+    showToast("⚠️ Preencha todos os campos!", "warn", 3000);
     return;
   }
 
-  try{
-    const snap = await db.ref('usuarios').orderByChild('user').equalTo(user).once('value');
-    const obj = snap.val();
-    if(!obj){ errEl.textContent='Usuário ou senha incorretos.'; return; }
-
-    let found=null, foundKey=null;
-    for(const k in obj){ if(obj[k].pass === pass){ found=obj[k]; foundKey=k; break; } }
-    if(!found){ errEl.textContent='Usuário ou senha incorretos.'; return; }
-
+  // Admin direto
+  if (user === ADMIN_LOGIN && pass === ADMIN_PASSWORD) {
     currentUser = {
-  user: found.user,
-  nome: found.nome,
-  localidade: found.localidade,
-  isAdmin: false,
-  key: foundKey,
-  uid: found.uid || foundKey, // garante compatibilidade com cadastros antigos
-  ministerio: found.ministerio || ''
-};
+      user: ADMIN_LOGIN,
+      nome: "Administrador",
+      localidade: "Administração",
+      isAdmin: true,
+      uid: "admin"
+    };
+
+    await logEvent("login", "Usuário logou", { user: ADMIN_LOGIN });
+
+    // Mensagem de boas-vindas (10s)
+    const titulo = "A paz de Deus, irmão Administrador!";
+    const mensagem =
+      "É muito importante seu zelo com a irmandade e com a obra de Deus!\n" +
+      "Faça bom proveito dos itens que o Senhor Deus está disponibilizando para compras.";
+    await mostrarTransicao(titulo, mensagem, 10000);
 
     enterApp();
-    showToast(`🕊️ A paz de Deus, irmão ${found.nome}!`, 'info', 4000);
-    await logEvent('login','Usuário logou',{user:found.user});
-  }catch(e){
-    console.error('erro login', e);
-    errEl.textContent='Erro ao autenticar. Veja console.';
+    return;
+  }
+
+  // Busca usuário comum
+  try {
+    const snap = await db.ref("usuarios").orderByChild("user").equalTo(user).once("value");
+    const users = snap.val();
+
+    if (!users) {
+      showToast("⚠️ Usuário não encontrado!", "error", 4000);
+      return;
+    }
+
+    const foundKey = Object.keys(users)[0];
+    const found = users[foundKey];
+
+    if ((found.pass || "").trim() !== pass) {
+      showToast("🔒 Senha incorreta!", "error", 4000);
+      return;
+    }
+
+    currentUser = {
+      user: found.user,
+      nome: found.nome,
+      localidade: found.localidade,
+      isAdmin: false,
+      uid: found.uid || foundKey,
+      ministerio: found.ministerio || ''
+    };
+
+    await logEvent("login", "Usuário logou", { user: found.user });
+
+    // Mensagem de boas-vindas (10s)
+    const titulo = `A paz de Deus, irmão ${currentUser.nome}!`;
+    const mensagem =
+      "É muito importante seu zelo com a irmandade e com a obra de Deus!\n" +
+      "Faça bom proveito dos itens que o Senhor Deus está disponibilizando para compras.";
+    await mostrarTransicao(titulo, mensagem, 10000);
+
+    enterApp();
+  } catch (e) {
+    console.error("erro login", e);
+    showToast("Erro ao autenticar. Veja console.", "error", 4000);
   }
 }
+
 function logout(){
-  const name = currentUser?.nome || '';
-  currentUser = null; sessionStorage.removeItem('ccb_user');
+  const name = currentUser?.nome || 'irmão';
+  sessionStorage.removeItem('ccb_user');
+  currentUser = null;
   go('loginScreen');
   $('#loginUser').value=''; $('#loginPass').value=''; $('#loginError').textContent='';
-  showToast('🙏 Deus abençoe, meu irmão! Saúda em casa com a santa paz de Deus!', 'info', 4500);
-  logEvent('logout','Usuário saiu',{nome:name});
+
+  // Mensagem de saída (10s)
+  const titulo = `Deus abençoe, irmão ${name}!`;
+  const mensagem = "Saúda em casa com a santa paz de Deus!";
+  mostrarTransicao(titulo, mensagem, 10000).then(()=>{
+    showToast('Saindo...', 'info', 1500);
+    logEvent('logout','Usuário saiu',{nome:name});
+  });
 }
+
 function enterApp(){
   sessionStorage.setItem('ccb_user', JSON.stringify(currentUser));
   go('pedidoScreen');
   $('#pedidoMsg').textContent='';
+
   if(currentUser.isAdmin){
     ['adminRelatorioBtn','adminProdutosBtn','adminUsuariosBtn','adminHistoricoBtn'].forEach(id=> $('#'+id)?.classList.remove('hidden'));
   } else {
@@ -1005,7 +912,6 @@ function filtrarProdutos(){
 }
 
 /* ========= PEDIDOS ========= */
-// Regra de soma automática: mesmo usuário + mesmo produto + mesmo ciclo + não entregue
 async function salvarPedido(){
   const produtoKey = selectedProductKey;
   const produtoText = $('#buscaProduto').value.trim();
@@ -1022,7 +928,6 @@ async function salvarPedido(){
   if(cycle.daysRemaining <= 5){ msgEl.style.color='red'; msgEl.textContent='Não é possível criar/editar pedidos nos últimos 5 dias do ciclo.'; return; }
 
   try{
-    // Busca pedidos do usuário e aplica filtro em memória
     const snap = await db.ref('pedidos').orderByChild('createdBy').equalTo(currentUser.user).once('value');
     const data = snap.val() || {};
     const rows = Object.keys(data).map(k=>({ key:k, ...data[k] }));
@@ -1033,7 +938,6 @@ async function salvarPedido(){
     );
 
     if(same){
-      // Somar quantidade
       const novaQtd = Number(same.quantidade||0) + Number(quantidade);
       await db.ref('pedidos/'+same.key).update({
         quantidade: novaQtd,
@@ -1045,7 +949,6 @@ async function salvarPedido(){
       });
       msgEl.style.color='green'; msgEl.textContent='Quantidade somada ao pedido em aberto.';
     }else{
-      // Criar novo
       const pedido = {
         produtoKey,
         produtoText,
@@ -1066,7 +969,6 @@ async function salvarPedido(){
       msgEl.style.color='green'; msgEl.textContent='Pedido enviado com sucesso.';
     }
 
-    // limpar UI
     $('#buscaProduto').value=''; selectedProductKey=null; $('#quantidade').value=''; $('#obs').value='';
     showToast('Pedido salvo', 'info');
   }catch(e){ console.error('erro salvarPedido', e); msgEl.style.color='red'; msgEl.textContent='Erro ao salvar pedido.'; }
@@ -1080,14 +982,13 @@ async function mostrarPedidosUsuario(status='todos'){
 
   try{
     const [snap, cycle] = await Promise.all([
-  db.ref('pedidos').orderByChild('createdByUid').equalTo(currentUser.uid).once('value'),
-  getCycleInfo()
-]);
+      db.ref('pedidos').orderByChild('createdByUid').equalTo(currentUser.uid).once('value'),
+      getCycleInfo()
+    ]);
 
     const data = snap.val() || {};
     let rows = Object.keys(data).map(k=>({ key:k, ...data[k] }));
 
-    // filtros
     if(status === 'aberto') rows = rows.filter(r => !r.entregue);
     if(status === 'entregue') rows = rows.filter(r => r.entregue);
     if($('#toggleOcultarEntreguesUsuario').checked || $('#toggleOcultarEntreguesUsuario2').checked){
@@ -1151,9 +1052,6 @@ async function deletePedido(key, opts={origin:'user'}){
     const cycle = await getCycleInfo();
     const isAdmin = !!currentUser?.isAdmin;
 
-    // Permissões:
-    // - Usuário pode excluir só se não entregue e ainda dentro da janela do ciclo.
-    // - Admin pode excluir qualquer pedido entregue SOMENTE se entregou há 1 ano ou mais.
     let allowed = false;
     let reason = '';
 
@@ -1181,7 +1079,6 @@ async function deletePedido(key, opts={origin:'user'}){
 
     showToast('Pedido excluído','info');
 
-    // 🔧 Correção: não chamar verRelatorioAdmin quando origem for usuário, para não gerar “Acesso negado”
     if(opts.origin === 'admin'){
       if(lastScreen === 'relatorioAdmin'){ verRelatorioAdmin($('#filtroAdmin').value || 'todos'); }
     }else{
@@ -1209,14 +1106,11 @@ async function verRelatorioAdmin(status='todos'){
     const pedidosObj = snapP.val() || {};
     let pedidos = Object.keys(pedidosObj).map(k=>({ key:k, ...pedidosObj[k] }));
 
-    // filtro status
     if(status === 'aberto') pedidos = pedidos.filter(p=> !p.entregue);
     if(status === 'entregue') pedidos = pedidos.filter(p=> p.entregue);
 
-    // ocultar entregues (checkbox)
     if($('#toggleOcultarEntreguesAdmin').checked){ pedidos = pedidos.filter(p=> !p.entregue); }
 
-    // tabela pedidos
     if(pedidos.length === 0){
       tbodyP.innerHTML = '<tr><td colspan="7">Nenhum pedido encontrado.</td></tr>';
     } else {
@@ -1230,7 +1124,6 @@ async function verRelatorioAdmin(status='todos'){
         const tdObs=document.createElement('td'); tdObs.innerText = p.obs || '';
         const tdStatus=document.createElement('td');
         let statusHtml = p.entregue? '<span class="status-entregue">Entregue</span>' : '<span class="status-aberto">Aberto</span>';
-        // dica de 1 ano
         if(p.entregue && p.deliveredAt){
           const aYearMs = 365*24*60*60*1000;
           if(Date.now() - p.deliveredAt >= aYearMs){
@@ -1245,7 +1138,6 @@ async function verRelatorioAdmin(status='todos'){
         else { btnToggle.innerText='Marcar entregue'; btnToggle.onclick = ()=> toggleEntregue(p.key, true); }
         tdActions.appendChild(btnToggle);
 
-        // botão excluir (admin): só se aberto OU se entregue há 1 ano
         const canDeleteDelivered = p.entregue && p.deliveredAt && (Date.now() - p.deliveredAt >= 365*24*60*60*1000);
         const canDeleteOpen = !p.entregue;
         if(canDeleteOpen || canDeleteDelivered){
@@ -1259,7 +1151,6 @@ async function verRelatorioAdmin(status='todos'){
       });
     }
 
-    // tabela usuários
     const usuariosObj = snapU.val()||{};
     const usuarios = Object.keys(usuariosObj).map(k=>({ key:k, ...usuariosObj[k] }));
     if(usuarios.length===0){
@@ -1273,7 +1164,6 @@ async function verRelatorioAdmin(status='todos'){
       });
     }
 
-    // Resumo por item
     const map = {};
     pedidos.forEach(p=>{ const name = p.produtoText || 'Sem produto'; if(!map[name]) map[name] = 0; map[name] += Number(p.quantidade||0); });
     tabelaProdutos.innerHTML = '';
@@ -1302,7 +1192,6 @@ async function toggleEntregue(key, toState){
     await db.ref('pedidos/'+key).update(updates);
     await logEvent('pedido', toState?'Pedido marcado entregue':'Pedido desmarcado entregue',{pedidoKey:key});
 
-    // 🔧 Correção: permanecer na mesma página (não redirecionar para “Meus Pedidos”)
     if(lastScreen === 'relatorioAdmin') verRelatorioAdmin($('#filtroAdmin').value || 'todos');
     else if(lastScreen === 'relatorioUsuario') mostrarPedidosUsuario($('#filtroUsuario').value || 'todos');
     else go('pedidoScreen');
@@ -1393,17 +1282,40 @@ function printHtml(html, title='Impressão'){
 }
 function imprimirRelatorioUsuario(){
   if(!currentUser){ showToast('Faça login','error'); return; }
-  const tpl = $('#tpl-impressao-usuario').content.cloneNode(true);
-  tpl.querySelector('#print-meta-usuario').textContent = `Gerado em ${fmtDateTime(Date.now())}`;
-  tpl.querySelector('#print-solicitante').textContent = `Solicitante: ${currentUser.nome} (${currentUser.user})`;
-  tpl.querySelector('#print-localidade').textContent = `Localidade: ${currentUser.localidade||'-'}`;
-  tpl.querySelector('#print-ministerio').textContent = `Ministério: ${currentUser.ministerio||'-'}`;
+  const tpl = document.createElement('div');
+  tpl.innerHTML = `
+    <div class="print-header">
+      <div>
+        <h3 style="margin:0;">Meus Pedidos</h3>
+        <div class="print-meta">Gerado em ${fmtDateTime(Date.now())}</div>
+        <div class="print-meta">Solicitante: ${escapeHtml(currentUser.nome)} (${escapeHtml(currentUser.user)})</div>
+        <div class="print-meta">Localidade: ${escapeHtml(currentUser.localidade||'-')}</div>
+        <div class="print-meta">Ministério: ${escapeHtml(currentUser.ministerio||'-')}</div>
+      </div>
+      <div class="print-meta" id="__ciclo_user"></div>
+    </div>
+    <table style="width:100%; border-collapse:collapse;">
+      <thead>
+        <tr style="background:#0056b3; color:#fff;">
+          <th style="text-align:left;padding:8px;border:1px solid #ddd;">Produto</th>
+          <th style="text-align:left;padding:8px;border:1px solid #ddd;">Qtd</th>
+          <th style="text-align:left;padding:8px;border:1px solid #ddd;">Obs</th>
+          <th class="check-col" style="border:1px solid #ddd;">Visto ✓</th>
+        </tr>
+      </thead>
+      <tbody id="__tbody_user_print"></tbody>
+    </table>
+    <div class="signature-grid">
+      <div class="signature-box">Assinatura do Solicitante</div>
+      <div class="signature-box">Conferente / Visto</div>
+    </div>`;
   getCycleInfo().then(info=>{
-    tpl.querySelector('#print-ciclo').textContent = `Ciclo: ${info.cycleId}`;
+    const el = tpl.querySelector('#__ciclo_user');
+    if(el) el.textContent = `Ciclo: ${info.cycleId}`;
   });
 
   const rows = $$('#tabelaPedidosUsuario tbody tr');
-  const tbody = tpl.querySelector('#print-tbody-usuario');
+  const tbody = tpl.querySelector('#__tbody_user_print');
   if(rows.length===0){ tbody.innerHTML = `<tr><td colspan="4">Sem dados</td></tr>`; }
   else{
     rows.forEach(r=>{
@@ -1419,19 +1331,43 @@ function imprimirRelatorioUsuario(){
       }
     });
   }
-  printHtml(tpl.firstElementChild.outerHTML, 'Meus Pedidos');
+  printHtml(tpl.innerHTML, 'Meus Pedidos');
 }
 function imprimirRelatorioAdmin(){
-  const table = $('#tabelaPedidosAdmin');
-  if(!table){ showToast('Tabela não encontrada','error'); return; }
-  const tpl = $('#tpl-impressao-geral').content.cloneNode(true);
-  tpl.querySelector('#print-meta-geral').textContent = `Gerado em ${fmtDateTime(Date.now())}`;
+  const rows = $$('#tabelaPedidosAdmin tbody tr');
+  const tpl = document.createElement('div');
+  tpl.innerHTML = `
+    <div class="print-header">
+      <div>
+        <h3 style="margin:0;">Relatório Geral de Pedidos</h3>
+        <div class="print-meta">Gerado em ${fmtDateTime(Date.now())}</div>
+      </div>
+      <div class="print-meta" id="__ciclo_geral"></div>
+    </div>
+    <table style="width:100%; border-collapse:collapse;">
+      <thead>
+        <tr style="background:#0056b3; color:#fff;">
+          <th style="text-align:left;padding:8px;border:1px solid #ddd;">Usuário</th>
+          <th style="text-align:left;padding:8px;border:1px solid #ddd;">Localidade</th>
+          <th style="text-align:left;padding:8px;border:1px solid #ddd;">Produto</th>
+          <th style="text-align:left;padding:8px;border:1px solid #ddd;">Qtd</th>
+          <th style="text-align:left;padding:8px;border:1px solid #ddd;">Obs</th>
+          <th style="text-align:left;padding:8px;border:1px solid #ddd;">Status</th>
+          <th class="check-col" style="border:1px solid #ddd;">Visto ✓</th>
+        </tr>
+      </thead>
+      <tbody id="__tbody_admin_print"></tbody>
+    </table>
+    <div class="signature-grid">
+      <div class="signature-box">Responsável / Assinatura</div>
+      <div class="signature-box">Conferente / Visto</div>
+    </div>`;
   getCycleInfo().then(info=>{
-    tpl.querySelector('#print-ciclo-geral').textContent = `Ciclo: ${info.cycleId}`;
+    const el = tpl.querySelector('#__ciclo_geral');
+    if(el) el.textContent = `Ciclo: ${info.cycleId}`;
   });
 
-  const tbody = tpl.querySelector('#print-tbody-geral');
-  const rows = $$('#tabelaPedidosAdmin tbody tr');
+  const tbody = tpl.querySelector('#__tbody_admin_print');
   if(rows.length===0){ tbody.innerHTML = `<tr><td colspan="7">Sem dados</td></tr>`; }
   else{
     rows.forEach(r=>{
@@ -1450,7 +1386,7 @@ function imprimirRelatorioAdmin(){
       }
     });
   }
-  printHtml(tpl.firstElementChild.outerHTML, 'Relatório de Pedidos - Geral');
+  printHtml(tpl.innerHTML, 'Relatório de Pedidos - Geral');
 }
 async function imprimirRelatorioPorLocalidade(){
   try{
@@ -1553,57 +1489,8 @@ async function imprimirResumoItensGeral(){
   }catch(e){ console.error('imprimirResumoItensGeral', e); showToast('Erro ao imprimir resumo de itens','error'); }
 }
 
-/* ========= HISTÓRICO (ADMIN) ========= */
-async function abrirHistoricoAdmin(){
-  if(!currentUser?.isAdmin){ alert('Acesso negado.'); return; }
-  go('historicoAdmin');
-  await carregarHistoricoAdmin();
-}
-async function carregarHistoricoAdmin(){
-  const tbody = $('#tabelaHistoricoAdmin tbody');
-  tbody.innerHTML = '<tr><td colspan="5">Carregando…</td></tr>';
-  try{
-    const snap = await db.ref('logs').orderByChild('ts').limitToLast(500).once('value');
-    const obj = snap.val() || {};
-    let rows = Object.keys(obj).map(k=>({ key:k, ...obj[k] })).sort((a,b)=> b.ts - a.ts);
-
-    // filtro tipo
-    const tipoSel = $('#filtroHistoricoTipo').value || 'todos';
-    if(tipoSel !== 'todos') rows = rows.filter(r=> r.tipo === tipoSel);
-
-    // ocultar histórico
-    if($('#toggleOcultarHistorico').checked){ rows = []; }
-
-    tbody.innerHTML = rows.length ? '' : '<tr><td colspan="5">Sem eventos</td></tr>';
-    rows.forEach(r=>{
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${fmtDateTime(r.ts)}</td>
-        <td>${escapeHtml(r.userNome||r.user||'-')}</td>
-        <td>${escapeHtml(r.tipo||'-')}</td>
-        <td>${escapeHtml(r.descricao||'-')}</td>
-        <td><pre style="white-space:pre-wrap;margin:0;">${escapeHtml(JSON.stringify(r.detalhes||{},null,0))}</pre></td>`;
-      tbody.appendChild(tr);
-    });
-
-    // KPIs
-    const now = Date.now();
-    const dayStart = new Date(); dayStart.setHours(0,0,0,0);
-    const last30 = now - 30*24*60*60*1000;
-    $('#kpiEvt30').textContent = rows.filter(r=> r.ts >= last30).length;
-    $('#kpiLoginHoje').textContent = rows.filter(r=> r.tipo==='login' && r.ts>=dayStart.getTime()).length;
-    $('#kpiPedidosHoje').textContent = rows.filter(r=> r.tipo==='pedido' && r.descricao.includes('Pedido criado') && r.ts>=dayStart.getTime()).length;
-    $('#kpiPwd30').textContent = rows.filter(r=> r.tipo==='perfil' && r.descricao.toLowerCase().includes('senha') && r.ts>=last30).length;
-
-  }catch(e){
-    console.error('carregarHistoricoAdmin', e);
-    tbody.innerHTML = '<tr><td colspan="5">Erro ao carregar.</td></tr>';
-  }
-}
-
 /* ========= UI EVENTOS ========= */
 function wireUI(){
-  // Header clock & footer year
   $('#yearFooter').textContent = new Date().getFullYear();
   setInterval(()=>{ $('#nowClock').textContent = fmtDateTime(Date.now()); }, 1000);
 
@@ -1657,7 +1544,7 @@ function wireUI(){
   $('#toggleOcultarHistorico').onchange = carregarHistoricoAdmin;
 }
 
-/* ========= Admin: addProduto (exposto) ========= */
+/* ========= Admin: addProduto ========= */
 async function addProduto(){
   if(!currentUser || !currentUser.isAdmin){ showToast('Acesso negado','error'); return; }
   const nome = $('#novoProdutoNome').value.trim();
@@ -1672,14 +1559,57 @@ async function addProduto(){
   }catch(e){ console.error('addProduto', e); showToast('Erro ao adicionar produto','error'); }
 }
 
+/* ========= HISTÓRICO (ADMIN) ========= */
+async function abrirHistoricoAdmin(){
+  if(!currentUser?.isAdmin){ alert('Acesso negado.'); return; }
+  go('historicoAdmin');
+  await carregarHistoricoAdmin();
+}
+async function carregarHistoricoAdmin(){
+  const tbody = $('#tabelaHistoricoAdmin tbody');
+  tbody.innerHTML = '<tr><td colspan="5">Carregando…</td></tr>';
+  try{
+    const snap = await db.ref('logs').orderByChild('ts').limitToLast(500).once('value');
+    const obj = snap.val() || {};
+    let rows = Object.keys(obj).map(k=>({ key:k, ...obj[k] })).sort((a,b)=> b.ts - a.ts);
+
+    const tipoSel = $('#filtroHistoricoTipo').value || 'todos';
+    if(tipoSel !== 'todos') rows = rows.filter(r=> r.tipo === tipoSel);
+
+    if($('#toggleOcultarHistorico').checked){ rows = []; }
+
+    tbody.innerHTML = rows.length ? '' : '<tr><td colspan="5">Sem eventos</td></tr>';
+    rows.forEach(r=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${fmtDateTime(r.ts)}</td>
+        <td>${escapeHtml(r.userNome||r.user||'-')}</td>
+        <td>${escapeHtml(r.tipo||'-')}</td>
+        <td>${escapeHtml(r.descricao||'-')}</td>
+        <td><pre style="white-space:pre-wrap;margin:0;">${escapeHtml(JSON.stringify(r.detalhes||{},null,0))}</pre></td>`;
+      tbody.appendChild(tr);
+    });
+
+    const now = Date.now();
+    const dayStart = new Date(); dayStart.setHours(0,0,0,0);
+    const last30 = now - 30*24*60*60*1000;
+    $('#kpiEvt30').textContent = rows.filter(r=> r.ts >= last30).length;
+    $('#kpiLoginHoje').textContent = rows.filter(r=> r.tipo==='login' && r.ts>=dayStart.getTime()).length;
+    $('#kpiPedidosHoje').textContent = rows.filter(r=> r.tipo==='pedido' && r.descricao.includes('Pedido criado') && r.ts>=dayStart.getTime()).length;
+    $('#kpiPwd30').textContent = rows.filter(r=> r.tipo==='perfil' && r.descricao.toLowerCase().includes('senha') && r.ts>=last30).length;
+
+  }catch(e){
+    console.error('carregarHistoricoAdmin', e);
+    tbody.innerHTML = '<tr><td colspan="5">Erro ao carregar.</td></tr>';
+  }
+}
+
 /* ========= Inicialização ========= */
 (async function init(){
   try{
-    // sessão
     const sess = sessionStorage.getItem('ccb_user');
     if(sess){ currentUser = JSON.parse(sess); enterApp(); }
 
-    // ensure cycleStart
     const cfg = await db.ref('config/cycleStart').once('value');
     if(!cfg.exists() || !cfg.val()) await db.ref('config').set({ cycleStart: Date.now() });
   }catch(e){ console.error('init cfg/sess', e); }
@@ -1689,35 +1619,22 @@ async function addProduto(){
   await loadProdutos();
   await updateCycleInfoUI();
 
-  // refresh ao focar a aba
   let __focusRefreshTimer = null;
   window.addEventListener('focus', ()=>{
     clearTimeout(__focusRefreshTimer);
     __focusRefreshTimer = setTimeout(async ()=>{
-      try{ await loadProdutos(); await renderAdminUsuarios(); await updateCycleInfoUI(); if(lastScreen==='historicoAdmin') await carregarHistoricoAdmin(); }catch(e){}
+      try{
+        await loadProdutos(); 
+        await renderAdminUsuarios(); 
+        await updateCycleInfoUI(); 
+        if(lastScreen==='historicoAdmin') await carregarHistoricoAdmin();
+      }catch(e){}
     }, 150);
   });
-})();// ===================== GARANTIR CARREGAMENTO DE PRODUTOS NO RELATÓRIO ADMIN =====================
-(async function garantirProdutosAdmin(){
-  try {
-    // pequeno atraso pra garantir que Firebase e init já rodaram
-    await new Promise(res => setTimeout(res, 800));
-    if (typeof loadProdutos === 'function') {
-      await loadProdutos(); // busca produtos no Firebase
-      if (typeof renderTabelaProdutosAdmin === 'function') {
-        renderTabelaProdutosAdmin(); // exibe na tabela do relatório admin
-        console.log('✅ Produtos carregados no relatório admin');
-      }
-    }
-  } catch(e) {
-    console.warn('Falha ao carregar produtos no relatório admin:', e);
-  }
 })();
 
-
-// ===================== CONTROLE DE EXIBIÇÃO (Admin) =====================
+/* Mostrar/ocultar tabelas (Admin) */
 document.addEventListener('DOMContentLoaded', ()=>{
-  // Ocultar/Mostrar Usuários
   const btnUsuarios = document.getElementById('btnToggleUsuarios');
   const tabelaUsuarios = document.getElementById('tabelaUsuariosAdmin');
   if(btnUsuarios && tabelaUsuarios){
@@ -1732,7 +1649,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
     });
   }
 
-  // Ocultar/Mostrar Produtos
   const btnProdutos = document.getElementById('btnToggleProdutos');
   const tabelaProdutos = document.getElementById('tabelaProdutosAdmin');
   if(btnProdutos && tabelaProdutos){
@@ -1747,7 +1663,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
     });
   }
 });
-</script>
+  </script>
 </body>
 </html>
-
