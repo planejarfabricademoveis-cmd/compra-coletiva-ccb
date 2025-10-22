@@ -2202,106 +2202,76 @@ async function editarEstoqueAdm(uid, pid, nome, qtdAtual) {
   abrirControleEstoqueAdm(); // recarrega a lista
 }
 // ==============================
-// CONTROLE DE ESTOQUES (ADMIN) — com filtro e busca
+// RELATÓRIO DE MOVIMENTAÇÕES (POR CICLO)
 // ==============================
-async function abrirControleEstoqueAdm() {
+async function abrirRelatorioMovimentacoesAdm(){
   try {
-    const snap = await db.ref('estoques').once('value');
-    const estoques = snap.val() || {};
-    console.log('📦 Estoques carregados:', estoques);
-
+    const snap = await db.ref('movimentacoes').once('value');
+    const movs = snap.val() || {};
     const todos = [];
 
-    // 🔹 Carrega os dados e resolve nome de usuário
-    for (const [uid, itens] of Object.entries(estoques || {})) {
-      let nomeUsuario = uid; // fallback padrão
-
-      try {
-        const userSnap = await db.ref(`usuarios/${uid}`).once('value');
-        if (userSnap.exists()) {
-          const userData = userSnap.val();
-          nomeUsuario = userData?.nome || userData?.displayName || `(UID: ${uid})`;
-        }
-      } catch (err) {
-        console.warn('⚠️ Erro ao buscar nome do usuário:', uid, err);
-      }
-
-      for (const [pid, p] of Object.entries(itens || {})) {
+    for (const [uid, lista] of Object.entries(movs)) {
+      for (const [mid, m] of Object.entries(lista)) {
         todos.push({
-          usuario: nomeUsuario,
-          produto: p?.nome || '-',
-          quantidade: p?.quantidade || 0,
-          localidade: p?.localidade || 'Não informado',
-          pid,
-          uid
+          usuario: uid,
+          produto: m.produto,
+          tipo: m.tipo,
+          qtd: m.qtd,
+          ciclo: m.ciclo || 'Sem ciclo',
+          data: m.data || '-',
+          origem: m.origem || '-'
         });
       }
     }
 
-    // 🔧 Cria opções de localidade
-    const localidades = [...new Set(todos.map(e => e.localidade))].sort();
-    const locOpts = ['<option value="Todas" selected>Todas</option>', ...localidades.map(l => `<option value="${l}">${l}</option>`)].join('');
+    if (todos.length === 0) {
+      abrirModal('📊 Relatório de Movimentações', '<p>Nenhuma movimentação registrada ainda.</p>');
+      return;
+    }
 
-    // 🧩 Interface do painel (adicionando campo de busca)
+    const ciclos = [...new Set(todos.map(e => e.ciclo))].sort();
+    const cicloOpts = ['Todos', ...ciclos].map(c => `<option value="${c}">${c}</option>`).join('');
+
     let html = `
-      <div style="margin-bottom:10px;">
-        <label>Filtrar por localidade:</label>
-        <select id="filtroLocal">${locOpts}</select>
-        <label style="margin-left:15px;">Buscar usuário:</label>
-        <input type="text" id="buscaUsuario" placeholder="Digite o nome..." style="padding:5px; width:180px;">
-      </div>
-
+      <label>Filtrar por ciclo:</label>
+      <select id="filtroCiclo">${cicloOpts}</select>
       <table style="width:100%;border-collapse:collapse;margin-top:10px;">
         <thead>
           <tr style="background:#0056b3;color:#fff;">
-            <th>Usuário</th>
-            <th>Localidade</th>
-            <th>Produto</th>
-            <th>Qtd</th>
-            <th>Ações</th>
+            <th>Usuário</th><th>Produto</th><th>Tipo</th><th>Qtd</th><th>Ciclo</th><th>Data/Hora</th><th>Origem</th>
           </tr>
         </thead>
-        <tbody id="tbodyEstoqueAdm"></tbody>
+        <tbody id="tbodyMovAdm"></tbody>
       </table>
     `;
+    abrirModal('📊 Relatório de Movimentações (por Ciclo)', html);
 
-    abrirModal('📦 Controle de Estoques (Administrador)', html);
-
-    // 🔍 Função de renderização
-    const render = (loc = 'Todas', busca = '') => {
-      const buscaLower = busca.toLowerCase();
-
+    const render = (ciclo='Todos')=>{
       const linhas = todos
-        .filter(e =>
-          (loc === 'Todas' || e.localidade === loc) &&
-          (busca === '' || e.usuario.toLowerCase().includes(buscaLower))
-        )
+        .filter(e => ciclo==='Todos' || e.ciclo===ciclo)
         .map(e => `
           <tr>
             <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(e.usuario)}</td>
-            <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(e.localidade)}</td>
             <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(e.produto)}</td>
-            <td style="border:1px solid #ddd;padding:6px;">${e.quantidade}</td>
-            <td style="border:1px solid #ddd;padding:6px;text-align:center;">
-              <button onclick="editarEstoqueAdm('${e.uid}','${e.pid}','${e.produto}',${e.quantidade})">✏️ Editar</button>
-            </td>
+            <td style="border:1px solid #ddd;padding:6px;">${e.tipo}</td>
+            <td style="border:1px solid #ddd;padding:6px;">${e.qtd}</td>
+            <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(e.ciclo)}</td>
+            <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(e.data)}</td>
+            <td style="border:1px solid #ddd;padding:6px;">${e.origem}</td>
           </tr>`
         ).join('');
 
-      $('#tbodyEstoqueAdm').innerHTML = linhas || '<tr><td colspan="5">Nenhum registro encontrado.</td></tr>';
+      $('#tbodyMovAdm').innerHTML = linhas || '<tr><td colspan="7">Nenhum registro para este ciclo.</td></tr>';
     };
 
-    // 🔄 Eventos de filtro e busca
     render();
-    $('#filtroLocal').onchange = e => render(e.target.value, $('#buscaUsuario').value);
-    $('#buscaUsuario').oninput = e => render($('#filtroLocal').value, e.target.value);
+    $('#filtroCiclo').onchange = e => render(e.target.value);
 
-  } catch (e) {
+  } catch(e){
     console.error(e);
-    showToast('Erro ao carregar estoques', 'error');
+    showToast('Erro ao carregar movimentações','error');
   }
 }
-
 // ==============================
 // EXPORTAR ESTOQUES E MOVIMENTAÇÕES PARA EXCEL
 // ==============================
@@ -2499,61 +2469,6 @@ setInterval(() => checarAvisosUltimosDias(5), 60000);
     }, 150);
   });
 })();
-// ==============================
-// SISTEMA DE MODAL (GENÉRICO E CORRIGIDO)
-// ==============================
-function abrirModal(titulo, conteudo) {
-  let modal = document.getElementById('modal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'modal';
-    modal.style.position = 'fixed';
-    modal.style.top = '0';
-    modal.style.left = '0';
-    modal.style.width = '100%';
-    modal.style.height = '100%';
-    modal.style.background = 'rgba(0,0,0,0.6)';
-    modal.style.display = 'flex';
-    modal.style.alignItems = 'center';
-    modal.style.justifyContent = 'center';
-    modal.style.zIndex = '9999';
-    document.body.appendChild(modal);
-  }
-
-  modal.innerHTML = `
-    <div style="background:#fff;max-width:800px;width:90%;border-radius:10px;padding:20px;position:relative;box-shadow:0 5px 20px rgba(0,0,0,0.3);">
-      <h2 style="margin-top:0;color:#0056b3;">${titulo}</h2>
-      <div style="max-height:60vh;overflow-y:auto;margin-bottom:15px;">${conteudo}</div>
-      <div style="text-align:right;">
-        <button onclick="fecharModal()" style="background:#0056b3;color:white;padding:8px 14px;border:none;border-radius:6px;cursor:pointer;">Voltar</button>
-      </div>
-    </div>
-  `;
-  modal.style.display = 'flex';
-}
-
-function fecharModal() {
-  const modal = document.getElementById('modal');
-  if (modal) modal.style.display = 'none';
-}
-
-// ==============================
-// OCULTAR RELATÓRIO DE REGISTROS (CORRIGIDO)
-// ==============================
-document.addEventListener('DOMContentLoaded', () => {
-  const btnOcultar = document.getElementById('btnOcultarRelatorio');
-  if (btnOcultar) {
-    btnOcultar.onclick = () => {
-      const painel = document.getElementById('painelRelatorios');
-      if (painel) {
-        const visivel = painel.style.display !== 'none';
-        painel.style.display = visivel ? 'none' : 'block';
-        btnOcultar.innerText = visivel ? '🔽 Mostrar Relatórios' : '🔼 Ocultar Relatórios';
-      }
-    };
-  }
-});
-
 
 </script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
