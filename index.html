@@ -2202,76 +2202,106 @@ async function editarEstoqueAdm(uid, pid, nome, qtdAtual) {
   abrirControleEstoqueAdm(); // recarrega a lista
 }
 // ==============================
-// RELATÓRIO DE MOVIMENTAÇÕES (POR CICLO)
+// CONTROLE DE ESTOQUES (ADMIN) — com filtro e busca
 // ==============================
-async function abrirRelatorioMovimentacoesAdm(){
+async function abrirControleEstoqueAdm() {
   try {
-    const snap = await db.ref('movimentacoes').once('value');
-    const movs = snap.val() || {};
+    const snap = await db.ref('estoques').once('value');
+    const estoques = snap.val() || {};
+    console.log('📦 Estoques carregados:', estoques);
+
     const todos = [];
 
-    for (const [uid, lista] of Object.entries(movs)) {
-      for (const [mid, m] of Object.entries(lista)) {
+    // 🔹 Carrega os dados e resolve nome de usuário
+    for (const [uid, itens] of Object.entries(estoques || {})) {
+      let nomeUsuario = uid; // fallback padrão
+
+      try {
+        const userSnap = await db.ref(`usuarios/${uid}`).once('value');
+        if (userSnap.exists()) {
+          const userData = userSnap.val();
+          nomeUsuario = userData?.nome || userData?.displayName || `(UID: ${uid})`;
+        }
+      } catch (err) {
+        console.warn('⚠️ Erro ao buscar nome do usuário:', uid, err);
+      }
+
+      for (const [pid, p] of Object.entries(itens || {})) {
         todos.push({
-          usuario: uid,
-          produto: m.produto,
-          tipo: m.tipo,
-          qtd: m.qtd,
-          ciclo: m.ciclo || 'Sem ciclo',
-          data: m.data || '-',
-          origem: m.origem || '-'
+          usuario: nomeUsuario,
+          produto: p?.nome || '-',
+          quantidade: p?.quantidade || 0,
+          localidade: p?.localidade || 'Não informado',
+          pid,
+          uid
         });
       }
     }
 
-    if (todos.length === 0) {
-      abrirModal('📊 Relatório de Movimentações', '<p>Nenhuma movimentação registrada ainda.</p>');
-      return;
-    }
+    // 🔧 Cria opções de localidade
+    const localidades = [...new Set(todos.map(e => e.localidade))].sort();
+    const locOpts = ['<option value="Todas" selected>Todas</option>', ...localidades.map(l => `<option value="${l}">${l}</option>`)].join('');
 
-    const ciclos = [...new Set(todos.map(e => e.ciclo))].sort();
-    const cicloOpts = ['Todos', ...ciclos].map(c => `<option value="${c}">${c}</option>`).join('');
-
+    // 🧩 Interface do painel (adicionando campo de busca)
     let html = `
-      <label>Filtrar por ciclo:</label>
-      <select id="filtroCiclo">${cicloOpts}</select>
+      <div style="margin-bottom:10px;">
+        <label>Filtrar por localidade:</label>
+        <select id="filtroLocal">${locOpts}</select>
+        <label style="margin-left:15px;">Buscar usuário:</label>
+        <input type="text" id="buscaUsuario" placeholder="Digite o nome..." style="padding:5px; width:180px;">
+      </div>
+
       <table style="width:100%;border-collapse:collapse;margin-top:10px;">
         <thead>
           <tr style="background:#0056b3;color:#fff;">
-            <th>Usuário</th><th>Produto</th><th>Tipo</th><th>Qtd</th><th>Ciclo</th><th>Data/Hora</th><th>Origem</th>
+            <th>Usuário</th>
+            <th>Localidade</th>
+            <th>Produto</th>
+            <th>Qtd</th>
+            <th>Ações</th>
           </tr>
         </thead>
-        <tbody id="tbodyMovAdm"></tbody>
+        <tbody id="tbodyEstoqueAdm"></tbody>
       </table>
     `;
-    abrirModal('📊 Relatório de Movimentações (por Ciclo)', html);
 
-    const render = (ciclo='Todos')=>{
+    abrirModal('📦 Controle de Estoques (Administrador)', html);
+
+    // 🔍 Função de renderização
+    const render = (loc = 'Todas', busca = '') => {
+      const buscaLower = busca.toLowerCase();
+
       const linhas = todos
-        .filter(e => ciclo==='Todos' || e.ciclo===ciclo)
+        .filter(e =>
+          (loc === 'Todas' || e.localidade === loc) &&
+          (busca === '' || e.usuario.toLowerCase().includes(buscaLower))
+        )
         .map(e => `
           <tr>
             <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(e.usuario)}</td>
+            <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(e.localidade)}</td>
             <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(e.produto)}</td>
-            <td style="border:1px solid #ddd;padding:6px;">${e.tipo}</td>
-            <td style="border:1px solid #ddd;padding:6px;">${e.qtd}</td>
-            <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(e.ciclo)}</td>
-            <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(e.data)}</td>
-            <td style="border:1px solid #ddd;padding:6px;">${e.origem}</td>
+            <td style="border:1px solid #ddd;padding:6px;">${e.quantidade}</td>
+            <td style="border:1px solid #ddd;padding:6px;text-align:center;">
+              <button onclick="editarEstoqueAdm('${e.uid}','${e.pid}','${e.produto}',${e.quantidade})">✏️ Editar</button>
+            </td>
           </tr>`
         ).join('');
 
-      $('#tbodyMovAdm').innerHTML = linhas || '<tr><td colspan="7">Nenhum registro para este ciclo.</td></tr>';
+      $('#tbodyEstoqueAdm').innerHTML = linhas || '<tr><td colspan="5">Nenhum registro encontrado.</td></tr>';
     };
 
+    // 🔄 Eventos de filtro e busca
     render();
-    $('#filtroCiclo').onchange = e => render(e.target.value);
+    $('#filtroLocal').onchange = e => render(e.target.value, $('#buscaUsuario').value);
+    $('#buscaUsuario').oninput = e => render($('#filtroLocal').value, e.target.value);
 
-  } catch(e){
+  } catch (e) {
     console.error(e);
-    showToast('Erro ao carregar movimentações','error');
+    showToast('Erro ao carregar estoques', 'error');
   }
 }
+
 // ==============================
 // EXPORTAR ESTOQUES E MOVIMENTAÇÕES PARA EXCEL
 // ==============================
