@@ -2107,16 +2107,21 @@ async function abrirControleEstoqueAdm(){
 
     const todos = [];
     for (const [uid, itens] of Object.entries(estoques)) {
-      for (const [pid, p] of Object.entries(itens)) {
-        todos.push({
-          usuario: uid,
-          produto: p.nome,
-          quantidade: p.quantidade,
-          localidade: p.localidade || 'Não Informado',
-          pid
-        });
-      }
-    }
+  // Busca o nome completo do usuário no Firebase
+  const nomeUsuario = await getNomeUsuario(uid);
+
+  for (const [pid, p] of Object.entries(itens)) {
+    todos.push({
+      usuario: nomeUsuario || 'Desconhecido',
+      produto: p.nome,
+      quantidade: p.quantidade,
+      localidade: p.localidade || 'Não Informado',
+      pid: pid,
+      uid: uid
+    });
+  }
+}
+
 
     const localidades = [...new Set(todos.map(e => e.localidade))].sort();
     const locOpts = ['Todas', ...localidades].map(l => `<option value="${l}">${l}</option>`).join('');
@@ -2456,4 +2461,5 @@ setInterval(() => checarAvisosUltimosDias(5), 60000);
 
 </body>
 </html>
+
 
