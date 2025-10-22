@@ -2115,7 +2115,8 @@ for (const [uid, itens] of Object.entries(estoques || {})) {
     const userSnap = await db.ref(`usuarios/${uid}`).once('value');
     if (userSnap.exists()) {
       const userData = userSnap.val();
-      nomeUsuario = userData.nome || userData.displayName || uid;
+      nomeUsuario = userData?.nome || userData?.displayName || `(UID: ${uid})`;
+
     }
   } catch (err) {
     console.warn('⚠️ Erro ao buscar nome do usuário:', uid, err);
