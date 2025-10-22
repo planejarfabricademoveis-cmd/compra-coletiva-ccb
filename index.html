@@ -2104,54 +2104,52 @@ async function abrirControleEstoqueAdm(){
   try {
     const snap = await db.ref('estoques').once('value');
     const estoques = snap.val() || {};
-console.log('📦 Estoques carregados:', estoques);
+    console.log('📦 Estoques carregados:', estoques);
 
+    const todos = [];
 
-    // 🔧 Carrega estoques e resolve nomes de usuários com segurança
-const todos = [];
+    for (const [uid, itens] of Object.entries(estoques || {})) {
+      let nomeUsuario = uid; // fallback
 
-for (const [uid, itens] of Object.entries(estoques || {})) {
-  let nomeUsuario = uid; // fallback padrão
+      try {
+        const userSnap = await db.ref(`usuarios/${uid}`).once('value');
+        if (userSnap.exists()) {
+          const userData = userSnap.val();
+          nomeUsuario = userData?.nome || userData?.displayName || `(UID: ${uid})`;
+        }
+      } catch (err) {
+        console.warn('⚠️ Erro ao buscar nome do usuário:', uid, err);
+      }
 
-  try {
-    const userSnap = await db.ref(`usuarios/${uid}`).once('value');
-    if (userSnap.exists()) {
-      const userData = userSnap.val();
-      nomeUsuario = userData?.nome || userData?.displayName || `(UID: ${uid})`;
-
+      for (const [pid, p] of Object.entries(itens || {})) {
+        todos.push({
+          usuario: nomeUsuario,
+          produto: p?.nome || '-',
+          quantidade: p?.quantidade || 0,
+          localidade: p?.localidade || 'Não informado',
+          pid,
+          uid
+        });
+      }
     }
-  } catch (err) {
-console.error('💥 Erro ao carregar estoques:', err);
 
-    console.warn('⚠️ Erro ao buscar nome do usuário:', uid, err);
-  }
-
-  for (const [pid, p] of Object.entries(itens || {})) {
-    todos.push({
-      usuario: nomeUsuario,
-      produto: p?.nome || '-',
-      quantidade: p?.quantidade || 0,
-      localidade: p?.localidade || 'Não informado',
-      pid,
-      uid
-    });
-  }
-}
-
-const localidades = [...new Set(todos.map(e => e.localidade))].sort();
-const locOpts = ['<option value="Todas" selected>Todas</option>', ...localidades.map(l => `<option value="${l}">${l}</option>`)].join('');
-
+    // 🔧 Cria as opções de localidades antes de usar no HTML
+    const localidades = [...new Set(todos.map(e => e.localidade))].sort();
+    const locOpts = ['<option value="Todas" selected>Todas</option>', ...localidades.map(l => `<option value="${l}">${l}</option>`)].join('');
 
     let html = `
       <label>Filtrar por localidade:</label>
       <select id="filtroLocal">${locOpts}</select>
       <table style="width:100%;border-collapse:collapse;margin-top:10px;">
-        <thead><tr style="background:#0056b3;color:#fff;">
-          <th>Usuário</th><th>Localidade</th><th>Produto</th><th>Qtd</th><th>Ações</th>
-        </tr></thead>
+        <thead>
+          <tr style="background:#0056b3;color:#fff;">
+            <th>Usuário</th><th>Localidade</th><th>Produto</th><th>Qtd</th><th>Ações</th>
+          </tr>
+        </thead>
         <tbody id="tbodyEstoqueAdm"></tbody>
       </table>
     `;
+
     abrirModal('📦 Controle de Estoques (Administrador)', html);
 
     const render = (loc = 'Todas') => {
@@ -2163,11 +2161,10 @@ const locOpts = ['<option value="Todas" selected>Todas</option>', ...localidades
             <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(e.localidade)}</td>
             <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(e.produto)}</td>
             <td style="border:1px solid #ddd;padding:6px;">${e.quantidade}</td>
-            <td style="border:1px solid #ddd;padding:6px;">
-              <button onclick="editarEstoqueAdm('${e.usuario}','${e.pid}','${e.produto}',${e.quantidade})">✏️ Editar</button>
+            <td style="border:1px solid #ddd;padding:6px;text-align:center;">
+              <button onclick="editarEstoqueAdm('${e.uid}','${e.pid}','${e.produto}',${e.quantidade})">✏️ Editar</button>
             </td>
-          </tr>`
-        ).join('');
+          </tr>`).join('');
 
       $('#tbodyEstoqueAdm').innerHTML = linhas || '<tr><td colspan="5">Nenhum registro encontrado.</td></tr>';
     };
@@ -2180,6 +2177,7 @@ const locOpts = ['<option value="Todas" selected>Todas</option>', ...localidades
     showToast('Erro ao carregar estoques', 'error');
   }
 }
+
 
 // ==============================
 // EDIÇÃO DE ESTOQUE (ADMIN)
