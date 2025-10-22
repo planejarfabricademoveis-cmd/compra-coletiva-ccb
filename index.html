@@ -2138,6 +2138,9 @@ console.error('💥 Erro ao carregar estoques:', err);
   }
 }
 
+const localidades = [...new Set(todos.map(e => e.localidade))].sort();
+const locOpts = ['<option value="Todas" selected>Todas</option>', ...localidades.map(l => `<option value="${l}">${l}</option>`)].join('');
+
 
     let html = `
       <label>Filtrar por localidade:</label>
