@@ -2105,33 +2105,34 @@ async function abrirControleEstoqueAdm(){
     const snap = await db.ref('estoques').once('value');
     const estoques = snap.val() || {};
 
-    const todos = [];
-    // Percorre cada UID e busca os nomes de forma assíncrona segura
-await Promise.all(
-  Object.entries(estoques).map(async ([uid, itens]) => {
-    try {
-      const nomeUsuario = await getNomeUsuario(uid);
+    // 🔧 Carrega estoques e resolve nomes de usuários com segurança
+const todos = [];
 
-      for (const [pid, p] of Object.entries(itens)) {
-        todos.push({
-          usuario: nomeUsuario || uid,
-          produto: p.nome || '-',
-          quantidade: p.quantidade || 0,
-          localidade: p.localidade || 'Não Informado',
-          pid: pid,
-          uid: uid
-        });
-      }
-    } catch (e) {
-      console.warn('⚠️ Erro ao buscar nome do usuário:', uid, e);
+for (const [uid, itens] of Object.entries(estoques || {})) {
+  let nomeUsuario = uid; // fallback padrão
+
+  try {
+    const userSnap = await db.ref(`usuarios/${uid}`).once('value');
+    if (userSnap.exists()) {
+      const userData = userSnap.val();
+      nomeUsuario = userData.nome || userData.displayName || uid;
     }
-  })
-);
+  } catch (err) {
+    console.warn('⚠️ Erro ao buscar nome do usuário:', uid, err);
+  }
 
+  for (const [pid, p] of Object.entries(itens || {})) {
+    todos.push({
+      usuario: nomeUsuario,
+      produto: p?.nome || '-',
+      quantidade: p?.quantidade || 0,
+      localidade: p?.localidade || 'Não informado',
+      pid,
+      uid
+    });
+  }
+}
 
-
-    const localidades = [...new Set(todos.map(e => e.localidade))].sort();
-    const locOpts = ['Todas', ...localidades].map(l => `<option value="${l}">${l}</option>`).join('');
 
     let html = `
       <label>Filtrar por localidade:</label>
