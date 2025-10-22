@@ -1,1270 +1,1263 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>CCB - Compra Coletiva</title>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CCB - Compra Coletiva</title>
 
-  <style>
-    :root{
-      --pri:#0056b3;
-      --pri-700:#004080;
-      --bg:#f0f4f8;
-      --ok:#28a745;
-      --warn:#f0ad4e;
-      --err:#b30000;
-      --text:#111;
-      --muted:#6b7280;
-      --br:10px;
-      --shadow:0 6px 20px rgba(10,10,20,.06);
-    }
+<!-- ======= ESTILOS ======= -->
+<style>
+  :root{
+    --pri:#0056b3; --pri-700:#004080; --bg:#f0f4f8; --ok:#28a745; --warn:#f0ad4e; --err:#b30000;
+    --text:#111; --muted:#6b7280; --br:10px; --shadow:0 6px 20px rgba(10,10,20,.06);
+  }
+  *{ box-sizing:border-box; }
+  html,body{
+  height:100%;
+  width:100%;
+  margin:0;
+  overflow-x:hidden; /* impede que o conteúdo saia pela direita */
+}
 
-    *{ box-sizing:border-box; }
-    html,body{ height:100%; }
-    body{ font-family:Arial,Helvetica,sans-serif; background:var(--bg); color:var(--text); margin:0; }
+  body{ font-family:Arial,Helvetica,sans-serif; background:var(--bg); color:var(--text); margin:0; }
+  header{ background:var(--pri); color:#fff; padding:14px 16px; position:sticky; top:0; z-index:20; box-shadow:0 2px 12px rgba(0,0,0,.12);
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  header .title{ font-size:20px; font-weight:700; flex:1; }
+  header .clock{ font-size:12px; opacity:.9; }
+  header .tag{ background:rgba(255,255,255,.15); padding:4px 8px; border-radius:999px; font-size:12px; }
+  main{ margin:18px auto; max-width:1120px; padding:0 14px; }
+  .card{ background:#fff; border-radius:var(--br); box-shadow:var(--shadow); padding:18px; margin:0 auto 18px; width:100%; }
+  h2{ color:var(--pri); margin:0 0 12px 0; font-size:20px; }
+  h3{ color:#1f2937; margin:16px 0 8px 0; font-size:18px; }
+  input, select, button, textarea{ width:100%; padding:10px; margin:6px 0; font-size:16px; border-radius:6px; border:1px solid #d1d5db; background:#fff; }
+  input[type=number]{ -moz-appearance:textfield; }
+  textarea{ min-height:90px; resize:vertical; }
+  button{ background:var(--pri); color:#fff; border:none; cursor:pointer; font-weight:700; transition:.15s transform ease,.15s background ease; }
+  button:hover{ background:var(--pri-700); transform:translateY(-1px); }
+  .btn-muted{ background:#e5e7eb; color:#111; }
+  .btn-muted:hover{ background:#d1d5db; }
+  .btn-danger{ background:var(--err); }
+  .btn-ok{ background:var(--ok); }
+  .btn-warn{ background:var(--warn); color:#111; }
+  .menu{ display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+  .menu button{ flex:1; min-width:160px; }
+  .small{ font-size:13px; padding:6px 10px; }
+  .hidden{ display:none !important; } .center{ text-align:center; } .right{ text-align:right; } .muted{ color:var(--muted); }
+  .table-wrap{
+  width:100%;
+  overflow-x:auto;
+  overflow-y:hidden;
+  border:1px solid #e5e7eb;
+  border-radius:8px;
+  max-width:100vw; /* garante que nunca passe da tela */
+}
 
-    header{
-      background:var(--pri); color:#fff; padding:14px 16px;
-      position:sticky; top:0; z-index:20; box-shadow:0 2px 12px rgba(0,0,0,.12);
-      display:flex; align-items:center; gap:12px; flex-wrap:wrap;
-    }
-    header .title{ font-size:20px; font-weight:700; flex:1; }
-    header .clock{ font-size:12px; opacity:.9; }
-    header .tag{ background:rgba(255,255,255,.15); padding:4px 8px; border-radius:999px; font-size:12px; }
+table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:100%;
+}
 
-    main{ margin:18px auto; max-width:1100px; padding:0 14px; }
-    .card{
-      background:#fff; border-radius:var(--br); box-shadow:var(--shadow);
-      padding:18px; margin:0 auto 18px; width:100%;
-    }
+  th,td{ border-bottom:1px solid #eee; padding:10px; text-align:left; }
+  th{ background:var(--pri); color:#fff; position:sticky; top:0; }
+  tr:hover td{ background:#fafafa; }
+  .delivered{ background:#e8ffe8; }
+  .status-aberto{ color:#d9534f; font-weight:700; }
+  .status-entregue{ color:#28a745; font-weight:700; }
+  .actions button{ margin-right:6px; margin-bottom:6px; }
+  #listaProdutos{ max-height:220px; overflow:auto; border:1px solid #e5e7eb; border-radius:8px; display:none; background:#fff; margin-top:4px; }
+  #listaProdutos > div{ padding:10px; cursor:pointer; border-bottom:1px solid #f3f4f6; }
+  #listaProdutos > div:hover{ background:#f9fafb; }
+  #modalOverlay {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.55);
+  padding: 20px;
+}
 
-    h2{ color:var(--pri); margin:0 0 12px 0; font-size:20px; }
-    h3{ color:#1f2937; margin:16px 0 8px 0; font-size:18px; }
+#modalOverlay.active {
+  display: flex;
+}
 
-    input, select, button, textarea{
-      width:100%; padding:10px; margin:6px 0; font-size:16px; border-radius:6px; border:1px solid #d1d5db; background:#fff;
-    }
-    input[type=number]{ -moz-appearance:textfield; }
-    textarea{ min-height:90px; resize:vertical; }
-    button{
-      background:var(--pri); color:#fff; border:none; cursor:pointer; font-weight:700;
-      transition:.15s transform ease, .15s background ease;
-    }
-    button:hover{ background:var(--pri-700); transform:translateY(-1px); }
-    .btn-muted{ background:#e5e7eb; color:#111; }
-    .btn-muted:hover{ background:#d1d5db; }
-    .btn-danger{ background:var(--err); }
-    .btn-danger:hover{ filter:brightness(.95); }
-    .btn-ok{ background:var(--ok); }
-    .btn-warn{ background:var(--warn); color:#111; }
+#modalBox {
+  background: #fff;
+  width: 95%;
+  max-width: 900px;
+  max-height: 90vh; /* ← limita a altura */
+  overflow-y: auto; /* ← ativa a rolagem */
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+  animation: pop 0.18s ease-out;
+  position: relative; /* ← pra posicionar o botão X */
+}
 
-    .menu{ display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
-    .menu button{ flex:1; min-width:160px; }
-    .small{ font-size:13px; padding:6px 10px; }
-
-    .hidden{ display:none !important; }
-    .center{ text-align:center; }
-    .right{ text-align:right; }
-    .muted{ color:var(--muted); }
-
-    .table-wrap{ width:100%; overflow:auto; border:1px solid #e5e7eb; border-radius:8px; }
-    table{ width:100%; border-collapse:collapse; min-width:720px; }
-    th,td{ border-bottom:1px solid #eee; padding:10px; text-align:left; }
-    th{ background:var(--pri); color:#fff; position:sticky; top:0; }
-    tr:hover td{ background:#fafafa; }
-    .delivered{ background:#e8ffe8; }
-    .status-aberto{ color:#d9534f; font-weight:700; }
-    .status-entregue{ color:#28a745; font-weight:700; }
-    .actions button{ margin-right:6px; margin-bottom:6px; }
-
-    /* Dropdown busca produto */
-    #listaProdutos{
-      max-height:180px; overflow:auto; border:1px solid #e5e7eb; border-radius:8px;
-      display:none; background:#fff; margin-top:4px;
-    }
-    #listaProdutos > div{ padding:10px; cursor:pointer; border-bottom:1px solid #f3f4f6; }
-    #listaProdutos > div:hover{ background:#f9fafb; }
-
-    /* Modal */
-    #modalOverlay{
-      position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:1000;
-      background:rgba(0,0,0,.55);
-    }
-    #modalOverlay.active{ display:flex; }
-    #modalBox{
-      background:#fff; width:95%; max-width:520px; border-radius:12px; padding:18px; box-shadow:0 12px 30px rgba(0,0,0,.25);
-      animation:pop .18s ease-out;
-    }
-    @keyframes pop{ from{ transform:scale(.98); opacity:.4; } to{ transform:scale(1); opacity:1; } }
-    #modalBox h3{ color:var(--pri); text-align:center; margin:0 0 10px 0; }
-
-    .chipbar{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:6px 0 10px; }
-    .chip{
-      display:inline-flex; align-items:center; gap:8px; border:1px solid #e5e7eb; padding:6px 10px; border-radius:999px; background:#fff;
-      font-size:13px;
-    }
-    .chip input[type=checkbox]{ width:auto; margin:0; }
-
-    .print-header{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:10px; }
-    .print-meta{ font-size:12px; color:#444; }
-    .signature-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:14px; margin-top:16px; }
-    .signature-box{ border-top:1px solid #000; padding-top:6px; text-align:center; font-size:12px; }
-    .check-col{ width:120px; text-align:center; }
-
-    .history-note{ background:#fff7ed; border:1px dashed #f59e0b; padding:10px; border-radius:8px; color:#7c2d12; }
-    .kpi{ display:grid; grid-template-columns: repeat(4, minmax(160px,1fr)); gap:10px; margin:10px 0 6px; }
-    .kpi .item{ background:#f8fafc; border:1px solid #e5e7eb; padding:12px; border-radius:10px; }
-    .kpi .val{ font-weight:800; font-size:18px; }
-
-    footer{ text-align:center; color:#6b7280; font-size:12px; padding:14px 0 24px; }
-
-    /* Toast */
-    #toast{
-      position:fixed; bottom:18px; left:50%; transform:translateX(-50%);
-      background:#111; color:#fff; padding:10px 14px; border-radius:999px; box-shadow:var(--shadow);
-      font-size:14px; z-index:2000; opacity:0; pointer-events:none; transition:opacity .2s ease, transform .2s ease;
-    }
-    #toast.show{ opacity:1; transform:translateX(-50%) translateY(-4px); }
-
-    /* Overlay (mensagens 10s) */
-    #transitionOverlay{
-      position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:3000;
-      background: radial-gradient(1200px 600px at 50% -20%, rgba(255,255,255,.25), rgba(255,255,255,0) 40%) ,
-                  linear-gradient(135deg, #0a4cc7 0%, #004aa0 40%, #052e6c 100%);
-      color:#fff; text-align:center; padding:24px;
-    }
-    #transitionOverlay.active{ display:flex; animation:fadein .4s ease-out; }
-    #transitionBox{
-      max-width:880px;
-      background:rgba(255,255,255,.08);
-      border:1px solid rgba(255,255,255,.18);
-      border-radius:16px; padding:24px 22px; box-shadow:0 16px 40px rgba(0,0,0,.35);
-      backdrop-filter: blur(3px);
-    }
-    #transitionTitle{ font-size:28px; font-weight:800; margin:0 0 8px; letter-spacing:.2px; }
-    #transitionMsg{ font-size:16px; opacity:.95; line-height:1.5; white-space:pre-line; }
-    @keyframes fadein{ from{ opacity:.3; transform:scale(.995);} to{ opacity:1; transform:scale(1);} }
-
-    @media (max-width:640px){
-      header .title{ width:100%; }
-      .menu{ flex-direction:column; }
-      table{ min-width:640px; }
-      .signature-grid{ grid-template-columns:1fr; }
-      #transitionTitle{ font-size:22px; }
-      #transitionMsg{ font-size:14px; }
-    }
-  </style>
+  @keyframes pop{ from{ transform:scale(.98); opacity:.4; } to{ transform:scale(1); opacity:1; } }
+  #modalBox h3{ color:var(--pri); text-align:center; margin:0 0 10px 0; }
+  .chipbar{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:6px 0 10px; }
+  .chip{ display:inline-flex; align-items:center; gap:8px; border:1px solid #e5e7eb; padding:6px 10px; border-radius:999px; background:#fff; font-size:13px; }
+  .chip input[type=checkbox]{ width:auto; margin:0; }
+  .print-header{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:10px; }
+  .print-meta{ font-size:12px; color:#444; }
+  .signature-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:16px; }
+  .signature-box{ border-top:1px solid #000; padding-top:6px; text-align:center; font-size:12px; }
+  .check-col{ width:120px; text-align:center; }
+  footer{ text-align:center; color:#6b7280; font-size:12px; padding:14px 0 24px; }
+  @media (max-width:640px){ header .title{ width:100%; } .menu{ flex-direction:column; } table{ min-width:640px; } .signature-grid{ grid-template-columns:1fr; } }
+  .pill{ display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; background:#eef2ff; color:#1e3a8a; }
+  .warn-note{ background:#fff7ed; border:1px dashed #f59e0b; padding:10px; border-radius:8px; color:#7c2d12; }
+</style>
 </head>
 <body>
 
-  <header>
-    <div class="title">CCB - Compra Coletiva</div>
-    <div class="tag" id="cycleTag">Carregando ciclo…</div>
-    <div class="clock" id="nowClock">--/--/---- --:--</div>
-  </header>
+<header>
+  <div class="title">CCB - Compra Coletiva</div>
+  <div class="tag" id="cycleTag">Carregando ciclo…</div>
+  <div class="clock" id="nowClock">--/--/---- --:--</div>
+</header>
 
-  <main>
-    <!-- LOGIN -->
-    <section id="loginScreen" class="card">
-      <h2>Login</h2>
-      <input type="text" id="loginUser" placeholder="Usuário" autocomplete="username"/>
-      <input type="password" id="loginPass" placeholder="Senha" autocomplete="current-password"/>
-      <div class="menu">
-        <button id="btnLogin">Entrar</button>
-        <button class="btn-muted" id="btnShowRegister">Criar conta</button>
-      </div>
-      <p class="center muted" style="margin-top:6px;">
-        Precisa de ajuda?
-        <span style="color:var(--pri);cursor:pointer;text-decoration:underline;" id="btnWhatsapp">Contato pelo WhatsApp</span>
-      </p>
-      <p id="loginError" class="center" style="color:var(--err); min-height:18px;"></p>
-    </section>
+<main>
 
-    <!-- REGISTRO -->
-    <section id="registerScreen" class="card hidden">
-      <h2>Criar Conta</h2>
-      <input type="text" id="regNome" placeholder="Nome completo"/>
-      <select id="regMinisterio">
-        <option value="">-- Selecione o ministério --</option>
-        <option>Ancião</option>
-        <option>Cooperador de ofício</option>
-        <option>Cooperador de jovens</option>
-        <option>Auxiliar da escrita</option>
-        <option>Outros</option>
+  <!-- LOGIN -->
+  <section id="loginScreen" class="card">
+    <h2>Login</h2>
+    <input type="text" id="loginUser" placeholder="Usuário" autocomplete="username"/>
+    <input type="password" id="loginPass" placeholder="Senha" autocomplete="current-password"/>
+    <div class="menu">
+      <button id="btnLogin">Entrar</button>
+      <!-- Registro público removido: cadastro é por liberação do admin -->
+      <button class="btn-muted" id="btnWhatsapp">
+        WhatsApp – Compra Coletiva
+      </button>
+    </div>
+    <p class="center muted" style="margin-top:6px;">
+      Para se cadastrar, excluir cadastro, ou adicionar algum produto no mix,
+      <b>entre em contato com a Compra Coletiva clicando acima</b>.
+    </p>
+    <p id="loginError" class="center" style="color:var(--err); min-height:18px;"></p>
+  </section>
+
+  <!-- 1º ACESSO (PROVISÓRIO) / COMPLETAR CADASTRO -->
+  <section id="primeiroAcessoScreen" class="card hidden">
+    <h2>Completar Cadastro (Acesso Provisório)</h2>
+    <div class="warn-note">Foi liberado um login provisório. Crie seu usuário definitivo e senha, e complete seus dados.</div>
+    <div class="menu">
+      <input id="paNome" placeholder="Nome completo"/>
+      <select id="paGenero">
+        <option value="auto">Detectar pelo nome</option>
+        <option value="M">Masculino</option>
+        <option value="F">Feminino</option>
       </select>
-      <input type="text" id="regLocalidade" placeholder="Localidade"/>
-      <div class="menu">
-        <input type="text" id="regUser" placeholder="Usuário"/>
-        <input type="password" id="regPass" placeholder="Senha"/>
+    </div>
+    <div class="menu">
+      <div style="flex:1;">
+        <label class="small muted">CEP</label>
+        <input id="paCep" placeholder="Somente números"/>
+        <button id="btnBuscaCepPA" class="small">Buscar CEP</button>
+        <div class="small muted">Ou marque “Outra localidade” para digitar manualmente.</div>
       </div>
-      <div class="menu">
-        <button id="btnRegister">Registrar</button>
-        <button class="btn-muted" id="btnBackLogin">Voltar</button>
+      <div style="flex:1; display:flex; align-items:center; gap:8px;">
+        <input type="checkbox" id="paOutraLocalidade" style="width:auto;"/>
+        <label for="paOutraLocalidade">Outra localidade</label>
       </div>
-      <p id="registerMsg" class="center" style="color:var(--ok); min-height:18px;"></p>
-    </section>
+    </div>
+    <div class="menu">
+      <input id="paLogradouro" placeholder="Logradouro" disabled/>
+      <input id="paBairro" placeholder="Bairro" disabled/>
+    </div>
+    <div class="menu">
+      <input id="paCidade" placeholder="Cidade" disabled/>
+      <input id="paUf" placeholder="UF" disabled/>
+    </div>
+    <div class="menu">
+      <input id="paUser" placeholder="Novo usuário"/>
+      <input id="paPass" placeholder="Nova senha" type="password"/>
+    </div>
+    <div class="menu">
+      <button id="btnConcluirPA" class="btn-ok">Concluir Cadastro</button>
+      <button id="btnVoltarPA" class="btn-muted">Sair</button>
+    </div>
+    <p id="paMsg" class="center" style="min-height:18px;"></p>
+  </section>
 
-    <!-- PEDIDO -->
-    <section id="pedidoScreen" class="card hidden">
-      <h2>Fazer Pedido</h2>
+  <!-- PEDIDO (HOME) -->
+  <section id="pedidoScreen" class="card hidden">
+    <h2>Fazer Pedido</h2>
 
-      <div class="chipbar" style="display:none;">
-        <span class="chip">
-          <input type="checkbox" id="toggleOcultarEntreguesUsuario"/>
-          <label for="toggleOcultarEntreguesUsuario">Ocultar pedidos entregues (meus)</label>
-        </span>
-      </div>
+    <input type="text" id="buscaProduto" placeholder="Buscar produto (digite o início do nome)..." autocomplete="off"/>
+    <div id="listaProdutos"></div>
 
-      <input type="text" id="buscaProduto" placeholder="Buscar produto..." autocomplete="off"/>
-      <div id="listaProdutos"></div>
+    <div class="menu">
+      <input type="number" id="quantidade" placeholder="Quantidade" min="1"/>
+      <input type="text" id="obs" placeholder="Observações"/>
+    </div>
 
-      <div class="menu">
-        <input type="number" id="quantidade" placeholder="Quantidade" min="1"/>
-        <input type="text" id="obs" placeholder="Observações"/>
-      </div>
+    <div class="menu">
+      <button id="btnSalvarPedido">Enviar Pedido</button>
+      <button class="btn-muted" id="btnMeusPedidos">Meus Pedidos</button>
+    </div>
 
-      <div class="menu">
-        <button id="btnSalvarPedido">Enviar Pedido</button>
-        <button class="btn-muted" id="btnMeusPedidos">Meus Pedidos</button>
-      </div>
+    <div class="menu" style="margin-top:8px;">
+      <button id="adminRelatorioBtn" class="hidden">Relatórios (Admin)</button>
+      <button id="adminProdutosBtn" class="hidden">Produtos (Admin)</button>
+      <button id="adminUsuariosBtn" class="hidden">Usuários (Admin)</button>
+      <button id="adminHistoricoBtn" class="hidden">Histórico (Admin)</button>
+    </div>
 
-      <div class="menu" style="margin-top:8px;">
-        <button id="adminRelatorioBtn" class="hidden">Relatórios (Admin)</button>
-        <button id="adminProdutosBtn" class="hidden">Produtos (Admin)</button>
-        <button id="adminUsuariosBtn" class="hidden">Usuários (Admin)</button>
-        <button id="adminHistoricoBtn" class="hidden">Histórico (Admin)</button>
-      </div>
+    <div class="menu" style="margin-top:6px;">
+<button id="btnMeuEstoque">📦 Meu Estoque</button>
 
-      <div class="menu" style="margin-top:6px;">
-        <button class="btn-danger" id="btnLogout">Sair</button>
-      </div>
+      <button class="btn-danger" id="btnLogout">Sair</button>
+    </div>
 
-      <p id="pedidoMsg" class="center" style="color:var(--ok); min-height:18px;"></p>
-      <p id="cycleInfo" class="center muted" style="margin-top:6px;"></p>
-    </section>
+    <p id="pedidoMsg" class="center" style="color:var(--ok); min-height:18px;"></p>
+    <p id="cycleInfo" class="center muted" style="margin-top:6px;"></p>
+  </section>
 
-    <!-- RELATÓRIO USUÁRIO -->
-    <section id="relatorioUsuario" class="card hidden">
-      <div class="print-header">
-        <h2>Meus Pedidos</h2>
-        <div>
-          <button id="btnImprimirRelUsuario" title="Imprimir">🖨️ Imprimir</button>
-        </div>
+  <!-- RELATÓRIO DO USUÁRIO -->
+  <section id="relatorioUsuario" class="card hidden">
+    <div class="print-header">
+      <h2>Meus Pedidos</h2>
+      <div class="chipbar right">
+        <input id="ruIntervalo" placeholder="Linhas: 1-10,12,15-18" style="max-width:260px;"/>
+        <button id="btnPreviewRelUsuario">👁️ Visualizar</button>
+        <button id="btnImprimirRelUsuario">🖨️ Imprimir</button>
       </div>
-      <div class="chipbar">
-        <label class="chip">Status:
-          <select id="filtroUsuario" style="border:none;">
-            <option value="todos">Todos</option>
-            <option value="aberto">Em aberto</option>
-            <option value="entregue">Entregues</option>
-          </select>
-        </label>
-        <span class="chip">
-          <input type="checkbox" id="toggleOcultarEntreguesUsuario2"/>
-          <label for="toggleOcultarEntreguesUsuario2">Ocultar entregues</label>
-        </span>
-      </div>
-      <div class="table-wrap">
-        <table id="tabelaPedidosUsuario">
-          <thead>
-            <tr>
-              <th>Produto</th><th>Qtd</th><th>Obs</th><th>Status</th><th>Ações</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-      <div class="center" style="margin-top:10px;">
-        <button class="btn-muted" id="btnVoltarUsuario">Voltar</button>
-      </div>
-    </section>
+    </div>
+    <div class="chipbar">
+      <label class="chip">Status:
+        <select id="filtroUsuario" style="border:none;">
+          <option value="todos">Todos</option>
+          <option value="aberto">Em aberto</option>
+          <option value="entregue">Entregues</option>
+        </select>
+      </label>
+      <span class="chip">
+        <input type="checkbox" id="toggleOcultarEntreguesUsuario2"/>
+        <label for="toggleOcultarEntreguesUsuario2">Ocultar entregues</label>
+      </span>
+    </div>
+    <div class="table-wrap">
+      <table id="tabelaPedidosUsuario">
+        <thead>
+          <tr><th>#</th><th>Produto</th><th>Qtd</th><th>Obs</th><th>Status</th><th>Ações</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="center" style="margin-top:10px;">
+      <button class="btn-muted" id="btnVoltarUsuario">Voltar</button>
+    </div>
+  </section>
 
-    <!-- RELATÓRIO ADMIN -->
-    <section id="relatorioAdmin" class="card hidden">
-      <div class="print-header">
-        <h2>Relatórios (Administrador)</h2>
-        <div class="chipbar right">
-          <button id="btnImprimirRelGeral">🖨️ Imprimir Geral</button>
-          <button id="btnImprimirRelLocalidade">🖨️ Por Localidade</button>
-          <button id="btnImprimirResumoItens">🖨️ Resumo Itens</button>
-        </div>
-      </div>
+  <!-- RELATÓRIO ADMIN -->
+  <section id="relatorioAdmin" class="card hidden">
+    <div class="print-header">
+      <h2>Relatórios (Administrador)</h2>
+      <div class="chipbar right">
+        <input id="raIntervalo" placeholder="Linhas: 1-50,60-80" style="max-width:260px;"/>
+        <button id="btnPreviewRelGeral">👁️ Visualizar</button>
+        <button id="btnImprimirRelGeral">🖨️ Imprimir Geral</button>
+        <button id="btnImprimirRelLocalidade">🖨️ Por Localidade</button>
+        <button id="btnImprimirResumoItens">🖨️ Resumo Itens</button>
+<button id="btnPreviewResumoItens">👁️ Visualizar Resumo Itens</button>
 
-      <div class="chipbar">
-        <label class="chip">Status:
-          <select id="filtroAdmin" style="border:none;">
-            <option value="todos">Todos</option>
-            <option value="aberto">Em aberto</option>
-            <option value="entregue">Entregues</option>
-          </select>
-        </label>
-        <span class="chip">
-          <input type="checkbox" id="toggleOcultarEntreguesAdmin"/>
-          <label for="toggleOcultarEntreguesAdmin">Ocultar entregues</label>
-        </span>
-      </div>
+        <button id="btnExportFechamento" class="btn-ok">⬇️ Exportar Fechamento (Excel)</button>
+<button id="btnRelatorioCiclos" class="btn-warn">📅 Relatórios de Ciclos Fechados</button>
+<button id="btnRelatorioStatus" class="btn-warn">📦 Relatórios por Status</button>
+<button id="btnControleEstoque" class="btn-ok">🧾 Controle de Estoques (Admin)</button>
+<button id="btnRelatorioMovimentacoes" class="btn-warn">📊 Relatório de Movimentações (por Ciclo)</button>
+<button id="btnExportarExcel" class="btn-ok">⬇️ Exportar Estoques / Movimentações (Excel)</button>
+<div class="menu" style="margin-top:20px;">
+  <h3>🕓 Ciclo Atual</h3>
+  <div id="infoCiclo" style="margin-bottom:10px; font-size:0.9rem; color:#333;"></div>
+  <button id="btnEncerrarCiclo" class="btn-warn">⏹️ Encerrar Ciclo Agora</button>
+</div>
 
-      <h3>Pedidos</h3>
-      <div class="table-wrap">
-        <table id="tabelaPedidosAdmin">
-          <thead>
-            <tr>
-              <th>Usuário</th><th>Localidade</th><th>Produto</th><th>Qtd</th><th>Obs</th><th>Status</th><th>Ações</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
 
-      <h3 style="margin-top:16px;">Usuários Cadastrados</h3>
-      <div style="text-align:right; margin-bottom:10px;">
-        <button id="btnToggleUsuarios" class="btn btn-secondary">👤 Ocultar usuários cadastrados</button>
-      </div>
 
-      <div class="table-wrap">
-        <table id="tabelaUsuariosAdmin">
-          <thead>
-            <tr>
-              <th>Nome</th><th>Usuário</th><th>Localidade</th><th>Ministério</th><th>Ações</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
 
-      <h3 style="margin-top:16px;">Produtos</h3>
-      <div style="text-align:right; margin-bottom:10px;">
-        <button id="btnToggleProdutos" class="btn btn-secondary">📦 Ocultar produtos cadastrados</button>
-      </div>
 
-      <div class="table-wrap">
-        <table id="tabelaProdutosAdmin">
-          <thead>
-            <tr>
-              <th>Produto</th><th>Ações</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
 
-      <div style="margin-top:12px;" class="menu">
-        <button id="btnAbrirCadastroUsuarioAdmin">Adicionar Usuário (Admin)</button>
-        <button id="btnAbrirCadastroProduto">Adicionar Produto (Admin)</button>
-        <button class="btn-muted" id="btnVoltarAdmin">Voltar</button>
       </div>
-    </section>
+    </div>
 
-    <!-- ADMIN / USUÁRIOS -->
-    <section id="adminUsuarios" class="card hidden">
-      <h2>Adicionar Usuário (Admin)</h2>
-      <div class="menu">
-        <input id="adminNovoNome" placeholder="Nome completo"/>
-        <input id="adminNovoUser" placeholder="Usuário"/>
-      </div>
-      <div class="menu">
-        <input id="adminNovoPass" placeholder="Senha" type="password"/>
-        <input id="adminNovoLocalidade" placeholder="Localidade"/>
-      </div>
+    <div class="chipbar">
+      <label class="chip">Status:
+        <select id="filtroAdmin" style="border:none;">
+          <option value="todos">Todos</option>
+          <option value="aberto">Em aberto</option>
+          <option value="entregue">Entregues</option>
+        </select>
+      </label>
+      <span class="chip">
+        <input type="checkbox" id="toggleOcultarEntreguesAdmin"/>
+        <label for="toggleOcultarEntreguesAdmin">Ocultar entregues</label>
+      </span>
+      <span class="chip"><span class="pill" id="resumoAbertos">Abertos: 0</span></span>
+      <span class="chip"><span class="pill" id="resumoEntregues">Entregues: 0</span></span>
+      <span class="chip"><span class="pill" id="resumoTotal">Total: 0</span></span>
+    </div>
+
+    <h3>Pedidos</h3>
+    <div class="table-wrap">
+      <table id="tabelaPedidosAdmin">
+        <thead>
+          <tr>
+            <th>#</th><th>Usuário</th><th>Localidade</th><th>Produto</th><th>Qtd</th><th>Obs</th><th>Status</th><th>Ações</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <h3 style="margin-top:16px;">Usuários Cadastrados</h3>
+    <div style="text-align:right; margin-bottom:10px;">
+      <button id="btnToggleUsuarios" class="btn btn-secondary">👤 Ocultar usuários cadastrados</button>
+    </div>
+    <div class="table-wrap">
+      <table id="tabelaUsuariosAdmin">
+        <thead>
+          <tr><th>Nome</th><th>Usuário</th><th>Localidade</th><th>Ministério</th><th>Provisório?</th><th>Ações</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <h3 style="margin-top:16px;">Produtos</h3>
+    <div style="text-align:right; margin-bottom:10px;">
+      <button id="btnToggleProdutos" class="btn btn-secondary">📦 Ocultar produtos cadastrados</button>
+    </div>
+    <div class="table-wrap">
+      <table id="tabelaProdutosAdmin">
+        <thead><tr><th>Produto</th><th>Unidade</th><th>Ações</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div style="margin-top:12px;" class="menu">
+      <button id="btnAbrirCadastroUsuarioAdmin">Adicionar Usuário (Admin)</button>
+      <button id="btnAbrirCadastroProduto">Adicionar Produto (Admin)</button>
+      <button class="btn-muted" id="btnVoltarAdmin">Voltar</button>
+    </div>
+  </section>
+
+  <!-- ADMIN: USUÁRIOS -->
+  <section id="adminUsuarios" class="card hidden">
+    <h2>Adicionar Usuário (Admin)</h2>
+    <div class="warn-note">Dica: para liberar cadastro use “Provisório: SIM” — o irmão/irmã entra com esse login e trocará os dados no primeiro acesso.</div>
+    <div class="menu">
+      <input id="adminNovoNome" placeholder="Nome completo"/>
+      <input id="adminNovoUser" placeholder="Usuário provisório (ou definitivo)"/>
+    </div>
+    <div class="menu">
+      <input id="adminNovoPass" placeholder="Senha provisória/definitiva" type="password"/>
+      <input id="adminNovoLocalidade" placeholder="Localidade"/>
+    </div>
+    <div class="menu">
       <select id="adminNovoMinisterio">
         <option value="">-- Selecionar ministério --</option>
-        <option>Ancião</option>
-        <option>Cooperador de ofício</option>
-        <option>Cooperador de jovens</option>
-        <option>Auxiliar da escrita</option>
-        <option>Outros</option>
+        <option>Ancião</option><option>Cooperador de ofício</option><option>Cooperador de jovens</option>
+        <option>Auxiliar da escrita</option><option>Outros</option>
       </select>
-      <div class="menu">
-        <button id="btnAdminAddUser">Adicionar Usuário</button>
-        <button class="btn-muted" id="btnVoltarAdminUsr">Voltar</button>
-      </div>
+      <select id="adminProvisorio">
+        <option value="true">Provisório: SIM</option>
+        <option value="false">Provisório: NÃO</option>
+      </select>
+    </div>
+    <div class="menu">
+      <button id="btnAdminAddUser">Adicionar Usuário</button>
+      <button class="btn-muted" id="btnVoltarAdminUsr">Voltar</button>
+    </div>
 
-      <div class="table-wrap" style="margin-top:10px;">
-        <table id="tabelaAdminUsuariosList">
-          <thead>
-            <tr>
-              <th>Nome</th><th>Usuário</th><th>Localidade</th><th>Ministério</th><th>Ações</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </section>
+    <div class="table-wrap" style="margin-top:10px;">
+      <table id="tabelaAdminUsuariosList">
+        <thead><tr><th>Nome</th><th>Usuário</th><th>Localidade</th><th>Ministério</th><th>Provisório?</th><th>Ações</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
 
-    <!-- ADMIN / PRODUTOS -->
-    <section id="adminProdutos" class="card hidden">
-      <h2>Produtos (Admin)</h2>
-      <div class="menu">
-        <input id="novoProdutoNome" placeholder="Nome do produto"/>
-        <input id="novoProdutoUnidade" placeholder="Unidade (ex: pacote, rolo, unidade)"/>
-      </div>
-      <div class="menu">
-        <button id="btnAddProduto">Adicionar Produto</button>
-        <button class="btn-muted" id="btnVoltarAdminProd">Voltar</button>
-      </div>
-      <div class="table-wrap" style="margin-top:10px;">
-        <table id="tabelaProdutosAdminList">
-          <thead>
-            <tr><th>Produto</th><th>Ações</th></tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </section>
+  <!-- ADMIN: PRODUTOS -->
+  <section id="adminProdutos" class="card hidden">
+    <h2>Produtos (Admin)</h2>
+    <div class="menu">
+      <input id="novoProdutoNome" placeholder="Nome do produto"/>
+      <input id="novoProdutoUnidade" placeholder="Unidade (ex: pacote, rolo, unidade)"/>
+    </div>
+    <div class="menu">
+      <button id="btnAddProduto">Adicionar Produto</button>
+      <button class="btn-muted" id="btnVoltarAdminProd">Voltar</button>
+    </div>
+    <div class="table-wrap" style="margin-top:10px;">
+      <table id="tabelaProdutosAdminList">
+        <thead><tr><th>Produto</th><th>Unidade</th><th>Ações</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
 
-    <!-- HISTÓRICO ADMIN -->
-    <section id="historicoAdmin" class="card hidden">
-      <h2>Histórico do Sistema (Admin)</h2>
-      <p class="history-note">
-        Apenas administradores visualizam. Aqui constam: logins, logouts, criação/edição/exclusão de pedidos, alterações de senha e demais eventos.
-      </p>
+  <!-- HISTÓRICO (ADMIN) -->
+  <section id="historicoAdmin" class="card hidden">
+    <h2>Histórico do Sistema (Admin)</h2>
+    <p class="warn-note">Apenas administradores visualizam. Aqui constam: logins, logouts, criação/edição/exclusão de pedidos, alterações de senha e demais eventos.</p>
 
-      <div class="kpi">
-        <div class="item"><div class="label muted">Eventos (30 dias)</div><div class="val" id="kpiEvt30">--</div></div>
-        <div class="item"><div class="label muted">Logins hoje</div><div class="val" id="kpiLoginHoje">--</div></div>
-        <div class="item"><div class="label muted">Pedidos criados hoje</div><div class="val" id="kpiPedidosHoje">--</div></div>
-        <div class="item"><div class="label muted">Alterações de senha (30 dias)</div><div class="val" id="kpiPwd30">--</div></div>
+    <div class="chipbar">
+      <span class="chip">
+        <input type="checkbox" id="toggleOcultarHistorico"/>
+        <label for="toggleOcultarHistorico">Ocultar histórico</label>
+      </span>
+      <label class="chip">Tipo:
+        <select id="filtroHistoricoTipo" style="border:none;">
+          <option value="todos">Todos</option>
+          <option value="login">Login</option>
+          <option value="logout">Logout</option>
+          <option value="pedido">Pedidos</option>
+          <option value="perfil">Perfil</option>
+          <option value="sistema">Sistema</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="kpi" style="display:grid;grid-template-columns: repeat(4,minmax(160px,1fr));gap:10px;margin:10px 0 6px;">
+      <div class="item" style="background:#f8fafc;border:1px solid #e5e7eb;padding:12px;border-radius:10px;">
+        <div class="label muted">Eventos (30 dias)</div><div class="val" id="kpiEvt30" style="font-weight:800;font-size:18px;">--</div>
       </div>
-
-      <div class="chipbar">
-        <span class="chip">
-          <input type="checkbox" id="toggleOcultarHistorico"/>
-          <label for="toggleOcultarHistorico">Ocultar histórico</label>
-        </span>
-        <label class="chip">Tipo:
-          <select id="filtroHistoricoTipo" style="border:none;">
-            <option value="todos">Todos</option>
-            <option value="login">Login</option>
-            <option value="logout">Logout</option>
-            <option value="pedido">Pedidos</option>
-            <option value="perfil">Perfil</option>
-            <option value="sistema">Sistema</option>
-          </select>
-        </label>
+      <div class="item" style="background:#f8fafc;border:1px solid #e5e7eb;padding:12px;border-radius:10px;">
+        <div class="label muted">Logins hoje</div><div class="val" id="kpiLoginHoje" style="font-weight:800;font-size:18px;">--</div>
       </div>
-
-      <div class="table-wrap">
-        <table id="tabelaHistoricoAdmin">
-          <thead>
-            <tr>
-              <th>Data/Hora</th><th>Usuário</th><th>Tipo</th><th>Descrição</th><th>Detalhes</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
+      <div class="item" style="background:#f8fafc;border:1px solid #e5e7eb;padding:12px;border-radius:10px;">
+        <div class="label muted">Pedidos criados hoje</div><div class="val" id="kpiPedidosHoje" style="font-weight:800;font-size:18px;">--</div>
       </div>
-
-      <div class="menu">
-        <button class="btn-muted" id="btnVoltarHistorico">Voltar</button>
+      <div class="item" style="background:#f8fafc;border:1px solid #e5e7eb;padding:12px;border-radius:10px;">
+        <div class="label muted">Alterações de senha (30 dias)</div><div class="val" id="kpiPwd30" style="font-weight:800;font-size:18px;">--</div>
       </div>
-    </section>
+    </div>
 
-    <!-- MODAL GENÉRICO -->
-    <div id="modalOverlay" class="hidden">
-      <div id="modalBox">
-        <h3 id="modalTitulo"></h3>
-        <div id="modalConteudo"></div>
-        <div class="center" style="margin-top:12px;">
-          <button class="btn-muted" id="btnFecharModal">Fechar</button>
+    <div class="table-wrap">
+      <table id="tabelaHistoricoAdmin">
+        <thead>
+          <tr><th>Data/Hora</th><th>Usuário</th><th>Tipo</th><th>Descrição</th><th>Detalhes</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="menu">
+      <button class="btn-muted" id="btnVoltarHistorico">Voltar</button>
+    </div>
+  </section>
+
+  <!-- MODAL GENÉRICO -->
+  <div id="modalOverlay" class="hidden">
+    <div id="modalBox">
+  <button id="closeModalX" style="position:absolute; top:8px; right:10px; background:none; border:none; font-size:22px; cursor:pointer;">✖</button>
+  <h3 id="modalTitulo"></h3>
+
+      <div id="modalConteudo"></div>
+      <div class="center" style="margin-top:12px;">
+        <button class="btn-muted" id="btnFecharModal">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TEMPLATES IMPRESSÃO -->
+  <template id="tpl-impressao-usuario">
+    <div>
+      <div class="print-header">
+        <div>
+          <h3 style="margin:0;">Meus Pedidos</h3>
+          <div class="print-meta" id="print-meta-usuario">Gerado em --/--/---- --:--</div>
+          <div class="print-meta" id="print-solicitante">Solicitante: --</div>
+          <div class="print-meta" id="print-localidade">Localidade: --</div>
+          <div class="print-meta" id="print-ministerio">Ministério: --</div>
         </div>
+        <div class="print-meta"><div id="print-ciclo">Ciclo: --</div></div>
+      </div>
+      <table style="width:100%; border-collapse:collapse;">
+        <thead>
+          <tr style="background:#0056b3; color:#fff;">
+            <th style="text-align:left;padding:8px;border:1px solid #ddd;">#</th>
+            <th style="text-align:left;padding:8px;border:1px solid #ddd;">Produto</th>
+            <th style="text-align:left;padding:8px;border:1px solid #ddd;">Qtd</th>
+            <th style="text-align:left;padding:8px;border:1px solid #ddd;">Obs</th>
+            <th class="check-col" style="border:1px solid #ddd;">Visto ✓</th>
+          </tr>
+        </thead>
+        <tbody id="print-tbody-usuario"></tbody>
+      </table>
+      <div class="signature-grid">
+        <div class="signature-box">Assinatura do Solicitante</div>
+        <div class="signature-box">Conferente / Visto</div>
       </div>
     </div>
+  </template>
 
-    <!-- OVERLAY DE TRANSIÇÃO (10s) -->
-    <div id="transitionOverlay">
-      <div id="transitionBox">
-        <div id="transitionTitle">Carregando…</div>
-        <div id="transitionMsg">Aguarde um instante…</div>
+  <template id="tpl-impressao-geral">
+    <div>
+      <div class="print-header">
+        <div>
+          <h3 style="margin:0;">Relatório Geral de Pedidos</h3>
+          <div class="print-meta" id="print-meta-geral">Gerado em --/--/---- --:--</div>
+        </div>
+        <div class="print-meta"><div id="print-ciclo-geral">Ciclo: --</div></div>
+      </div>
+      <table style="width:100%; border-collapse:collapse;">
+        <thead>
+          <tr style="background:#0056b3; color:#fff;">
+            <th style="text-align:left;padding:8px;border:1px solid #ddd;">#</th>
+            <th style="text-align:left;padding:8px;border:1px solid #ddd;">Usuário</th>
+            <th style="text-align:left;padding:8px;border:1px solid #ddd;">Localidade</th>
+            <th style="text-align:left;padding:8px;border:1px solid #ddd;">Produto</th>
+            <th style="text-align:left;padding:8px;border:1px solid #ddd;">Qtd</th>
+            <th style="text-align:left;padding:8px;border:1px solid #ddd;">Obs</th>
+            <th style="text-align:left;padding:8px;border:1px solid #ddd;">Status</th>
+            <th class="check-col" style="border:1px solid #ddd;">Visto ✓</th>
+          </tr>
+        </thead>
+        <tbody id="print-tbody-geral"></tbody>
+      </table>
+      <div class="signature-grid">
+        <div class="signature-box">Responsável / Assinatura</div>
+        <div class="signature-box">Conferente / Visto</div>
       </div>
     </div>
+  </template>
 
-  </main>
+</main>
 
-  <footer>
-    <div>© <span id="yearFooter"></span> CCB - Compra Coletiva. Todos os direitos reservados.</div>
-  </footer>
+<footer>
+  <div>© <span id="yearFooter"></span> CCB - Compra Coletiva. Todos os direitos reservados.</div>
+</footer>
 
-  <!-- Firebase v8 -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<!-- Firebase v8 -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<!-- SheetJS para Excel -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
-  <div id="toast"></div>
-
-  <script>
+<script>
 /* ===============================
-   APP – Firebase v8 + Realtime DB
-   Mensagens de transição (10s) personalizadas
-   Correções de login, toasts e handlers
+   APP – Firebase + Lógica
 ================================ */
-
 const firebaseConfig = {
   apiKey: "AIzaSyDwpb9gdYL8qzJfaref3bi0miXiJhiH1Ds",
   authDomain: "compra-coletiva-ccb-web.firebaseapp.com",
   databaseURL: "https://compra-coletiva-ccb-web-default-rtdb.firebaseio.com",
   projectId: "compra-coletiva-ccb-web",
-  storageBucket: "compra-coletiva-ccb-web.firebasestorage.app",
+  storageBucket: "compra-coletiva-ccb-web.appspot.com",
+
   messagingSenderId: "20688611131",
   appId: "1:20688611131:web:c0fbaa91045c538e23f91e"
 };
 try{ if(!firebase.apps.length) firebase.initializeApp(firebaseConfig); }catch(e){}
 const db = firebase.database();
 
+/* ======= VARS ======= */
 const ADMIN_LOGIN = "fernando_filho87";
 const ADMIN_PASSWORD = "1502";
-const WHATSAPP_PHONE = "5531985330656";
-
+const WHATSAPP_PHONE = "5531985330656"; // com DDI +55
 let currentUser = null;
 let produtosCache = [];
 let selectedProductKey = null;
 let lastScreen = "loginScreen";
+let audioCtx = null;
 
-/* ========= HELPERS ========= */
+/* ======= UTILS ======= */
 const $ = sel => document.querySelector(sel);
 const $$ = sel => Array.from(document.querySelectorAll(sel));
-
-function escapeHtml(s){
-  if(s === null || s === undefined) return '';
-  return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[m]));
+function escapeHtml(s){ if(s==null) return ''; return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[m])); }
+function fmtDateTime(ts){ const d=new Date(ts); const dd=String(d.getDate()).padStart(2,'0'); const mm=String(d.getMonth()+1).padStart(2,'0'); const yyyy=d.getFullYear(); const hh=String(d.getHours()).padStart(2,'0'); const mi=String(d.getMinutes()).padStart(2,'0'); return `${dd}/${mm}/${yyyy} ${hh}:${mi}`; }
+function monthIdFrom(ts){ const d=new Date(ts); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; }
+function normalize(s){ return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(); }
+function showToast(msg, type='info', t=2000){ // simples
+  const div = document.createElement('div');
+  div.style.position='fixed'; div.style.left='50%'; div.style.top='18px'; div.style.transform='translateX(-50%)';
+  div.style.background= type==='error'?'#b30000':(type==='warn'?'#f0ad4e':'#0056b3'); div.style.color='#fff'; div.style.padding='10px 14px';
+  div.style.borderRadius='8px'; div.style.boxShadow='0 8px 20px rgba(0,0,0,.2)'; div.style.zIndex='9999';
+  div.innerText = msg; document.body.appendChild(div); setTimeout(()=>div.remove(), t);
 }
-function fmtDateTime(ts){
-  const d = new Date(ts);
-  const dd = String(d.getDate()).padStart(2,'0');
-  const mm = String(d.getMonth()+1).padStart(2,'0');
-  const yyyy = d.getFullYear();
-  const hh = String(d.getHours()).padStart(2,'0');
-  const min = String(d.getMinutes()).padStart(2,'0');
-  return `${dd}/${mm}/${yyyy} ${hh}:${min}`;
-}
-function monthIdFrom(ts){
-  const d = new Date(ts);
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-}
-
-/* ========= TOAST ========= */
-let toastTimer = null;
-function showToast(msg, type="info", ms=2500){
-  const el = $("#toast");
-  if(!el) return;
-  el.textContent = msg;
-  el.style.background = (type==="error")?"#b30000":(type==="warn")?"#8a6d3b":"#111";
-  clearTimeout(toastTimer);
-  el.classList.add("show");
-  toastTimer = setTimeout(()=> el.classList.remove("show"), ms);
+// ======= Alternar "Outra Localidade" no primeiro acesso =======
+function togglePAOutraLocalidade(checked){
+  const campos = ['#paLogradouro','#paBairro','#paCidade','#paUf'];
+  campos.forEach(sel => {
+    const el = document.querySelector(sel);
+    if (!el) return;
+    el.disabled = !checked;
+    if (!checked) el.value = '';
+  });
 }
 
-/* ========= OVERLAY (10s) ========= */
-function mostrarTransicao(titulo, mensagem, duracao=10000){
-  const ov = $("#transitionOverlay");
-  const tTitle = $("#transitionTitle");
-  const tMsg = $("#transitionMsg");
-  tTitle.textContent = titulo || "Carregando…";
-  tMsg.textContent = mensagem || "Aguarde um instante…";
-  ov.classList.add("active");
-  return new Promise(resolve=>{
+function abrirModal(titulo, conteudoHtml){ $('#modalTitulo').innerText=titulo||''; $('#modalConteudo').innerHTML=conteudoHtml||''; $('#modalOverlay').classList.remove('hidden'); $('#modalOverlay').classList.add('active'); }
+function fecharModal(){ $('#modalOverlay').classList.remove('active'); $('#modalOverlay').classList.add('hidden'); $('#modalTitulo').innerText=''; $('#modalConteudo').innerHTML=''; }
+$('#btnFecharModal').addEventListener('click', fecharModal);
+$('#closeModalX').addEventListener('click', fecharModal);
+
+
+/* ======= ÁUDIO (WebAudio) ======= */
+function ensureAudio(){ if(!audioCtx){ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); } }
+function playChime(type='login'){ try{
+  ensureAudio();
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.type = 'sine';
+  o.frequency.value = (type==='login')? 880 : 523; // mais alto/limpo
+  g.gain.value = 0.0001;
+  o.connect(g); g.connect(audioCtx.destination);
+  o.start();
+  // fade-in breve + fade-out mais longo
+  const now = audioCtx.currentTime;
+  g.gain.exponentialRampToValueAtTime(0.2, now+0.04);
+  g.gain.exponentialRampToValueAtTime(0.0001, now+0.6);
+  o.stop(now+0.65);
+}catch(e){} }
+
+/* ======= Saudação com gênero ======= */
+function guessGeneroByNome(nome){
+  if(!nome) return 'M'; // padrão
+  const n = normalize(nome).split(' ')[0]; // primeiro nome
+  // regras simples:
+  if(n.endsWith('a') || n.endsWith('e')) return 'F';
+  return 'M';
+}
+function saudacaoLogin(nome, genero){
+  const g = genero==='auto' ? guessGeneroByNome(nome) : genero;
+  const termo = (g==='F')? 'irmã' : 'irmão';
+  return `A paz de Deus, ${termo} ${nome || ''}...! É muito importante seu zelo com a irmandade e com a obra de Deus! Faça bom proveito dos itens que o Senhor Deus está disponibilizando para compras.`;
+}
+function saudacaoSaida(nome, genero){
+  const g = genero==='auto' ? guessGeneroByNome(nome) : genero;
+  const termo = (g==='F')? 'irmã' : 'irmão';
+  return `Deus abençoe, ${termo} ${nome || ''}...! Saúda em casa com a santa paz de Deus!`;
+}
+
+/* ======= Mensagem de transição ======= */
+function msgTransicao(texto, duracao=10000){ // 10s conforme pedido
+  return new Promise(res=>{
+    const overlay=document.createElement('div');
+    Object.assign(overlay.style,{position:'fixed',inset:'0',background:'linear-gradient(135deg,#0056b3,#004080)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:'24px',fontWeight:'700',textAlign:'center',zIndex:'9999',opacity:'0',transition:'opacity .4s ease',padding:'20px',whiteSpace:'pre-wrap'});
+    overlay.innerText = texto;
+    document.body.appendChild(overlay);
+    setTimeout(()=>overlay.style.opacity='1',20);
     setTimeout(()=>{
-      ov.classList.remove("active");
-      resolve();
+      overlay.style.opacity='0';
+      setTimeout(()=>{ overlay.remove(); res(); }, 350);
     }, duracao);
   });
 }
 
-/* ========= MODAL ========= */
-function abrirModal(titulo, conteudoHtml){
-  const overlay = $('#modalOverlay');
-  $('#modalTitulo').innerText = titulo || '';
-  $('#modalConteudo').innerHTML = conteudoHtml || '';
-  overlay.classList.remove('hidden');
-  overlay.classList.add('active');
-}
-function fecharModal(){
-  const overlay = $('#modalOverlay');
-  overlay.classList.remove('active');
-  overlay.classList.add('hidden');
-  $('#modalTitulo').innerText='';
-  $('#modalConteudo').innerHTML='';
-}
-function promptModal(titulo,label,defaultVal=''){
-  return new Promise(resolve=>{
-    const html = `
-      <label>${label}</label>
-      <input id="__modal_input" value="${escapeHtml(defaultVal)}"/>
-      <div class="center" style="margin-top:10px;">
-        <button id="ok">OK</button>
-        <button class="btn-muted" id="cancel">Cancelar</button>
-      </div>`;
-    abrirModal(titulo, html);
-    $('#ok').onclick = ()=>{ const v = $('#__modal_input').value; fecharModal(); resolve(v); };
-    $('#cancel').onclick = ()=>{ fecharModal(); resolve(null); };
-  });
-}
-function confirmModal(titulo, msg){
-  return new Promise(resolve=>{
-    const html = `
-      <p>${msg}</p>
-      <div class="center" style="margin-top:10px;">
-        <button id="yes">Sim</button>
-        <button class="btn-muted" id="no">Não</button>
-      </div>`;
-    abrirModal(titulo, html);
-    $('#yes').onclick = ()=>{ fecharModal(); resolve(true); };
-    $('#no').onclick = ()=>{ fecharModal(); resolve(false); };
-  });
-}
-function senhaModal(titulo){
-  return new Promise(resolve=>{
-    const html = `
-      <label>Senha:</label>
-      <input id="__modal_pass" type="password"/>
-      <div class="center" style="margin-top:10px;">
-        <button id="ok2">Confirmar</button>
-        <button class="btn-muted" id="cancel2">Cancelar</button>
-      </div>`;
-    abrirModal(titulo, html);
-    $('#ok2').onclick = ()=>{ const v = $('#__modal_pass').value; fecharModal(); resolve(v); };
-    $('#cancel2').onclick = ()=>{ fecharModal(); resolve(null); };
-  });
-}
-$('#btnFecharModal').addEventListener('click', fecharModal);
+/* ======= Navegação ======= */
+function hideAll(){ ['loginScreen','primeiroAcessoScreen','pedidoScreen','relatorioUsuario','relatorioAdmin','adminProdutos','adminUsuarios','historicoAdmin'].forEach(id=>$('#'+id)?.classList.add('hidden')); }
+function go(id){ hideAll(); $('#'+id)?.classList.remove('hidden'); lastScreen=id; }
 
-/* ========= NAVEGAÇÃO ========= */
-function hideAllScreens(){
-  ['loginScreen','registerScreen','pedidoScreen','relatorioUsuario','relatorioAdmin','adminProdutos','adminUsuarios','historicoAdmin']
-    .forEach(id => $('#'+id)?.classList.add('hidden'));
-}
-function go(screenId){
-  hideAllScreens();
-  $('#'+screenId)?.classList.remove('hidden');
-  lastScreen = screenId;
-}
-
-/* ========= CICLO (30 dias) ========= */
+/* ======= Ciclo ======= */
 async function getCycleInfo(){
   try{
     const snap = await db.ref('config/cycleStart').once('value');
-    const start = snap.val() || Date.now();
-    const now = Date.now();
-    const elapsed = now - start;
-    const daysElapsed = Math.floor(elapsed / (24*60*60*1000));
-    const daysRemaining = 30 - daysElapsed;
-    const open = daysElapsed < 30;
+    const start = snap.val() || Date.now(); const now=Date.now();
+    const daysElapsed = Math.floor((now-start)/(24*60*60*1000));
+    const daysRemaining = 30 - daysElapsed; const open = daysElapsed < 30;
     return { start, now, daysElapsed, daysRemaining, open, cycleId: monthIdFrom(start) };
-  }catch(e){
-    return { start: Date.now(), now: Date.now(), daysElapsed:0, daysRemaining:30, open:true, cycleId: monthIdFrom(Date.now()) };
-  }
+  }catch(e){ return { start: Date.now(), now: Date.now(), daysElapsed:0, daysRemaining:30, open:true, cycleId: monthIdFrom(Date.now()) }; }
 }
 async function updateCycleInfoUI(){
   const info = await getCycleInfo();
-  const el = $('#cycleInfo');
-  const tag = $('#cycleTag');
-  if(el){
-    if(!info.open) el.textContent = `Período de 30 dias encerrado. Para novo ciclo, contate o administrador.`;
-    else el.textContent = `Ciclo aberto. Dia ${info.daysElapsed+1} de 30. Edições permitidas até ${info.daysRemaining>5 ? (info.daysRemaining+' dias antes do fechamento') : 'bloqueadas (últimos 5 dias)'}.`;
-  }
-  if(tag){
-    tag.textContent = info.open ? `Ciclo ${info.cycleId} (aberto)` : `Ciclo ${info.cycleId} (encerrado)`;
-  }
+  $('#cycleInfo').textContent = info.open
+    ? `Ciclo aberto. Dia ${info.daysElapsed+1} de 30. Edições permitidas até ${info.daysRemaining>5 ? (info.daysRemaining+' dias antes do fechamento') : 'bloqueadas (últimos 5 dias)'}.`
+    : `Período de 30 dias encerrado. Para novo ciclo, contate o administrador.`;
+  $('#cycleTag').textContent = info.open ? `Ciclo ${info.cycleId} (aberto)` : `Ciclo ${info.cycleId} (encerrado)`;
 }
 
-/* ========= LOGS ========= */
+/* ======= LOGS ======= */
 async function logEvent(tipo, descricao, detalhes={}){
-  const payload = {
-    tipo, // 'login' | 'logout' | 'pedido' | 'perfil' | 'sistema'
-    descricao,
-    detalhes: detalhes || {},
-    user: currentUser?.user || 'anon',
-    userNome: currentUser?.nome || 'Anônimo',
-    ts: Date.now()
-  };
-  try{ await db.ref('logs').push(payload); }catch(e){ console.warn('log fail', e); }
+  try{
+    const payload={ tipo, descricao, detalhes:detalhes||{}, user: currentUser?.user || 'anon', userNome: currentUser?.nome || 'Anônimo', ts: Date.now() };
+    await db.ref('logs').push(payload);
+  }catch(e){ console.warn('log fail',e); }
 }
 
-/* ========= PRODUTOS ========= */
+/* ======= PRODUTOS ======= */
 async function seedProdutos(){
   try{
     const snap = await db.ref('produtos').once('value');
     if(snap.exists()) return;
-    const iniciais = [
-      { nome: 'Copo descartável pacote com 100 unidades', unidade:'pacote' },
-      { nome: 'Toalha papel interfolha pacote com 1000 folhas', unidade:'pacote' },
-      { nome: 'Papel higiênico 300 metros (rolo)', unidade:'rolo' },
-      { nome: 'Toalha papel 200 metros (rolo)', unidade:'rolo' },
-      { nome: 'Papel higiênico 60 metros pacote com 12 unidades', unidade:'pacote' }
+    const iniciais=[
+      { nome:'Copo descartável 100 un', unidade:'pacote' },
+      { nome:'Toalha papel interfolha 1000 folhas', unidade:'pacote' },
+      { nome:'Papel higiênico 300m', unidade:'rolo' },
+      { nome:'Toalha papel 200m', unidade:'rolo' },
+      { nome:'Papel higiênico 60m c/12', unidade:'pacote' },
     ];
     for(const p of iniciais) await db.ref('produtos').push(p);
-  }catch(e){ console.error('seed error', e); }
+  }catch(e){}
 }
 async function loadProdutos(){
   try{
     const snap = await db.ref('produtos').once('value');
-    const obj = snap.val() || {};
-    produtosCache = Object.keys(obj).map(k => ({ key:k, ...obj[k] }));
-    renderTabelaProdutosAdmin();
-  }catch(e){ console.error('loadProdutos', e); }
+    const obj = snap.val()||{};
+    produtosCache = Object.keys(obj).map(k=>({ key:k, ...obj[k] }));
+    // ordenar alfabeticamente por nome
+    produtosCache.sort((a,b)=> normalize(a.nome).localeCompare(normalize(b.nome)));
+    renderProdutosAdminTabelas();
+  }catch(e){ console.error('loadProdutos',e); }
 }
-function renderTabelaProdutosAdmin(){
-  const tbody = $('#tabelaProdutosAdmin tbody');
-  if(tbody){
-    tbody.innerHTML='';
-    produtosCache.forEach(p=>{
-      const tr=document.createElement('tr');
-      tr.innerHTML = `<td>${escapeHtml(p.nome)} (${escapeHtml(p.unidade||'')})</td>
-        <td class="actions">
-          <button class="small" onclick="adminEditProduto('${p.key}')">Editar</button>
-          <button class="small" onclick="adminDeleteProduto('${p.key}')">Excluir</button>
-        </td>`;
-      tbody.appendChild(tr);
-    });
-  }
-  const tbodyList = $('#tabelaProdutosAdminList tbody');
-  if(tbodyList){
-    tbodyList.innerHTML='';
-    produtosCache.forEach(p=>{
-      const tr=document.createElement('tr');
-      tr.innerHTML = `<td>${escapeHtml(p.nome)} (${escapeHtml(p.unidade||'')})</td>
-        <td class="actions">
-          <button class="small" onclick="adminEditProduto('${p.key}')">Editar</button>
-          <button class="small" onclick="adminDeleteProduto('${p.key}')">Excluir</button>
-        </td>`;
-      tbodyList.appendChild(tr);
-    });
-  }
+function renderProdutosAdminTabelas(){
+  const tbody = $('#tabelaProdutosAdmin tbody'); const tbodyList = $('#tabelaProdutosAdminList tbody');
+  if(tbody){ tbody.innerHTML=''; produtosCache.forEach(p=>{ const tr=document.createElement('tr');
+    tr.innerHTML = `<td>${escapeHtml(p.nome)}</td><td>${escapeHtml(p.unidade||'')}</td>
+      <td class="actions">
+        <button class="small" onclick="adminEditProduto('${p.key}')">Editar</button>
+        <button class="small" onclick="adminDeleteProduto('${p.key}')">Excluir</button>
+      </td>`;
+    tbody.appendChild(tr);
+  });}
+  if(tbodyList){ tbodyList.innerHTML=''; produtosCache.forEach(p=>{ const tr=document.createElement('tr');
+    tr.innerHTML = `<td>${escapeHtml(p.nome)}</td><td>${escapeHtml(p.unidade||'')}</td>
+      <td class="actions">
+        <button class="small" onclick="adminEditProduto('${p.key}')">Editar</button>
+        <button class="small" onclick="adminDeleteProduto('${p.key}')">Excluir</button>
+      </td>`;
+    tbodyList.appendChild(tr);
+  });}
 }
 window.adminEditProduto = async function(key){
   try{
     const p = produtosCache.find(x=>x.key===key); if(!p) return;
-    const novoNome = await promptModal('Editar Produto','Nome:', p.nome); if(novoNome===null) return;
-    const novaUn = await promptModal('Editar Produto','Unidade:', p.unidade||''); if(novaUn===null) return;
+    const novoNome = prompt('Novo nome:', p.nome); if(novoNome===null) return;
+    const novaUn = prompt('Unidade:', p.unidade||''); if(novaUn===null) return;
     await db.ref('produtos/'+key).update({ nome: novoNome.trim(), unidade: novaUn.trim() });
     await loadProdutos(); showToast('Produto atualizado','info'); await logEvent('sistema','Produto atualizado',{produto:key});
-  }catch(e){ console.error('adminEditProduto', e); showToast('Erro ao editar produto','error'); }
+  }catch(e){ showToast('Erro ao editar produto','error'); }
 };
 window.adminDeleteProduto = async function(key){
   try{
-    const ok = await confirmModal('Confirmar','Deseja excluir este produto?'); if(!ok) return;
-    await db.ref('produtos/'+key).remove();
-    await loadProdutos(); showToast('Produto excluído','info'); await logEvent('sistema','Produto excluído',{produto:key});
-  }catch(e){ console.error('adminDeleteProduto', e); showToast('Erro ao excluir produto','error'); }
+    if(!confirm('Excluir este produto?')) return;
+    await db.ref('produtos/'+key).remove(); await loadProdutos(); showToast('Produto excluído','info'); await logEvent('sistema','Produto excluído',{produto:key});
+  }catch(e){ showToast('Erro ao excluir produto','error'); }
 };
 
-/* ========= AUTENTICAÇÃO ========= */
-async function register(){
-  const nome = $('#regNome').value.trim();
-  const localidade = $('#regLocalidade').value.trim();
-  const user = $('#regUser').value.trim();
-  const pass = $('#regPass').value.trim();
-  const ministerio = $('#regMinisterio').value || '';
-  const msgEl = $('#registerMsg'); msgEl.textContent='';
-
-  if(!nome || !localidade || !user || !pass){
-    msgEl.style.color='red'; msgEl.textContent='Preencha todos os campos.'; return;
-  }
-  if(user === ADMIN_LOGIN){
-    msgEl.style.color='red'; msgEl.textContent='Nome de usuário indisponível.'; return;
-  }
-  try{
-    const snap = await db.ref('usuarios').orderByChild('user').equalTo(user).once('value');
-    if(snap.exists()){ msgEl.style.color='red'; msgEl.textContent='Nome de usuário já existe.'; return; }
-    const uid = Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
-    await db.ref('usuarios').push({
-      nome, localidade, user, pass, ministerio, uid, createdAt: Date.now()
-    });
-
-    msgEl.style.color='green'; msgEl.textContent='Usuário registrado com sucesso.';
-    $('#regNome').value=''; $('#regLocalidade').value=''; $('#regUser').value=''; $('#regPass').value='';
-    await logEvent('perfil','Novo usuário registrado',{user});
-    setTimeout(()=> backToLogin(), 900);
-  }catch(e){
-    console.error('erro register', e);
-    msgEl.style.color='red'; msgEl.textContent='Erro ao salvar usuário.';
-  }
+/* ======= CEP (ViaCEP) ======= */
+async function buscaCEP(cep){
+  cep = (cep||'').replace(/\D/g,'');
+  if(cep.length!==8) throw new Error('CEP inválido');
+  const resp = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+  const data = await resp.json();
+  if(data.erro) throw new Error('CEP não encontrado');
+  return data; // {logradouro,bairro,localidade,uf}
 }
 
-async function login() {
+/* ======= AUTENTICAÇÃO ======= */
+async function register(usuario){
+  // usado no primeiro acesso para concluir cadastro
+  // usuario: {nome, user, pass, localidade, ministerio, genero}
+  const msgEl = $('#paMsg'); msgEl.textContent='';
+  try{
+    // checar duplicidade de user
+    const snap = await db.ref('usuarios').orderByChild('user').equalTo(usuario.user).once('value');
+    if(snap.exists()){ msgEl.style.color='red'; msgEl.textContent='Nome de usuário já existe.'; return false; }
+    const uid = Date.now().toString(36) + Math.random().toString(36).substring(2,8);
+    await db.ref('usuarios').push({
+      nome: usuario.nome, localidade: usuario.localidade, user: usuario.user, pass: usuario.pass,
+      ministerio: usuario.ministerio||'', genero: usuario.genero||'auto', uid, createdAt: Date.now(), provisorio: false
+    });
+    msgEl.style.color='green'; msgEl.textContent='Cadastro concluído com sucesso.';
+    await logEvent('perfil','Cadastro concluído',{user:usuario.user});
+    return true;
+  }catch(e){ console.error('register',e); msgEl.style.color='red'; msgEl.textContent='Erro ao salvar usuário.'; return false; }
+}
+
+async function login(){
   const user = $('#loginUser').value.trim();
   const pass = $('#loginPass').value.trim();
-  if (!user || !pass) {
-    showToast("⚠️ Preencha todos os campos!", "warn", 3000);
-    return;
-  }
+  const errEl = $('#loginError'); errEl.textContent='';
+  if(!user || !pass){ showToast('⚠️ Preencha todos os campos!','warn'); return; }
 
   // Admin direto
-  if (user === ADMIN_LOGIN && pass === ADMIN_PASSWORD) {
-    currentUser = {
-      user: ADMIN_LOGIN,
-      nome: "Administrador",
-      localidade: "Administração",
-      isAdmin: true,
-      uid: "admin"
-    };
-
-    await logEvent("login", "Usuário logou", { user: ADMIN_LOGIN });
-
-    // Mensagem de boas-vindas (10s)
-    const titulo = "A paz de Deus, irmão Administrador!";
-    const mensagem =
-      "É muito importante seu zelo com a irmandade e com a obra de Deus!\n" +
-      "Faça bom proveito dos itens que o Senhor Deus está disponibilizando para compras.";
-    await mostrarTransicao(titulo, mensagem, 10000);
-
-    enterApp();
-    return;
+  if(user===ADMIN_LOGIN && pass===ADMIN_PASSWORD){
+    currentUser = { user: ADMIN_LOGIN, nome:'Administrador', localidade:'Administração', genero:'M', isAdmin:true, provisorio:false };
+    await logEvent('login','Admin logou',{user:ADMIN_LOGIN});
+    playChime('login');
+    await msgTransicao("A paz de Deus, irmão Administrador...!\nÉ muito importante seu zelo com a irmandade e com a obra de Deus!\nFaça bom proveito dos itens que o Senhor Deus está disponibilizando para compras.", 10000);
+    enterApp(); return;
   }
 
-  // Busca usuário comum
-  try {
-    const snap = await db.ref("usuarios").orderByChild("user").equalTo(user).once("value");
+  try{
+    // 1) Tenta achar usuário normal
+    let snap = await db.ref('usuarios').orderByChild('user').equalTo(user).once('value');
     const users = snap.val();
+    if(users){
+      const key = Object.keys(users)[0]; const found = users[key];
+      if((found.pass||found.senha) !== pass){ showToast('🔒 Senha incorreta!','error'); return; }
+      currentUser = {
+        user: found.user, nome: found.nome, localidade: found.localidade, genero: found.genero||'auto',
+        ministerio: found.ministerio||'', isAdmin: (found.user===ADMIN_LOGIN), uid: found.uid||key, provisorio: !!found.provisorio
+      };
+      await logEvent('login','Usuário logou',{user:found.user});
+      playChime('login');
 
-    if (!users) {
-      showToast("⚠️ Usuário não encontrado!", "error", 4000);
-      return;
+      if(currentUser.provisorio){
+        // força completar cadastro
+        go('primeiroAcessoScreen');
+        $('#paNome').value = currentUser.nome||'';
+        $('#paUser').value = currentUser.user||'';
+        $('#paPass').value = '';
+        $('#paLogradouro').value=''; $('#paBairro').value=''; $('#paCidade').value=currentUser.localidade||''; $('#paUf').value='';
+        $('#paOutraLocalidade').checked=false; togglePAOutraLocalidade(false);
+        return;
+      }
+
+      const msg = saudacaoLogin(currentUser.nome, currentUser.genero||'auto');
+      await msgTransicao(msg, 10000);
+      enterApp(); return;
     }
 
-    const foundKey = Object.keys(users)[0];
-    const found = users[foundKey];
-
-    if ((found.pass || "").trim() !== pass) {
-      showToast("🔒 Senha incorreta!", "error", 4000);
-      return;
-    }
-
-    currentUser = {
-      user: found.user,
-      nome: found.nome,
-      localidade: found.localidade,
-      isAdmin: false,
-      uid: found.uid || foundKey,
-      ministerio: found.ministerio || ''
-    };
-
-    await logEvent("login", "Usuário logou", { user: found.user });
-
-    // Mensagem de boas-vindas (10s)
-    const titulo = `A paz de Deus, irmão ${currentUser.nome}!`;
-    const mensagem =
-      "É muito importante seu zelo com a irmandade e com a obra de Deus!\n" +
-      "Faça bom proveito dos itens que o Senhor Deus está disponibilizando para compras.";
-    await mostrarTransicao(titulo, mensagem, 10000);
-
-    enterApp();
-  } catch (e) {
-    console.error("erro login", e);
-    showToast("Erro ao autenticar. Veja console.", "error", 4000);
+    // 2) Não achou -> erro
+    showToast('⚠️ Usuário não encontrado!','error',4000);
+  }catch(e){
+    console.error('erro login', e);
+    errEl.textContent='Erro ao autenticar. Veja console.';
   }
 }
 
 function logout(){
-  const name = currentUser?.nome || 'irmão';
-  sessionStorage.removeItem('ccb_user');
-  currentUser = null;
+  const name = currentUser?.nome || '';
+  const gen = currentUser?.genero || 'auto';
+  const msg = saudacaoSaida(name, gen);
+  currentUser = null; sessionStorage.removeItem('ccb_user');
   go('loginScreen');
-  $('#loginUser').value=''; $('#loginPass').value=''; $('#loginError').textContent='';
-
-  // Mensagem de saída (10s)
-  const titulo = `Deus abençoe, irmão ${name}!`;
-  const mensagem = "Saúda em casa com a santa paz de Deus!";
-  mostrarTransicao(titulo, mensagem, 10000).then(()=>{
-    showToast('Saindo...', 'info', 1500);
-    logEvent('logout','Usuário saiu',{nome:name});
-  });
+  $('#loginUser').value=''; $('#loginPass').value='';
+  msgTransicao(msg, 10000).then(()=> showToast('Saindo...', 'info', 1500));
+  logEvent('logout','Usuário saiu',{nome:name});
+  playChime('logout');
 }
 
 function enterApp(){
   sessionStorage.setItem('ccb_user', JSON.stringify(currentUser));
   go('pedidoScreen');
   $('#pedidoMsg').textContent='';
-
-  if(currentUser.isAdmin){
+  if(currentUser.isAdmin || currentUser.user===ADMIN_LOGIN){
     ['adminRelatorioBtn','adminProdutosBtn','adminUsuariosBtn','adminHistoricoBtn'].forEach(id=> $('#'+id)?.classList.remove('hidden'));
-  } else {
+  }else{
     ['adminRelatorioBtn','adminProdutosBtn','adminUsuariosBtn','adminHistoricoBtn'].forEach(id=> $('#'+id)?.classList.add('hidden'));
   }
   updateCycleInfoUI();
 }
-function showRegister(){ go('registerScreen'); }
-function backToLogin(){ go('loginScreen'); }
-function abrirWhatsapp(){
-  if(confirm('Deseja contatar o administrador via WhatsApp?')){
-    const url='https://wa.me/'+WHATSAPP_PHONE+'?text='+encodeURIComponent('Olá, preciso de ajuda com o sistema de compras coletivas.');
-    window.open(url,'_blank');
-  }
-}
 
-/* ========= BUSCA PRODUTOS ========= */
+/* ======= BUSCA PRODUTOS (alfabética - começa com) ======= */
 function filtrarProdutos(){
-  const q = $('#buscaProduto').value.trim().toLowerCase();
+  const q = normalize($('#buscaProduto').value.trim());
   const lista = $('#listaProdutos'); lista.innerHTML=''; selectedProductKey = null;
   if(!q){ lista.style.display='none'; return; }
-  const matches = produtosCache.filter(p => (p.nome||'').toLowerCase().includes(q));
+  const matches = produtosCache.filter(p => normalize(p.nome).startsWith(q));
   if(matches.length === 0){ lista.innerHTML = '<div>Nenhum produto</div>'; lista.style.display='block'; return; }
   matches.forEach(m=>{
     const div = document.createElement('div');
     div.textContent = `${m.nome} (${m.unidade||''})`;
-    div.onclick = ()=>{
-      selectedProductKey = m.key;
-      $('#buscaProduto').value = `${m.nome} (${m.unidade||''})`;
-      lista.style.display='none';
-      showToast('Produto selecionado: '+m.nome, 'info', 1200);
-    };
+    div.onclick = ()=>{ selectedProductKey = m.key; $('#buscaProduto').value = `${m.nome} (${m.unidade||''})`; lista.style.display='none'; showToast('Produto selecionado: '+m.nome, 'info', 1200); };
     lista.appendChild(div);
   });
   lista.style.display='block';
 }
 
-/* ========= PEDIDOS ========= */
+/* ======= PEDIDOS ======= */
 async function salvarPedido(){
   const produtoKey = selectedProductKey;
   const produtoText = $('#buscaProduto').value.trim();
   const quantidade = $('#quantidade').value.trim();
   const obs = $('#obs').value.trim();
   const msgEl = $('#pedidoMsg'); msgEl.textContent='';
-
   if(!produtoKey || !produtoText){ msgEl.style.color='red'; msgEl.textContent='Selecione um produto.'; return; }
-  if(!quantidade || parseInt(quantidade) <= 0){ msgEl.style.color='red'; msgEl.textContent='Quantidade inválida.'; return; }
-  if(!currentUser){ msgEl.style.color='red'; msgEl.textContent='Você precisa estar logado para enviar pedido.'; return; }
-
+  if(!quantidade || parseInt(quantidade)<=0){ msgEl.style.color='red'; msgEl.textContent='Quantidade inválida.'; return; }
+  if(!currentUser){ msgEl.style.color='red'; msgEl.textContent='Você precisa estar logado.'; return; }
   const cycle = await getCycleInfo();
   if(!cycle.open){ msgEl.style.color='red'; msgEl.textContent='Período de pedidos encerrado.'; return; }
-  if(cycle.daysRemaining <= 5){ msgEl.style.color='red'; msgEl.textContent='Não é possível criar/editar pedidos nos últimos 5 dias do ciclo.'; return; }
+  if(cycle.daysRemaining<=5){ msgEl.style.color='red'; msgEl.textContent='Não é possível criar/editar nos últimos 5 dias do ciclo.'; return; }
 
   try{
     const snap = await db.ref('pedidos').orderByChild('createdBy').equalTo(currentUser.user).once('value');
-    const data = snap.val() || {};
-    const rows = Object.keys(data).map(k=>({ key:k, ...data[k] }));
-    const same = rows.find(r =>
-      r.produtoKey === produtoKey &&
-      !r.entregue &&
-      (r.cycleId || monthIdFrom(r.createdAt||Date.now())) === cycle.cycleId
-    );
-
+    const data = snap.val()||{}; const rows = Object.keys(data).map(k=>({ key:k, ...data[k] }));
+    const same = rows.find(r=> r.produtoKey===produtoKey && !r.entregue && (r.cycleId||monthIdFrom(r.createdAt||Date.now()))===cycle.cycleId);
     if(same){
       const novaQtd = Number(same.quantidade||0) + Number(quantidade);
-      await db.ref('pedidos/'+same.key).update({
-        quantidade: novaQtd,
-        obs: obs ? (same.obs ? `${same.obs}; ${obs}` : obs) : (same.obs||''),
-        updatedAt: Date.now()
-      });
-      await logEvent('pedido','Quantidade somada a pedido existente',{
-        pedidoKey: same.key, produtoKey, addQtd:Number(quantidade), total:novaQtd
-      });
+      await db.ref('pedidos/'+same.key).update({ quantidade: novaQtd, obs: obs ? (same.obs ? `${same.obs}; ${obs}` : obs) : (same.obs||''), updatedAt: Date.now() });
+      await logEvent('pedido','Quantidade somada a pedido existente',{pedidoKey:same.key,produtoKey,addQtd:Number(quantidade),total:novaQtd});
       msgEl.style.color='green'; msgEl.textContent='Quantidade somada ao pedido em aberto.';
     }else{
-      const pedido = {
-        produtoKey,
-        produtoText,
-        quantidade: parseInt(quantidade),
-        obs,
-        createdBy: currentUser.user,
-        createdByUid: currentUser.uid,
-        createdByName: currentUser.nome,
-        createdByLocalidade: currentUser.localidade,
-        createdAt: Date.now(),
-        entregue: false,
-        deliveredAt: null,
-        cycleId: cycle.cycleId,
-        cycleStart: cycle.start
-      };
+      const pedido={ produtoKey, produtoText, quantidade: parseInt(quantidade), obs, createdBy: currentUser.user, createdByUid: currentUser.uid||'', createdByName: currentUser.nome, createdByLocalidade: currentUser.localidade,
+        createdAt: Date.now(), entregue:false, deliveredAt:null, cycleId: cycle.cycleId, cycleStart: cycle.start };
       await db.ref('pedidos').push(pedido);
       await logEvent('pedido','Pedido criado',{produtoKey, quantidade:Number(quantidade)});
       msgEl.style.color='green'; msgEl.textContent='Pedido enviado com sucesso.';
     }
-
     $('#buscaProduto').value=''; selectedProductKey=null; $('#quantidade').value=''; $('#obs').value='';
-    showToast('Pedido salvo', 'info');
-  }catch(e){ console.error('erro salvarPedido', e); msgEl.style.color='red'; msgEl.textContent='Erro ao salvar pedido.'; }
+    showToast('Pedido salvo','info');
+  }catch(e){ console.error('salvarPedido',e); msgEl.style.color='red'; msgEl.textContent='Erro ao salvar pedido.'; }
 }
 
 async function mostrarPedidosUsuario(status='todos'){
   if(!currentUser){ alert('Faça login primeiro.'); return; }
   go('relatorioUsuario');
-
-  const tbody = $('#tabelaPedidosUsuario tbody'); tbody.innerHTML = '<tr><td colspan="5">Carregando...</td></tr>';
-
+  const tbody=$('#tabelaPedidosUsuario tbody'); tbody.innerHTML='<tr><td colspan="6">Carregando...</td></tr>';
   try{
     const [snap, cycle] = await Promise.all([
-      db.ref('pedidos').orderByChild('createdByUid').equalTo(currentUser.uid).once('value'),
+      db.ref('pedidos').orderByChild('createdBy').equalTo(currentUser.user).once('value'),
       getCycleInfo()
     ]);
-
-    const data = snap.val() || {};
-    let rows = Object.keys(data).map(k=>({ key:k, ...data[k] }));
-
-    if(status === 'aberto') rows = rows.filter(r => !r.entregue);
-    if(status === 'entregue') rows = rows.filter(r => r.entregue);
-    if($('#toggleOcultarEntreguesUsuario').checked || $('#toggleOcultarEntreguesUsuario2').checked){
-      rows = rows.filter(r=> !r.entregue);
-    }
-
-    tbody.innerHTML = rows.length ? '' : '<tr><td colspan="5">Nenhum pedido encontrado.</td></tr>';
-
-    const canEditByCycle = cycle.open && cycle.daysRemaining > 5;
-
-    rows.forEach(r=>{
-      const tr = document.createElement('tr'); if(r.entregue) tr.classList.add('delivered');
-      const tdProd = document.createElement('td'); tdProd.innerText = r.produtoText || '';
-      const tdQtd = document.createElement('td'); tdQtd.innerText = r.quantidade || '';
-      const tdObs = document.createElement('td'); tdObs.innerText = r.obs || '';
-      const tdStatus = document.createElement('td'); tdStatus.innerHTML = r.entregue ? '<span class="status-entregue">Entregue</span>' : '<span class="status-aberto">Aberto</span>';
-      const tdActions = document.createElement('td'); tdActions.className='actions';
-
-      const canEdit = (r.createdBy === currentUser.user) && canEditByCycle && !r.entregue;
-      const canDelete = (r.createdBy === currentUser.user) && canEditByCycle && !r.entregue;
-
-      if(canEdit){
-        const btnE = document.createElement('button'); btnE.className='small'; btnE.innerText='Editar'; btnE.onclick = ()=> editPedido(r.key);
-        tdActions.appendChild(btnE);
-      }
-      if(canDelete){
-        const btnD = document.createElement('button'); btnD.className='small'; btnD.innerText='Excluir'; btnD.onclick = ()=> deletePedido(r.key, {origin:'user'});
-        tdActions.appendChild(btnD);
-      }
-
-      tr.appendChild(tdProd); tr.appendChild(tdQtd); tr.appendChild(tdObs); tr.appendChild(tdStatus); tr.appendChild(tdActions);
+    const data = snap.val()||{}; let rows = Object.keys(data).map((k,i)=>({ idx:i+1, key:k, ...data[k] }));
+    if(status==='aberto') rows = rows.filter(r=>!r.entregue);
+    if(status==='entregue') rows = rows.filter(r=>r.entregue);
+    if($('#toggleOcultarEntreguesUsuario2').checked) rows = rows.filter(r=>!r.entregue);
+    tbody.innerHTML = rows.length?'':'<tr><td colspan="6">Nenhum pedido encontrado.</td></tr>';
+    const canEditByCycle = cycle.open && cycle.daysRemaining>5;
+    rows.forEach((r,i)=>{
+      const tr=document.createElement('tr'); if(r.entregue) tr.classList.add('delivered');
+      const canEdit = (r.createdBy===currentUser.user) && canEditByCycle && !r.entregue;
+      const canDelete = canEdit;
+      tr.innerHTML = `
+        <td>${i+1}</td>
+        <td>${escapeHtml(r.produtoText||'')}</td>
+        <td>${escapeHtml(r.quantidade||'')}</td>
+        <td>${escapeHtml(r.obs||'')}</td>
+        <td>${r.entregue?'<span class="status-entregue">Entregue</span>':'<span class="status-aberto">Aberto</span>'}</td>
+        <td class="actions"></td>`;
+      const act = tr.querySelector('.actions');
+      if(canEdit){ const b=document.createElement('button'); b.className='small'; b.textContent='Editar'; b.onclick=()=>editPedido(r.key); act.appendChild(b); }
+      if(canDelete){ const b=document.createElement('button'); b.className='small'; b.textContent='Excluir'; b.onclick=()=>deletePedido(r.key,{origin:'user'}); act.appendChild(b); }
       tbody.appendChild(tr);
     });
-  }catch(e){
-    console.error('mostrarPedidosUsuario', e);
-    tbody.innerHTML = '<tr><td colspan="5">Erro ao carregar pedidos.</td></tr>';
-  }
+  }catch(e){ console.error('mostrarPedidosUsuario',e); tbody.innerHTML='<tr><td colspan="6">Erro ao carregar.</td></tr>'; }
 }
 
 async function editPedido(key){
   try{
-    const snap = await db.ref('pedidos/'+key).once('value'); const p = snap.val(); if(!p) return;
+    const snap = await db.ref('pedidos/'+key).once('value'); const p=snap.val(); if(!p) return;
     const cycle = await getCycleInfo();
-    const canEdit = currentUser && (p.createdBy === currentUser.user) && cycle.open && cycle.daysRemaining > 5 && !p.entregue;
+    const canEdit = currentUser && (p.createdBy===currentUser.user) && cycle.open && cycle.daysRemaining>5 && !p.entregue;
     if(!canEdit){ showToast('Edição não permitida','error'); return; }
-
-    const novaQtd = await promptModal('Editar quantidade','Quantidade:', p.quantidade || '');
-    if(novaQtd === null) return; if(parseInt(novaQtd) <= 0){ showToast('Quantidade inválida','error'); return; }
-    const novoObs = await promptModal('Editar observações','Observações:', p.obs || '');
-    if(novoObs === null) return;
-
+    const novaQtd = prompt('Quantidade:', p.quantidade||''); if(novaQtd===null || parseInt(novaQtd)<=0){ showToast('Quantidade inválida','error'); return; }
+    const novoObs = prompt('Observações:', p.obs||''); if(novoObs===null) return;
     await db.ref('pedidos/'+key).update({ quantidade: parseInt(novaQtd), obs: novoObs, updatedAt: Date.now() });
     await logEvent('pedido','Pedido atualizado',{pedidoKey:key});
-    showToast('Pedido atualizado','info'); mostrarPedidosUsuario($('#filtroUsuario').value || 'todos');
-  }catch(e){ console.error('editPedido', e); showToast('Erro ao editar pedido','error'); }
+    showToast('Pedido atualizado','info'); mostrarPedidosUsuario($('#filtroUsuario').value||'todos');
+  }catch(e){ showToast('Erro ao editar pedido','error'); }
 }
 
 async function deletePedido(key, opts={origin:'user'}){
   try{
-    const snap = await db.ref('pedidos/'+key).once('value'); const p = snap.val(); if(!p) return;
-    const cycle = await getCycleInfo();
-    const isAdmin = !!currentUser?.isAdmin;
-
-    let allowed = false;
-    let reason = '';
-
+    const snap = await db.ref('pedidos/'+key).once('value'); const p=snap.val(); if(!p) return;
+    const cycle = await getCycleInfo(); const isAdmin=!!currentUser?.isAdmin;
+    let allowed=false; let reason='';
     if(!p.entregue){
-      if((p.createdBy === currentUser?.user) && cycle.open && cycle.daysRemaining > 5){ allowed = true; }
-      if(isAdmin){ allowed = true; }
+      if((p.createdBy===currentUser?.user) && cycle.open && cycle.daysRemaining>5) allowed=true;
+      if(isAdmin) allowed=true;
     }else{
       if(isAdmin){
-        const deliveredAt = p.deliveredAt || 0;
-        const aYearMs = 365*24*60*60*1000;
-        if(Date.now() - deliveredAt >= aYearMs) allowed = true;
-        else reason = 'Pedido entregue há menos de 1 ano.';
-      } else {
-        reason = 'Pedidos entregues só podem ser excluídos pelo administrador.';
-      }
+        const aYear=365*24*60*60*1000;
+        if(Date.now()-(p.deliveredAt||0) >= aYear) allowed=true; else reason='Pedido entregue há menos de 1 ano.';
+      }else reason='Pedidos entregues só podem ser excluídos pelo administrador.';
     }
-
-    if(!allowed){ showToast(`Exclusão não permitida${reason?': '+reason:''}`,'error'); return; }
-
-    const ok = await confirmModal('Confirmar exclusão','Deseja realmente excluir este pedido?');
-    if(!ok) return;
-
-    await db.ref('pedidos/'+key).remove();
-    await logEvent('pedido','Pedido excluído',{pedidoKey:key});
-
+    if(!allowed){ showToast('Exclusão não permitida'+(reason?': '+reason:''),'error'); return; }
+    if(!confirm('Deseja realmente excluir este pedido?')) return;
+    await db.ref('pedidos/'+key).remove(); await logEvent('pedido','Pedido excluído',{pedidoKey:key});
     showToast('Pedido excluído','info');
-
-    if(opts.origin === 'admin'){
-      if(lastScreen === 'relatorioAdmin'){ verRelatorioAdmin($('#filtroAdmin').value || 'todos'); }
-    }else{
-      mostrarPedidosUsuario($('#filtroUsuario').value || 'todos');
-    }
-
-  }catch(e){ console.error('deletePedido', e); showToast('Erro ao excluir pedido','error'); }
+    if(opts.origin==='admin'){ if(lastScreen==='relatorioAdmin') verRelatorioAdmin($('#filtroAdmin').value||'todos'); }
+    else mostrarPedidosUsuario($('#filtroUsuario').value||'todos');
+  }catch(e){ showToast('Erro ao excluir pedido','error'); }
 }
 
-/* ========= RELATÓRIOS (ADMIN) ========= */
+/* ======= RELATÓRIOS (ADMIN) ======= */
 async function verRelatorioAdmin(status='todos'){
   if(!currentUser || !currentUser.isAdmin){ alert('Acesso negado.'); return; }
   go('relatorioAdmin');
+await atualizarStatusCiclo();
 
-  const tbodyP = $('#tabelaPedidosAdmin tbody');
-  const tbodyU = $('#tabelaUsuariosAdmin tbody');
-  const tabelaProdutos = $('#tabelaProdutosAdmin tbody');
-  tbodyP.innerHTML = '<tr><td colspan="7">Carregando...</td></tr>';
-  tbodyU.innerHTML = '<tr><td colspan="5">Carregando...</td></tr>';
-  tabelaProdutos.innerHTML = '<tr><td colspan="2">Carregando...</td></tr>';
-
+  const tbodyP=$('#tabelaPedidosAdmin tbody'); const tbodyU=$('#tabelaUsuariosAdmin tbody');
+  const tabelaResumo=$('#tabelaProdutosAdmin tbody');
+  tbodyP.innerHTML='<tr><td colspan="8">Carregando...</td></tr>';
+  tbodyU.innerHTML='<tr><td colspan="6">Carregando...</td></tr>';
+  tabelaResumo.innerHTML='<tr><td colspan="3">Carregando...</td></tr>';
   try{
     const [snapP, snapU] = await Promise.all([ db.ref('pedidos').once('value'), db.ref('usuarios').once('value') ]);
+    const pedidosObj = snapP.val()||{}; let pedidos = Object.keys(pedidosObj).map((k,i)=>({ idx:i+1, key:k, ...pedidosObj[k] }));
+    const usuariosObj = snapU.val()||{}; const usuarios = Object.keys(usuariosObj).map(k=>({ key:k, ...usuariosObj[k] }));
 
-    const pedidosObj = snapP.val() || {};
-    let pedidos = Object.keys(pedidosObj).map(k=>({ key:k, ...pedidosObj[k] }));
+    if(status==='aberto') pedidos = pedidos.filter(p=>!p.entregue);
+    if(status==='entregue') pedidos = pedidos.filter(p=>p.entregue);
+    if($('#toggleOcultarEntreguesAdmin').checked) pedidos = pedidos.filter(p=>!p.entregue);
 
-    if(status === 'aberto') pedidos = pedidos.filter(p=> !p.entregue);
-    if(status === 'entregue') pedidos = pedidos.filter(p=> p.entregue);
+    // Tabela Pedidos
+    tbodyP.innerHTML = pedidos.length?'':'<tr><td colspan="8">Nenhum pedido encontrado.</td></tr>';
+    let totAbertos=0, totEntregues=0;
+    pedidos.forEach((p,i)=>{
+      if(p.entregue) totEntregues++; else totAbertos++;
+      const tr=document.createElement('tr'); if(p.entregue) tr.classList.add('delivered');
+      const canDeliveredDelete = p.entregue && p.deliveredAt && (Date.now()-p.deliveredAt >= 365*24*60*60*1000);
+      tr.innerHTML = `
+        <td>${i+1}</td>
+        <td>${escapeHtml(p.createdByName||p.createdBy||'')}</td>
+        <td>${escapeHtml(p.createdByLocalidade||'')}</td>
+        <td>${escapeHtml(p.produtoText||'')}</td>
+        <td>${escapeHtml(p.quantidade||'')}</td>
+        <td>${escapeHtml(p.obs||'')}</td>
+        <td>${p.entregue?'<span class="status-entregue">Entregue</span>':'<span class="status-aberto">Aberto</span>'}</td>
+        <td class="actions"></td>`;
+      const act = tr.querySelector('.actions');
+      const btnToggle=document.createElement('button'); btnToggle.className='small';
+      if(p.entregue){ btnToggle.textContent='Desmarcar'; btnToggle.onclick=()=>toggleEntregue(p.key,false); }
+      else{ btnToggle.textContent='Marcar entregue'; btnToggle.onclick=()=>toggleEntregue(p.key,true); }
+      act.appendChild(btnToggle);
+      if(!p.entregue || canDeliveredDelete){
 
-    if($('#toggleOcultarEntreguesAdmin').checked){ pedidos = pedidos.filter(p=> !p.entregue); }
+        const b=document.createElement('button'); b.className='small'; b.textContent='Excluir'; b.onclick=()=>deletePedido(p.key,{origin:'admin'}); act.appendChild(b);
+      }
+      tbodyP.appendChild(tr);
+    });
+    $('#resumoAbertos').textContent = 'Abertos: '+totAbertos;
+    $('#resumoEntregues').textContent = 'Entregues: '+totEntregues;
+    $('#resumoTotal').textContent = 'Total: '+(totAbertos+totEntregues);
 
-    if(pedidos.length === 0){
-      tbodyP.innerHTML = '<tr><td colspan="7">Nenhum pedido encontrado.</td></tr>';
-    } else {
-      tbodyP.innerHTML = '';
-      pedidos.forEach(p=>{
-        const tr = document.createElement('tr'); if(p.entregue) tr.classList.add('delivered');
-        const tdUser=document.createElement('td'); tdUser.innerText = p.createdByName || p.createdBy || '';
-        const tdLocal=document.createElement('td'); tdLocal.innerText = p.createdByLocalidade || '';
-        const tdProd=document.createElement('td'); tdProd.innerText = p.produtoText || '';
-        const tdQtd=document.createElement('td'); tdQtd.innerText = p.quantidade || '';
-        const tdObs=document.createElement('td'); tdObs.innerText = p.obs || '';
-        const tdStatus=document.createElement('td');
-        let statusHtml = p.entregue? '<span class="status-entregue">Entregue</span>' : '<span class="status-aberto">Aberto</span>';
-        if(p.entregue && p.deliveredAt){
-          const aYearMs = 365*24*60*60*1000;
-          if(Date.now() - p.deliveredAt >= aYearMs){
-            statusHtml += ' • 🕊️ Pode ser excluído (entregue há 1 ano)';
-          }
-        }
-        tdStatus.innerHTML = statusHtml;
-
-        const tdActions=document.createElement('td'); tdActions.className='actions';
-        const btnToggle = document.createElement('button'); btnToggle.className='small';
-        if(p.entregue){ btnToggle.innerText='Desmarcar'; btnToggle.onclick = ()=> toggleEntregue(p.key, false); }
-        else { btnToggle.innerText='Marcar entregue'; btnToggle.onclick = ()=> toggleEntregue(p.key, true); }
-        tdActions.appendChild(btnToggle);
-
-        const canDeleteDelivered = p.entregue && p.deliveredAt && (Date.now() - p.deliveredAt >= 365*24*60*60*1000);
-        const canDeleteOpen = !p.entregue;
-        if(canDeleteOpen || canDeleteDelivered){
-          const btnDel = document.createElement('button'); btnDel.className='small'; btnDel.innerText='Excluir';
-          btnDel.onclick = ()=> deletePedido(p.key, {origin:'admin'});
-          tdActions.appendChild(btnDel);
-        }
-
-        tr.appendChild(tdUser); tr.appendChild(tdLocal); tr.appendChild(tdProd); tr.appendChild(tdQtd); tr.appendChild(tdObs); tr.appendChild(tdStatus); tr.appendChild(tdActions);
-        tbodyP.appendChild(tr);
-      });
-    }
-
-    const usuariosObj = snapU.val()||{};
-    const usuarios = Object.keys(usuariosObj).map(k=>({ key:k, ...usuariosObj[k] }));
-    if(usuarios.length===0){
-      tbodyU.innerHTML = '<tr><td colspan="5">Nenhum usuário encontrado.</td></tr>';
-    } else {
-      tbodyU.innerHTML='';
-      usuarios.forEach(u=>{
-        const tr=document.createElement('tr');
-        tr.innerHTML = `<td>${escapeHtml(u.nome)}</td><td>${escapeHtml(u.user)}</td><td>${escapeHtml(u.localidade)}</td><td>${escapeHtml(u.ministerio||'')}</td><td class="actions"><button class="small" onclick="adminEditUser('${u.key}')">Editar</button><button class="small" onclick="adminDeleteUser('${u.key}')">Excluir</button></td>`;
-        tbodyU.appendChild(tr);
-      });
-    }
-
-    const map = {};
-    pedidos.forEach(p=>{ const name = p.produtoText || 'Sem produto'; if(!map[name]) map[name] = 0; map[name] += Number(p.quantidade||0); });
-    tabelaProdutos.innerHTML = '';
-    Object.keys(map).forEach(name=>{
+    // Tabela Usuários
+    tbodyU.innerHTML = '';
+    usuarios.forEach(u=>{
       const tr=document.createElement('tr');
-      tr.innerHTML = `<td>${escapeHtml(name)}</td><td>${escapeHtml(map[name])}</td>`;
-      tabelaProdutos.appendChild(tr);
+      tr.innerHTML = `<td>${escapeHtml(u.nome||'')}</td><td>${escapeHtml(u.user||'')}</td><td>${escapeHtml(u.localidade||'')}</td><td>${escapeHtml(u.ministerio||'')}</td>
+        <td>${u.provisorio?'SIM':'NÃO'}</td>
+        <td class="actions">
+          <button class="small" onclick="adminEditUser('${u.key}')">Editar</button>
+          <button class="small" onclick="adminDeleteUser('${u.key}')">Excluir</button>
+        </td>`;
+      tbodyU.appendChild(tr);
+    });
+
+    // Resumo Itens – agora somente ABERTOS (baixa ao entregar)
+    const map={};
+    Object.values(pedidosObj).forEach(p=>{ if(!p.entregue){ const name=p.produtoText||'Sem produto'; map[name]=(map[name]||0)+Number(p.quantidade||0); } });
+    tabelaResumo.innerHTML='';
+    Object.keys(map).sort((a,b)=>normalize(a).localeCompare(normalize(b))).forEach(name=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML = `<td>${escapeHtml(name)}</td><td>${escapeHtml(map[name])}</td>
+        <td class="actions">
+          <button class="small" onclick="adminEditProdutoBusca('${escapeHtml(name)}')">Editar Nome</button>
+        </td>`;
+      tabelaResumo.appendChild(tr);
     });
   }catch(e){
-    console.error('verRelatorioAdmin', e);
-    tbodyP.innerHTML = '<tr><td colspan="7">Erro ao carregar pedidos.</td></tr>';
-    tbodyU.innerHTML = '<tr><td colspan="5">Erro ao carregar usuários.</td></tr>';
-    tabelaProdutos.innerHTML = '<tr><td colspan="2">Erro.</td></tr>';
+    console.error('verRelatorioAdmin',e);
+    tbodyP.innerHTML='<tr><td colspan="8">Erro ao carregar pedidos.</td></tr>';
+    tbodyU.innerHTML='<tr><td colspan="6">Erro ao carregar usuários.</td></tr>';
+    tabelaResumo.innerHTML='<tr><td colspan="3">Erro.</td></tr>';
   }
 }
+window.adminEditProdutoBusca = function(nome){ alert('Edite o produto na aba Produtos (Admin). Nome: '+nome); };
 
 async function toggleEntregue(key, toState){
-  if(!currentUser || !currentUser.isAdmin){ showToast('Acesso negado','error'); return; }
-  const ok = await confirmModal('Confirmar','Tem certeza?'); if(!ok) return;
-  const senha = await senhaModal('Senha administrador'); if(senha === null) return;
-  if(senha !== ADMIN_PASSWORD){ showToast('Senha incorreta','error'); return; }
-
+  if(!currentUser?.isAdmin){ showToast('Acesso negado','error'); return; }
+  if(!confirm('Confirmar?')) return;
+  const senha = prompt('Senha de administrador:'); if(senha!==ADMIN_PASSWORD){ showToast('Senha incorreta','error'); return; }
   try{
     const updates = { entregue: !!toState };
     if(toState){ updates.deliveredAt = Date.now(); } else { updates.deliveredAt = null; }
     await db.ref('pedidos/'+key).update(updates);
-    await logEvent('pedido', toState?'Pedido marcado entregue':'Pedido desmarcado entregue',{pedidoKey:key});
+// === Atualiza automaticamente o estoque do usuário ===
+if (toState) {
+  try {
+    const pedidoSnap = await db.ref('pedidos/' + key).once('value');
+    const pedido = pedidoSnap.val();
+    if (pedido) {
+      const uid = pedido.createdByUid || pedido.createdBy;
+      const produtoId = pedido.produtoKey;
+      const produtoNome = pedido.produtoText;
+      const qtd = Number(pedido.quantidade) || 0;
+      const local = pedido.createdByLocalidade || 'Não informado';
+      const ciclo = pedido.cycleId || 'Sem ciclo';
 
-    if(lastScreen === 'relatorioAdmin') verRelatorioAdmin($('#filtroAdmin').value || 'todos');
-    else if(lastScreen === 'relatorioUsuario') mostrarPedidosUsuario($('#filtroUsuario').value || 'todos');
-    else go('pedidoScreen');
+      const refEstoque = db.ref(`estoques/${uid}/${produtoId}`);
+      const snapEstoque = await refEstoque.once('value');
+      const atual = snapEstoque.exists() ? snapEstoque.val().quantidade || 0 : 0;
 
-    showToast('Atualizado','info');
-  }catch(e){ console.error('toggleEntregue', e); showToast('Erro ao atualizar','error'); }
+      await refEstoque.set({
+        nome: produtoNome,
+        quantidade: atual + qtd,
+        localidade: local,
+        ultimaEntrada: new Date().toLocaleString('pt-BR'),
+        ciclo: ciclo
+      });
+
+      // registrar movimentação
+      const movRef = db.ref(`movimentacoes/${uid}`).push();
+      await movRef.set({
+        tipo: 'entrada',
+        produto: produtoNome,
+        qtd: qtd,
+        ciclo: ciclo,
+        data: new Date().toLocaleString('pt-BR'),
+        origem: 'entrega_admin'
+      });
+
+      console.log(`✅ Estoque de ${produtoNome} atualizado para o usuário ${uid}`);
+    }
+  } catch (e) {
+    console.error('Erro ao atualizar estoque automático:', e);
+  }
 }
 
-/* ========= ADMIN: USUÁRIOS ========= */
+    await logEvent('pedido', toState?'Pedido marcado entregue':'Pedido desmarcado entregue',{pedidoKey:key});
+    // Recarrega a mesma tela sem precisar sair
+    if(lastScreen==='relatorioAdmin') verRelatorioAdmin($('#filtroAdmin').value||'todos');
+    else if(lastScreen==='relatorioUsuario') mostrarPedidosUsuario($('#filtroUsuario').value||'todos');
+    else go('pedidoScreen');
+    showToast('Atualizado','info');
+  }catch(e){ showToast('Erro ao atualizar','error'); }
+}
+
+/* ======= ADMIN – Usuários ======= */
 function abrirCadastroUsuarioAdmin(){ go('adminUsuarios'); renderAdminUsuarios(); }
 function abrirCadastroProduto(){ go('adminProdutos'); }
 
 async function adminAddUser(){
-  if(!currentUser || !currentUser.isAdmin){ showToast('Acesso negado','error'); return; }
-  const nome = $('#adminNovoNome').value.trim();
-  const user = $('#adminNovoUser').value.trim();
-  const pass = $('#adminNovoPass').value.trim();
-  const localidade = $('#adminNovoLocalidade').value.trim();
-  const ministerio = $('#adminNovoMinisterio').value || '';
-  if(!nome || !user || !pass || !localidade){ showToast('Preencha todos os campos','error'); return; }
+  if(!currentUser?.isAdmin){ showToast('Acesso negado','error'); return; }
+  const nome=$('#adminNovoNome').value.trim();
+  const user=$('#adminNovoUser').value.trim();
+  const pass=$('#adminNovoPass').value.trim();
+  const localidade=$('#adminNovoLocalidade').value.trim();
+  const ministerio=$('#adminNovoMinisterio').value||'';
+  const provisorio = $('#adminProvisorio').value==='true';
+  if(!nome || !user || !pass){ showToast('Preencha: nome, usuário, senha','error'); return; }
   try{
     const snap = await db.ref('usuarios').orderByChild('user').equalTo(user).once('value');
     if(snap.exists()){ showToast('Usuário já existe','error'); return; }
-    await db.ref('usuarios').push({ nome, user, pass, localidade, ministerio, createdAt: Date.now() });
+    const uid = Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+    await db.ref('usuarios').push({ nome, user, pass, localidade, ministerio, genero:'auto', uid, createdAt: Date.now(), provisorio });
     $('#adminNovoNome').value=''; $('#adminNovoUser').value=''; $('#adminNovoPass').value=''; $('#adminNovoLocalidade').value='';
-    await renderAdminUsuarios(); showToast('Usuário criado','info');
-    await logEvent('perfil','Usuário criado (admin)',{user});
-  }catch(e){ console.error('adminAddUser', e); showToast('Erro ao criar usuário','error'); }
+    await renderAdminUsuarios(); showToast('Usuário criado','info'); await logEvent('perfil','Usuário criado (admin)',{user});
+  }catch(e){ showToast('Erro ao criar usuário','error'); }
 }
 async function renderAdminUsuarios(){
   try{
-    const tbody = $('#tabelaUsuariosAdmin tbody'); if(!tbody) return;
-    const snap = await db.ref('usuarios').once('value'); const obj = snap.val()||{}; const usuarios = Object.keys(obj).map(k=>({ key:k, ...obj[k] }));
-    tbody.innerHTML = '';
+    const tbody=$('#tabelaUsuariosAdmin tbody'); if(!tbody) return;
+    const snap = await db.ref('usuarios').once('value'); const obj=snap.val()||{}; const usuarios=Object.keys(obj).map(k=>({ key:k, ...obj[k] }));
+    tbody.innerHTML=''; const tbody2=$('#tabelaAdminUsuariosList tbody'); if(tbody2) tbody2.innerHTML='';
     usuarios.forEach(u=>{
       const tr=document.createElement('tr');
-      tr.innerHTML = `<td>${escapeHtml(u.nome)}</td><td>${escapeHtml(u.user)}</td><td>${escapeHtml(u.localidade)}</td><td>${escapeHtml(u.ministerio||'')}</td><td class="actions"><button class="small" onclick="adminEditUser('${u.key}')">Editar</button><button class="small" onclick="adminDeleteUser('${u.key}')">Excluir</button></td>`;
+      tr.innerHTML = `<td>${escapeHtml(u.nome||'')}</td><td>${escapeHtml(u.user||'')}</td><td>${escapeHtml(u.localidade||'')}</td><td>${escapeHtml(u.ministerio||'')}</td>
+        <td>${u.provisorio?'SIM':'NÃO'}</td>
+        <td class="actions">
+          <button class="small" onclick="adminEditUser('${u.key}')">Editar</button>
+          <button class="small" onclick="adminDeleteUser('${u.key}')">Excluir</button>
+        </td>`;
       tbody.appendChild(tr);
+      if(tbody2){ const tr2=document.createElement('tr'); tr2.innerHTML=tr.innerHTML; tbody2.appendChild(tr2); }
     });
-
-    const tbody2 = $('#tabelaAdminUsuariosList tbody');
-    if(tbody2){
-      tbody2.innerHTML='';
-      usuarios.forEach(u=>{
-        const tr2=document.createElement('tr');
-        tr2.innerHTML = `<td>${escapeHtml(u.nome)}</td><td>${escapeHtml(u.user)}</td><td>${escapeHtml(u.localidade)}</td><td>${escapeHtml(u.ministerio||'')}</td><td class="actions"><button class="small" onclick="adminEditUser('${u.key}')">Editar</button><button class="small" onclick="adminDeleteUser('${u.key}')">Excluir</button></td>`;
-        tbody2.appendChild(tr2);
-      });
-    }
-  }catch(e){ console.error('renderAdminUsuarios', e); }
+  }catch(e){ console.error('renderAdminUsuarios',e); }
 }
 window.adminEditUser = async function(key){
   try{
-    const snap = await db.ref('usuarios/'+key).once('value'); const u = snap.val(); if(!u) return;
-    const novoNome = await promptModal('Editar Usuário','Nome:', u.nome); if(novoNome === null) return;
-    const novoUser = await promptModal('Editar Usuário','Usuário:', u.user); if(novoUser === null) return;
-    const novaLoc = await promptModal('Editar Usuário','Localidade:', u.localidade||''); if(novaLoc === null) return;
-    const novaMin = await promptModal('Editar Usuário','Ministério:', u.ministerio||''); if(novaMin === null) return;
-    const novaPass = await promptModal('Editar Usuário','Senha (deixe em branco para manter):', '');
-    const updates = { nome: novoNome.trim(), user: novoUser.trim(), localidade: novaLoc.trim(), ministerio: novaMin.trim(), updatedAt: Date.now() };
-    if(novaPass && novaPass.trim()) { updates.pass = novaPass.trim(); await logEvent('perfil','Senha alterada (admin)',{user:novoUser.trim()}); }
+    const snap = await db.ref('usuarios/'+key).once('value'); const u=snap.val(); if(!u) return;
+    const novoNome = prompt('Nome:', u.nome||''); if(novoNome===null) return;
+    const novoUser = prompt('Usuário:', u.user||''); if(novoUser===null) return;
+    const novaLoc = prompt('Localidade:', u.localidade||''); if(novaLoc===null) return;
+    const novaMin = prompt('Ministério:', u.ministerio||''); if(novaMin===null) return;
+    const provisorioStr = prompt('Provisório? (SIM/NAO):', u.provisorio?'SIM':'NAO'); if(provisorioStr===null) return;
+    const novaPass = prompt('Senha (deixe vazio para manter):','');
+    const updates = { nome:novoNome.trim(), user:novoUser.trim(), localidade:novaLoc.trim(), ministerio:novaMin.trim(), provisorio:(provisorioStr||'NAO').toUpperCase()==='SIM', updatedAt: Date.now() };
+    if(novaPass && novaPass.trim()){ updates.pass=novaPass.trim(); await logEvent('perfil','Senha alterada (admin)',{user:novoUser.trim()}); }
     await db.ref('usuarios/'+key).update(updates); await renderAdminUsuarios(); showToast('Usuário atualizado','info');
-  }catch(e){ console.error('adminEditUser', e); showToast('Erro ao editar usuário','error'); }
+  }catch(e){ showToast('Erro ao editar usuário','error'); }
 };
 window.adminDeleteUser = async function(key){
   try{
-    const ok = await confirmModal('Confirmar','Deseja excluir este usuário?'); if(!ok) return;
+    if(!confirm('Excluir este usuário?')) return;
     await db.ref('usuarios/'+key).remove(); await renderAdminUsuarios(); showToast('Usuário excluído','info');
     await logEvent('perfil','Usuário excluído (admin)',{userKey:key});
-  }catch(e){ console.error('adminDeleteUser', e); showToast('Erro ao excluir usuário','error'); }
+  }catch(e){ showToast('Erro ao excluir usuário','error'); }
 };
 
-/* ========= IMPRESSÃO ========= */
+/* ======= ADMIN – Produtos ======= */
+async function addProduto(){
+  if(!currentUser?.isAdmin){ showToast('Acesso negado','error'); return; }
+  const nome=$('#novoProdutoNome').value.trim(); const unidade=$('#novoProdutoUnidade').value.trim();
+  if(!nome || !unidade){ showToast('Preencha nome e unidade','error'); return; }
+  try{
+    await db.ref('produtos').push({ nome, unidade }); $('#novoProdutoNome').value=''; $('#novoProdutoUnidade').value='';
+    await loadProdutos(); showToast('Produto adicionado','info'); await logEvent('sistema','Produto adicionado',{nome,unidade});
+  }catch(e){ showToast('Erro ao adicionar produto','error'); }
+}
+
+/* ======= HISTÓRICO (ADMIN) ======= */
+async function abrirHistoricoAdmin(){ if(!currentUser?.isAdmin){ alert('Acesso negado.'); return; } go('historicoAdmin'); await carregarHistoricoAdmin(); }
+async function carregarHistoricoAdmin(){
+  const tbody=$('#tabelaHistoricoAdmin tbody'); tbody.innerHTML='<tr><td colspan="5">Carregando…</td></tr>';
+  try{
+    const snap = await db.ref('logs').orderByChild('ts').limitToLast(500).once('value');
+    const obj=snap.val()||{}; let rows = Object.keys(obj).map(k=>({ key:k, ...obj[k] })).sort((a,b)=> b.ts-a.ts);
+    const tipoSel = $('#filtroHistoricoTipo').value||'todos';
+    if(tipoSel!=='todos') rows = rows.filter(r=>r.tipo===tipoSel);
+    if($('#toggleOcultarHistorico').checked){ rows=[]; }
+    tbody.innerHTML = rows.length?'':'<tr><td colspan="5">Sem eventos</td></tr>';
+    rows.forEach(r=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML = `<td>${fmtDateTime(r.ts)}</td><td>${escapeHtml(r.userNome||r.user||'-')}</td><td>${escapeHtml(r.tipo||'-')}</td><td>${escapeHtml(r.descricao||'-')}</td>
+        <td><pre style="white-space:pre-wrap;margin:0;">${escapeHtml(JSON.stringify(r.detalhes||{},null,0))}</pre></td>`;
+      tbody.appendChild(tr);
+    });
+    // KPIs
+    const now=Date.now(); const dayStart=new Date(); dayStart.setHours(0,0,0,0);
+    const last30 = now - 30*24*60*60*1000;
+    $('#kpiEvt30').textContent = Object.values(obj).filter(r=> r.ts>=last30).length;
+    $('#kpiLoginHoje').textContent = Object.values(obj).filter(r=> r.tipo==='login' && r.ts>=dayStart.getTime()).length;
+    $('#kpiPedidosHoje').textContent = Object.values(obj).filter(r=> r.tipo==='pedido' && (r.descricao||'').toLowerCase().includes('pedido criado') && r.ts>=dayStart.getTime()).length;
+    $('#kpiPwd30').textContent = Object.values(obj).filter(r=> r.tipo==='perfil' && (r.descricao||'').toLowerCase().includes('senha') && r.ts>=last30).length;
+  }catch(e){ tbody.innerHTML='<tr><td colspan="5">Erro ao carregar.</td></tr>'; }
+}
+
+/* ======= IMPRESSÃO / PREVIEW / INTERVALO ======= */
+function parseIntervalo(text){
+  if(!text) return null;
+  // "1-3,6,10-12"
+  const parts = text.split(',').map(s=>s.trim()).filter(Boolean);
+  const idxs = new Set();
+  for(const part of parts){
+    if(/^\d+$/.test(part)){ idxs.add(parseInt(part)); }
+    else if(/^\d+\-\d+$/.test(part)){
+      const [a,b]=part.split('-').map(n=>parseInt(n));
+      const start=Math.min(a,b), end=Math.max(a,b);
+      for(let i=start;i<=end;i++) idxs.add(i);
+    }
+  }
+  return idxs.size? idxs : null;
+}
+function buildPrintTableFromDom(domRows, intervalSet, isAdmin=false){
+  const rows=[];
+  domRows.forEach((r,i)=>{
+    const idx=i+1; if(intervalSet && !intervalSet.has(idx)) return;
+    const cols=r.querySelectorAll('td'); if(cols.length===0) return;
+    if(isAdmin){
+      rows.push(`<tr>
+        <td style="border:1px solid #ddd;padding:6px;">${idx}</td>
+        <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(cols[1].innerText)}</td>
+        <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(cols[2].innerText)}</td>
+        <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(cols[3].innerText)}</td>
+        <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(cols[4].innerText)}</td>
+        <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(cols[5].innerText)}</td>
+        <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(cols[6].innerText)}</td>
+        <td class="check-col" style="border:1px solid #ddd;">[  ]</td>
+      </tr>`);
+    }else{
+      rows.push(`<tr>
+        <td style="border:1px solid #ddd;padding:6px;">${idx}</td>
+        <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(cols[1].innerText)}</td>
+        <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(cols[2].innerText)}</td>
+        <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(cols[3].innerText)}</td>
+        <td class="check-col" style="border:1px solid #ddd;">[  ]</td>
+      </tr>`);
+    }
+  });
+  return rows.join('');
+}
 function printHtml(html, title='Impressão'){
   const w = window.open('','_blank');
   const totalCss = `
@@ -1280,135 +1273,82 @@ function printHtml(html, title='Impressão'){
   const doc = `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(title)}</title><style>${totalCss}</style></head><body>${html}</body></html>`;
   w.document.write(doc); w.document.close(); w.focus(); setTimeout(()=> w.print(), 300);
 }
-function imprimirRelatorioUsuario(){
-  if(!currentUser){ showToast('Faça login','error'); return; }
-  const tpl = document.createElement('div');
-  tpl.innerHTML = `
-    <div class="print-header">
-      <div>
-        <h3 style="margin:0;">Meus Pedidos</h3>
-        <div class="print-meta">Gerado em ${fmtDateTime(Date.now())}</div>
-        <div class="print-meta">Solicitante: ${escapeHtml(currentUser.nome)} (${escapeHtml(currentUser.user)})</div>
-        <div class="print-meta">Localidade: ${escapeHtml(currentUser.localidade||'-')}</div>
-        <div class="print-meta">Ministério: ${escapeHtml(currentUser.ministerio||'-')}</div>
-      </div>
-      <div class="print-meta" id="__ciclo_user"></div>
-    </div>
-    <table style="width:100%; border-collapse:collapse;">
-      <thead>
-        <tr style="background:#0056b3; color:#fff;">
-          <th style="text-align:left;padding:8px;border:1px solid #ddd;">Produto</th>
-          <th style="text-align:left;padding:8px;border:1px solid #ddd;">Qtd</th>
-          <th style="text-align:left;padding:8px;border:1px solid #ddd;">Obs</th>
-          <th class="check-col" style="border:1px solid #ddd;">Visto ✓</th>
-        </tr>
-      </thead>
-      <tbody id="__tbody_user_print"></tbody>
-    </table>
-    <div class="signature-grid">
-      <div class="signature-box">Assinatura do Solicitante</div>
-      <div class="signature-box">Conferente / Visto</div>
-    </div>`;
-  getCycleInfo().then(info=>{
-    const el = tpl.querySelector('#__ciclo_user');
-    if(el) el.textContent = `Ciclo: ${info.cycleId}`;
-  });
 
-  const rows = $$('#tabelaPedidosUsuario tbody tr');
-  const tbody = tpl.querySelector('#__tbody_user_print');
-  if(rows.length===0){ tbody.innerHTML = `<tr><td colspan="4">Sem dados</td></tr>`; }
-  else{
-    rows.forEach(r=>{
-      const cols = r.querySelectorAll('td');
-      if(cols.length>=4){
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(cols[0].innerText)}</td>
-          <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(cols[1].innerText)}</td>
-          <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(cols[2].innerText)}</td>
-          <td class="check-col" style="border:1px solid #ddd;">[  ]</td>`;
-        tbody.appendChild(tr);
-      }
-    });
-  }
-  printHtml(tpl.innerHTML, 'Meus Pedidos');
+function previewRelUsuario(){
+  const interval = parseIntervalo($('#ruIntervalo').value.trim());
+  const tpl = $('#tpl-impressao-usuario').content.cloneNode(true);
+  tpl.querySelector('#print-meta-usuario').textContent = `Gerado em ${fmtDateTime(Date.now())}`;
+  tpl.querySelector('#print-solicitante').textContent = `Solicitante: ${currentUser?.nome||'-'} (${currentUser?.user||'-'})`;
+  tpl.querySelector('#print-localidade').textContent = `Localidade: ${currentUser?.localidade||'-'}`;
+  tpl.querySelector('#print-ministerio').textContent = `Ministério: ${currentUser?.ministerio||'-'}`;
+  getCycleInfo().then(info=> tpl.querySelector('#print-ciclo').textContent = `Ciclo: ${info.cycleId}`);
+  const rowsDom = $$('#tabelaPedidosUsuario tbody tr');
+  const body = buildPrintTableFromDom(rowsDom, interval, false);
+  tpl.querySelector('#print-tbody-usuario').innerHTML = body || '<tr><td colspan="5">Sem dados</td></tr>';
+  abrirModal('Pré-visualização – Meus Pedidos', tpl.firstElementChild.outerHTML);
+}
+function imprimirRelatorioUsuario(){
+  const interval = parseIntervalo($('#ruIntervalo').value.trim());
+  const tpl = $('#tpl-impressao-usuario').content.cloneNode(true);
+  tpl.querySelector('#print-meta-usuario').textContent = `Gerado em ${fmtDateTime(Date.now())}`;
+  tpl.querySelector('#print-solicitante').textContent = `Solicitante: ${currentUser?.nome||'-'} (${currentUser?.user||'-'})`;
+  tpl.querySelector('#print-localidade').textContent = `Localidade: ${currentUser?.localidade||'-'}`;
+  tpl.querySelector('#print-ministerio').textContent = `Ministério: ${currentUser?.ministerio||'-'}`;
+  getCycleInfo().then(info=> tpl.querySelector('#print-ciclo').textContent = `Ciclo: ${info.cycleId}`);
+  const rowsDom = $$('#tabelaPedidosUsuario tbody tr');
+  const body = buildPrintTableFromDom(rowsDom, interval, false);
+  tpl.querySelector('#print-tbody-usuario').innerHTML = body || '<tr><td colspan="5">Sem dados</td></tr>';
+  printHtml(tpl.firstElementChild.outerHTML, 'Meus Pedidos');
+}
+
+function previewRelGeral(){
+  const interval = parseIntervalo($('#raIntervalo').value.trim());
+  const tpl = $('#tpl-impressao-geral').content.cloneNode(true);
+  tpl.querySelector('#print-meta-geral').textContent = `Gerado em ${fmtDateTime(Date.now())}`;
+  getCycleInfo().then(info=> tpl.querySelector('#print-ciclo-geral').textContent = `Ciclo: ${info.cycleId}`);
+  const rowsDom = $$('#tabelaPedidosAdmin tbody tr');
+  const body = buildPrintTableFromDom(rowsDom, interval, true);
+  tpl.querySelector('#print-tbody-geral').innerHTML = body || '<tr><td colspan="8">Sem dados</td></tr>';
+  abrirModal('Pré-visualização – Relatório Geral', tpl.firstElementChild.outerHTML);
 }
 function imprimirRelatorioAdmin(){
-  const rows = $$('#tabelaPedidosAdmin tbody tr');
-  const tpl = document.createElement('div');
-  tpl.innerHTML = `
-    <div class="print-header">
-      <div>
-        <h3 style="margin:0;">Relatório Geral de Pedidos</h3>
-        <div class="print-meta">Gerado em ${fmtDateTime(Date.now())}</div>
-      </div>
-      <div class="print-meta" id="__ciclo_geral"></div>
-    </div>
-    <table style="width:100%; border-collapse:collapse;">
-      <thead>
-        <tr style="background:#0056b3; color:#fff;">
-          <th style="text-align:left;padding:8px;border:1px solid #ddd;">Usuário</th>
-          <th style="text-align:left;padding:8px;border:1px solid #ddd;">Localidade</th>
-          <th style="text-align:left;padding:8px;border:1px solid #ddd;">Produto</th>
-          <th style="text-align:left;padding:8px;border:1px solid #ddd;">Qtd</th>
-          <th style="text-align:left;padding:8px;border:1px solid #ddd;">Obs</th>
-          <th style="text-align:left;padding:8px;border:1px solid #ddd;">Status</th>
-          <th class="check-col" style="border:1px solid #ddd;">Visto ✓</th>
-        </tr>
-      </thead>
-      <tbody id="__tbody_admin_print"></tbody>
-    </table>
-    <div class="signature-grid">
-      <div class="signature-box">Responsável / Assinatura</div>
-      <div class="signature-box">Conferente / Visto</div>
-    </div>`;
-  getCycleInfo().then(info=>{
-    const el = tpl.querySelector('#__ciclo_geral');
-    if(el) el.textContent = `Ciclo: ${info.cycleId}`;
-  });
-
-  const tbody = tpl.querySelector('#__tbody_admin_print');
-  if(rows.length===0){ tbody.innerHTML = `<tr><td colspan="7">Sem dados</td></tr>`; }
-  else{
-    rows.forEach(r=>{
-      const cols = r.querySelectorAll('td');
-      if(cols.length>=6){
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(cols[0].innerText)}</td>
-          <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(cols[1].innerText)}</td>
-          <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(cols[2].innerText)}</td>
-          <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(cols[3].innerText)}</td>
-          <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(cols[4].innerText)}</td>
-          <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(cols[5].innerText)}</td>
-          <td class="check-col" style="border:1px solid #ddd;">[  ]</td>`;
-        tbody.appendChild(tr);
-      }
-    });
-  }
-  printHtml(tpl.innerHTML, 'Relatório de Pedidos - Geral');
+  const interval = parseIntervalo($('#raIntervalo').value.trim());
+  const tpl = $('#tpl-impressao-geral').content.cloneNode(true);
+  tpl.querySelector('#print-meta-geral').textContent = `Gerado em ${fmtDateTime(Date.now())}`;
+  getCycleInfo().then(info=> tpl.querySelector('#print-ciclo-geral').textContent = `Ciclo: ${info.cycleId}`);
+  const rowsDom = $$('#tabelaPedidosAdmin tbody tr');
+  const body = buildPrintTableFromDom(rowsDom, interval, true);
+  tpl.querySelector('#print-tbody-geral').innerHTML = body || '<tr><td colspan="8">Sem dados</td></tr>';
+  printHtml(tpl.firstElementChild.outerHTML, 'Relatório de Pedidos - Geral');
 }
+
 async function imprimirRelatorioPorLocalidade(){
   try{
-    const snap = await db.ref('usuarios').once('value'); const obj = snap.val() || {};
+    const snap = await db.ref('usuarios').once('value'); const obj=snap.val()||{};
     const usuarios = Object.keys(obj).map(k=>({ key:k, ...obj[k] }));
     const localidades = Array.from(new Set(usuarios.map(u=>u.localidade||'').filter(Boolean)));
     if(localidades.length===0){ showToast('Nenhuma localidade encontrada','error'); return; }
-    let options=''; localidades.forEach(loc=> options += `<option value="${escapeHtml(loc)}">${escapeHtml(loc)}</option>`);
-    const html = `<label>Localidade:</label><select id="__sel_localidade">${options}</select>
-      <div style="text-align:center;margin-top:12px;"><button id="__print_local">Imprimir</button> <button class="btn-muted" id="__cancel_local">Cancelar</button></div>`;
-    abrirModal('Imprimir por Localidade', html);
-    $('#__print_local').onclick = async ()=>{
-      const loc = $('#__sel_localidade').value; fecharModal();
-      const snapP = await db.ref('pedidos').once('value');
-      const pedidosObj = snapP.val() || {};
-      const pedidos = Object.keys(pedidosObj).map(k=>({ key:k, ...pedidosObj[k] }));
-      const filtered = pedidos.filter(p => (p.createdByLocalidade||'') === loc);
-      if(filtered.length===0){ showToast('Nenhum pedido para essa localidade.','error'); return; }
+    let options=''; localidades.sort((a,b)=>normalize(a).localeCompare(normalize(b))).forEach(loc=> options += `<option value="${escapeHtml(loc)}">${escapeHtml(loc)}</option>`);
+    const html = `
+  <label>Localidade:</label>
+  <select id="__sel_localidade">${options}</select>
+  <div style="text-align:center;margin-top:12px;">
+    <button id="__view_local">👁️ Visualizar</button>
+    <button id="__print_local">🖨️ Imprimir</button>
+    <button class="btn-muted" id="__cancel_local">Cancelar</button>
+  </div>
+`;
+abrirModal('Relatório por Localidade', html);
 
-      let bodyRows = '';
-      filtered.forEach(p=>{
+    $('#__print_local').onclick = async ()=>{
+      const loc=$('#__sel_localidade').value; fecharModal();
+      const snapP = await db.ref('pedidos').once('value');
+      const pedidosObj=snapP.val()||{}; const pedidos=Object.keys(pedidosObj).map(k=>({ key:k, ...pedidosObj[k] }));
+      const filtered = pedidos.filter(p=> (p.createdByLocalidade||'')===loc );
+      let bodyRows='';
+      filtered.forEach((p,i)=>{
         bodyRows += `<tr>
+          <td style="border:1px solid #ddd;padding:6px;">${i+1}</td>
           <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(p.createdByName||p.createdBy||'')}</td>
           <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(p.produtoText)}</td>
           <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(p.quantidade)}</td>
@@ -1417,17 +1357,14 @@ async function imprimirRelatorioPorLocalidade(){
           <td class="check-col" style="border:1px solid #ddd;">[  ]</td>
         </tr>`;
       });
-
       const htmlDoc = `
         <div class="print-header">
-          <div>
-            <h3 style="margin:0;">Pedidos - ${escapeHtml(loc)}</h3>
-            <div class="print-meta">Gerado em ${fmtDateTime(Date.now())}</div>
-          </div>
+          <div><h3 style="margin:0;">Pedidos - ${escapeHtml(loc)}</h3><div class="print-meta">Gerado em ${fmtDateTime(Date.now())}</div></div>
         </div>
         <table style="width:100%; border-collapse:collapse;">
           <thead>
             <tr style="background:#0056b3; color:#fff;">
+              <th style="text-align:left;padding:8px;border:1px solid #ddd;">#</th>
               <th style="text-align:left;padding:8px;border:1px solid #ddd;">Usuário</th>
               <th style="text-align:left;padding:8px;border:1px solid #ddd;">Produto</th>
               <th style="text-align:left;padding:8px;border:1px solid #ddd;">Qtd</th>
@@ -1436,7 +1373,7 @@ async function imprimirRelatorioPorLocalidade(){
               <th class="check-col" style="border:1px solid #ddd;">Visto ✓</th>
             </tr>
           </thead>
-          <tbody>${bodyRows}</tbody>
+          <tbody>${bodyRows||'<tr><td colspan="7">Sem dados</td></tr>'}</tbody>
         </table>
         <div class="signature-grid">
           <div class="signature-box">Responsável / Assinatura</div>
@@ -1444,88 +1381,475 @@ async function imprimirRelatorioPorLocalidade(){
         </div>`;
       printHtml(htmlDoc, `Pedidos - ${loc}`);
     };
-    $('#__cancel_local').onclick = ()=> fecharModal();
-  }catch(e){ console.error('imprimirRelatorioPorLocalidade', e); showToast('Erro ao preparar impressão por localidade','error'); }
+$('#__view_local').onclick = async ()=>{
+  const loc = $('#__sel_localidade').value;
+  const snapP = await db.ref('pedidos').once('value');
+  const pedidosObj = snapP.val() || {};
+  const pedidos = Object.keys(pedidosObj).map(k => ({ key:k, ...pedidosObj[k] }));
+  const filtered = pedidos.filter(p => (p.createdByLocalidade||'') === loc );
+
+  let bodyRows = '';
+  filtered.forEach((p,i) => {
+    bodyRows += `<tr>
+      <td style="border:1px solid #ddd;padding:6px;">${i+1}</td>
+      <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(p.createdByName||p.createdBy||'')}</td>
+      <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(p.produtoText)}</td>
+      <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(p.quantidade)}</td>
+      <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(p.obs||'')}</td>
+      <td style="border:1px solid #ddd;padding:6px;">${p.entregue? 'Entregue':'Aberto'}</td>
+    </tr>`;
+  });
+
+  const htmlDoc = `
+    <div class="print-header">
+      <div>
+        <h3 style="margin:0;">Pedidos - ${escapeHtml(loc)}</h3>
+        <div class="print-meta">Gerado em ${fmtDateTime(Date.now())}</div>
+      </div>
+    </div>
+    <table style="width:100%; border-collapse:collapse;">
+      <thead>
+        <tr style="background:#0056b3; color:#fff;">
+          <th style="text-align:left;padding:8px;border:1px solid #ddd;">#</th>
+          <th style="text-align:left;padding:8px;border:1px solid #ddd;">Usuário</th>
+          <th style="text-align:left;padding:8px;border:1px solid #ddd;">Produto</th>
+          <th style="text-align:left;padding:8px;border:1px solid #ddd;">Qtd</th>
+          <th style="text-align:left;padding:8px;border:1px solid #ddd;">Obs</th>
+          <th style="text-align:left;padding:8px;border:1px solid #ddd;">Status</th>
+        </tr>
+      </thead>
+      <tbody>${bodyRows || '<tr><td colspan="6">Sem dados</td></tr>'}</tbody>
+    </table>
+  `;
+
+  // Abre dentro do modal, sem imprimir
+  abrirModal(`Visualização – ${escapeHtml(loc)}`, htmlDoc);
+};
+
+    $('#__cancel_local').onclick=()=>fecharModal();
+  }catch(e){ showToast('Erro ao preparar impressão por localidade','error'); }
 }
+
 async function imprimirResumoItensGeral(){
   try{
-    const snapP = await db.ref('pedidos').once('value');
-    const pedidosObj = snapP.val() || {};
+    const snapP = await db.ref('pedidos').once('value'); const pedidosObj=snapP.val()||{};
     const pedidos = Object.keys(pedidosObj).map(k=>({ key:k, ...pedidosObj[k] }));
-    const map={};
-    pedidos.forEach(p=>{ const name = p.produtoText || 'Sem produto'; if(!map[name]) map[name]=0; map[name]+= Number(p.quantidade||0); });
-
-    let bodyRows = '';
-    Object.keys(map).forEach(name=>{
+    const map={}; // apenas ABERTOS
+    pedidos.filter(p=>!p.entregue).forEach(p=>{ const name=p.produtoText||'Sem produto'; map[name]=(map[name]||0)+Number(p.quantidade||0); });
+    let bodyRows='';
+    Object.keys(map).sort((a,b)=>normalize(a).localeCompare(normalize(b))).forEach((name,i)=>{
       bodyRows += `<tr>
+        <td style="border:1px solid #ddd;padding:6px;">${i+1}</td>
         <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(name)}</td>
         <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(map[name])}</td>
         <td class="check-col" style="border:1px solid #ddd;">[  ]</td>
       </tr>`;
     });
-
     const htmlDoc = `
-      <div class="print-header">
-        <div>
-          <h3 style="margin:0;">Resumo de Itens - Total Geral</h3>
-          <div class="print-meta">Gerado em ${fmtDateTime(Date.now())}</div>
-        </div>
-      </div>
+      <div class="print-header"><div><h3 style="margin:0;">Resumo de Itens - (Somente Abertos)</h3><div class="print-meta">Gerado em ${fmtDateTime(Date.now())}</div></div></div>
       <table style="width:100%; border-collapse:collapse;">
         <thead>
           <tr style="background:#0056b3; color:#fff;">
+            <th style="text-align:left;padding:8px;border:1px solid #ddd;">#</th>
             <th style="text-align:left;padding:8px;border:1px solid #ddd;">Produto</th>
             <th style="text-align:left;padding:8px;border:1px solid #ddd;">Quantidade Total</th>
             <th class="check-col" style="border:1px solid #ddd;">Visto ✓</th>
           </tr>
         </thead>
-        <tbody>${bodyRows || '<tr><td colspan="3">Sem dados</td></tr>'}</tbody>
+        <tbody>${bodyRows || '<tr><td colspan="4">Sem dados</td></tr>'}</tbody>
       </table>
-      <div class="signature-grid">
-        <div class="signature-box">Responsável / Assinatura</div>
-        <div class="signature-box">Conferente / Visto</div>
-      </div>`;
-    printHtml(htmlDoc, 'Resumo de Itens - Total Geral');
-  }catch(e){ console.error('imprimirResumoItensGeral', e); showToast('Erro ao imprimir resumo de itens','error'); }
+      <div class="signature-grid"><div class="signature-box">Responsável / Assinatura</div><div class="signature-box">Conferente / Visto</div></div>`;
+    printHtml(htmlDoc, 'Resumo de Itens - Abertos');
+  }catch(e){ showToast('Erro ao imprimir resumo de itens','error'); }
+}
+async function abrirRelatorioCiclosFechados(){
+  try{
+    // Buscar todos os ciclos disponíveis no banco
+    const snap = await db.ref('pedidos').once('value');
+    const obj = snap.val() || {};
+    const pedidos = Object.values(obj);
+    const ciclos = [...new Set(pedidos.map(p => p.cycleId).filter(Boolean))].sort().reverse();
+
+    if(ciclos.length === 0){
+      showToast('Nenhum ciclo encontrado ainda.', 'warn');
+      return;
+    }
+
+    let options = ciclos.map(c => `<option value="${c}">${c}</option>`).join('');
+    const html = `
+      <label for="selCiclo">Selecione o ciclo:</label>
+      <select id="selCiclo">${options}</select>
+      <div style="text-align:center;margin-top:12px;">
+        <button id="btnViewCiclo">👁️ Visualizar</button>
+        <button id="btnPrintCiclo">🖨️ Imprimir</button>
+        <button id="btnExcelCiclo">⬇️ Exportar Excel</button>
+        <button class="btn-muted" id="btnCancelCiclo">Cancelar</button>
+      </div>
+    `;
+    abrirModal('Relatórios de Ciclos Fechados', html);
+
+    $('#btnCancelCiclo').onclick = fecharModal;
+
+    // Função comum de filtro
+    const gerarRelatorio = async (modo='view')=>{
+      const ciclo = $('#selCiclo').value;
+      const filtered = pedidos.filter(p => p.cycleId === ciclo);
+      if(filtered.length === 0){
+        showToast('Nenhum pedido encontrado neste ciclo.', 'warn');
+        return;
+      }
+
+      // Montar HTML do relatório
+      let bodyRows = '';
+      filtered.forEach((p,i)=>{
+        bodyRows += `<tr>
+          <td style="border:1px solid #ddd;padding:6px;">${i+1}</td>
+          <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(p.createdByName||p.createdBy||'')}</td>
+          <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(p.createdByLocalidade||'')}</td>
+          <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(p.produtoText||'')}</td>
+          <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(p.quantidade||0)}</td>
+          <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(p.obs||'')}</td>
+          <td style="border:1px solid #ddd;padding:6px;">${p.entregue?'Entregue':'Aberto'}</td>
+        </tr>`;
+      });
+
+      const htmlDoc = `
+        <div class="print-header">
+          <div>
+            <h3 style="margin:0;">Relatório de Pedidos – Ciclo ${escapeHtml(ciclo)}</h3>
+            <div class="print-meta">Gerado em ${fmtDateTime(Date.now())}</div>
+          </div>
+        </div>
+        <table style="width:100%; border-collapse:collapse;">
+          <thead>
+            <tr style="background:#0056b3;color:#fff;">
+              <th>#</th><th>Usuário</th><th>Localidade</th><th>Produto</th><th>Qtd</th><th>Obs</th><th>Status</th>
+            </tr>
+          </thead>
+          <tbody>${bodyRows}</tbody>
+        </table>
+      `;
+
+      if(modo === 'view') abrirModal(`Visualização – Ciclo ${ciclo}`, htmlDoc);
+      if(modo === 'print') printHtml(htmlDoc, `Relatório ${ciclo}`);
+      if(modo === 'excel'){
+        // Gerar planilha Excel
+        const head = ['Usuário','Localidade','Produto','Qtd','Obs','Status'];
+        const rows = filtered.map(p => [
+          p.createdByName||p.createdBy||'',
+          p.createdByLocalidade||'',
+          p.produtoText||'',
+          p.quantidade||0,
+          p.obs||'',
+          p.entregue?'Entregue':'Aberto'
+        ]);
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet([head,...rows]);
+        XLSX.utils.book_append_sheet(wb, ws, `Ciclo_${ciclo}`);
+        XLSX.writeFile(wb, `relatorio_ciclo_${ciclo}.xlsx`);
+        showToast('Excel exportado com sucesso!','info');
+      }
+    };
+
+    $('#btnViewCiclo').onclick = ()=> gerarRelatorio('view');
+    $('#btnPrintCiclo').onclick = ()=> gerarRelatorio('print');
+    $('#btnExcelCiclo').onclick = ()=> gerarRelatorio('excel');
+  }catch(e){
+    console.error(e);
+    showToast('Erro ao carregar ciclos', 'error');
+  }
 }
 
-/* ========= UI EVENTOS ========= */
-function wireUI(){
+async function previewResumoItensGeral(){
+  try{
+    const snapP = await db.ref('pedidos').once('value');
+    const pedidosObj = snapP.val() || {};
+    const pedidos = Object.keys(pedidosObj).map(k => ({ key:k, ...pedidosObj[k] }));
+    const map = {};
+    pedidos.filter(p => !p.entregue).forEach(p => {
+      const name = p.produtoText || 'Sem produto';
+      map[name] = (map[name] || 0) + Number(p.quantidade || 0);
+    });
+
+    let bodyRows = '';
+    Object.keys(map).sort((a,b)=>normalize(a).localeCompare(normalize(b))).forEach((name,i)=>{
+      bodyRows += `<tr>
+        <td style="border:1px solid #ddd;padding:6px;">${i+1}</td>
+        <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(name)}</td>
+        <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(map[name])}</td>
+      </tr>`;
+    });
+
+    const htmlDoc = `
+      <div class="print-header">
+        <div><h3 style="margin:0;">Resumo de Itens (Somente Abertos)</h3>
+        <div class="print-meta">Gerado em ${fmtDateTime(Date.now())}</div></div>
+      </div>
+      <table style="width:100%; border-collapse:collapse;">
+        <thead>
+          <tr style="background:#0056b3; color:#fff;">
+            <th style="text-align:left;padding:8px;border:1px solid #ddd;">#</th>
+            <th style="text-align:left;padding:8px;border:1px solid #ddd;">Produto</th>
+            <th style="text-align:left;padding:8px;border:1px solid #ddd;">Quantidade Total</th>
+          </tr>
+        </thead>
+        <tbody>${bodyRows || '<tr><td colspan="3">Sem dados</td></tr>'}</tbody>
+      </table>
+    `;
+
+    abrirModal('Pré-visualização – Resumo de Itens', htmlDoc);
+  }catch(e){ showToast('Erro ao gerar pré-visualização','error'); }
+}
+
+
+/* ======= FECHAMENTO – Exportação Excel ======= */
+// ==============================
+// RELATÓRIO DE CICLOS FECHADOS (com filtro por localidade)
+// ==============================
+async function abrirRelatorioCiclosFechados(){
+  try{
+    // Buscar todos os pedidos
+    const snap = await db.ref('pedidos').once('value');
+    const obj = snap.val() || {};
+    const pedidos = Object.values(obj);
+
+    // Obter lista de ciclos e localidades
+    const ciclos = [...new Set(pedidos.map(p => p.cycleId).filter(Boolean))].sort().reverse();
+    const localidades = [...new Set(pedidos.map(p => p.createdByLocalidade || 'Não Informado'))].sort();
+
+    if(ciclos.length === 0){
+      showToast('Nenhum ciclo encontrado ainda.', 'warn');
+      return;
+    }
+
+    // Monta as opções de seleção
+    const cicloOpts = ciclos.map(c => `<option value="${c}">${c}</option>`).join('');
+    const localOpts = ['Todas', ...localidades].map(l => `<option value="${l}">${l}</option>`).join('');
+
+    // HTML do modal
+    const html = `
+      <label for="selCiclo">Selecione o ciclo:</label>
+      <select id="selCiclo">${cicloOpts}</select>
+
+      <label for="selLocal" style="margin-top:10px;display:block;">Filtrar por localidade:</label>
+      <select id="selLocal">${localOpts}</select>
+
+      <div style="text-align:center;margin-top:12px;">
+        <button id="btnViewCiclo">👁️ Visualizar</button>
+        <button id="btnPrintCiclo">🖨️ Imprimir</button>
+        <button id="btnExcelCiclo">⬇️ Exportar Excel</button>
+        <button class="btn-muted" id="btnCancelCiclo">Cancelar</button>
+      </div>
+    `;
+
+    abrirModal('Relatórios de Ciclos Fechados', html);
+    $('#btnCancelCiclo').onclick = fecharModal;
+
+    // Função que gera o relatório
+    const gerarRelatorio = async (modo='view')=>{
+      const ciclo = $('#selCiclo').value;
+      const local = $('#selLocal').value;
+
+      // Filtra conforme o ciclo e (opcionalmente) a localidade
+      let filtered = pedidos.filter(p => p.cycleId === ciclo);
+      if(local !== 'Todas') filtered = filtered.filter(p => (p.createdByLocalidade||'Não Informado') === local);
+
+      if(filtered.length === 0){
+        showToast('Nenhum pedido encontrado nesse filtro.', 'warn');
+        return;
+      }
+
+      // Monta o corpo da tabela
+      let bodyRows = '';
+      filtered.forEach((p,i)=>{
+        bodyRows += `<tr>
+          <td style="border:1px solid #ddd;padding:6px;">${i+1}</td>
+          <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(p.createdByName||p.createdBy||'')}</td>
+          <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(p.createdByLocalidade||'')}</td>
+          <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(p.produtoText||'')}</td>
+          <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(p.quantidade||0)}</td>
+          <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(p.obs||'')}</td>
+          <td style="border:1px solid #ddd;padding:6px;">${p.entregue?'Entregue':'Aberto'}</td>
+        </tr>`;
+      });
+
+      // Cabeçalho do relatório
+      const titulo = local === 'Todas'
+        ? `Relatório de Pedidos – Ciclo ${escapeHtml(ciclo)}`
+        : `Relatório de Pedidos – Ciclo ${escapeHtml(ciclo)} (${escapeHtml(local)})`;
+
+      const htmlDoc = `
+        <div class="print-header">
+          <div>
+            <h3 style="margin:0;">${titulo}</h3>
+            <div class="print-meta">Gerado em ${fmtDateTime(Date.now())}</div>
+          </div>
+        </div>
+        <table style="width:100%; border-collapse:collapse;">
+          <thead>
+            <tr style="background:#0056b3;color:#fff;">
+              <th>#</th><th>Usuário</th><th>Localidade</th><th>Produto</th><th>Qtd</th><th>Obs</th><th>Status</th>
+            </tr>
+          </thead>
+          <tbody>${bodyRows}</tbody>
+        </table>
+      `;
+
+      // Ações
+      if(modo === 'view') abrirModal(`Visualização – ${titulo}`, htmlDoc);
+      if(modo === 'print') printHtml(htmlDoc, `Relatório ${ciclo}`);
+      if(modo === 'excel'){
+        // Exportar Excel
+        const head = ['Usuário','Localidade','Produto','Qtd','Obs','Status'];
+        const rows = filtered.map(p => [
+          p.createdByName||p.createdBy||'',
+          p.createdByLocalidade||'',
+          p.produtoText||'',
+          p.quantidade||0,
+          p.obs||'',
+          p.entregue?'Entregue':'Aberto'
+        ]);
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet([head,...rows]);
+        XLSX.utils.book_append_sheet(wb, ws, `Ciclo_${ciclo}`);
+        XLSX.writeFile(wb, `relatorio_ciclo_${ciclo}_${local.replace(/\s+/g,'_')}.xlsx`);
+        showToast('Excel exportado com sucesso!','info');
+      }
+    };
+
+    // Liga os botões
+    $('#btnViewCiclo').onclick = ()=> gerarRelatorio('view');
+    $('#btnPrintCiclo').onclick = ()=> gerarRelatorio('print');
+    $('#btnExcelCiclo').onclick = ()=> gerarRelatorio('excel');
+
+  }catch(e){
+    console.error(e);
+    showToast('Erro ao carregar ciclos','error');
+  }
+}
+async function exportFechamentoExcel(){
+  try{
+    const snap = await db.ref('pedidos').once('value');
+    const obj = snap.val() || {};
+    const pedidos = Object.values(obj);
+
+    if(pedidos.length === 0){
+      showToast('Nenhum pedido encontrado para exportar.', 'warn');
+      return;
+    }
+
+    const rows = pedidos.map(p => ({
+      Ciclo: p.cycleId || '-',
+      Usuario: p.createdByName || p.createdBy || '-',
+      Localidade: p.createdByLocalidade || '-',
+      Produto: p.produtoText || '-',
+      Quantidade: p.quantidade || 0,
+      Obs: p.obs || '',
+      Status: p.entregue ? 'Entregue' : 'Aberto'
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Fechamento');
+    XLSX.writeFile(wb, `fechamento_geral_${new Date().toISOString().slice(0,10)}.xlsx`);
+
+    showToast('Arquivo Excel exportado com sucesso!', 'info');
+  }catch(e){
+    console.error(e);
+    showToast('Erro ao exportar fechamento.', 'error');
+  }
+}
+
   $('#yearFooter').textContent = new Date().getFullYear();
-  setInterval(()=>{ $('#nowClock').textContent = fmtDateTime(Date.now()); }, 1000);
+  setInterval(()=> $('#nowClock').textContent = fmtDateTime(Date.now()), 1000);
 
-  // Login/Registro
+  // Login
   $('#btnLogin').onclick = login;
-  $('#btnShowRegister').onclick = showRegister;
-  $('#btnBackLogin').onclick = backToLogin;
-  $('#btnRegister').onclick = register;
-  $('#btnWhatsapp').onclick = abrirWhatsapp;
-  $('#btnLogout').onclick = logout;
+  $('#btnWhatsapp').onclick = ()=>{
+  const phone = '5531985330656'; // número completo com DDI + DDD, sem + nem espaços
+  const msg = encodeURIComponent('Olá, preciso de ajuda com o sistema de compras coletivas.');
+  const url = `https://wa.me/${phone}?text=${msg}`;
+  console.log('Abrindo WhatsApp:', url);
+  window.open(url, '_blank');
+};
 
-  // Pedido/Home
+  // Primeiro acesso
+  $('#btnVoltarPA').onclick = ()=>{ currentUser=null; go('loginScreen'); };
+  $('#paOutraLocalidade').onchange = e=> togglePAOutraLocalidade(e.target.checked);
+  $('#btnBuscaCepPA').onclick = async ()=>{
+    try{
+      const cep=$('#paCep').value.trim();
+      const data = await buscaCEP(cep);
+      $('#paLogradouro').value = data.logradouro||'';
+      $('#paBairro').value = data.bairro||'';
+      $('#paCidade').value = data.localidade||'';
+      $('#paUf').value = data.uf||'';
+      togglePAOutraLocalidade(true);
+      showToast('Endereço preenchido pelo CEP','info');
+    }catch(e){ showToast(e.message||'Erro no CEP','error'); }
+  };
+  $('#btnConcluirPA').onclick = async ()=>{
+    const nome=$('#paNome').value.trim(); const generoSel=$('#paGenero').value||'auto';
+    const user=$('#paUser').value.trim(); const pass=$('#paPass').value.trim();
+    let localidade = $('#paCidade').value.trim(); const logradouro=$('#paLogradouro').value.trim(); const bairro=$('#paBairro').value.trim(); const uf=$('#paUf').value.trim();
+    if(!nome || !user || !pass){ $('#paMsg').style.color='red'; $('#paMsg').textContent='Preencha nome, usuário e senha.'; return; }
+    if($('#paOutraLocalidade').checked){
+      if(!localidade){ $('#paMsg').style.color='red'; $('#paMsg').textContent='Informe a cidade.'; return; }
+    }
+    // criar usuário definitivo
+    const ok = await register({ nome, user, pass, localidade: localidade || currentUser?.localidade || '', ministerio:'', genero: generoSel });
+    if(!ok) return;
+    // remover antigo provisório (se existir)
+    if(currentUser && currentUser.uid){
+      try{
+        // localizar registro pelo user atual (provisório)
+        const snap = await db.ref('usuarios').orderByChild('user').equalTo(currentUser.user).once('value');
+        const data=snap.val();
+        if(data){ const key=Object.keys(data)[0]; await db.ref('usuarios/'+key).remove(); }
+      }catch(e){}
+    }
+    showToast('Agora você já pode entrar com seu novo usuário.','info');
+    go('loginScreen');
+  };
+
+  // Pedido
   $('#buscaProduto').addEventListener('input', filtrarProdutos);
   $('#btnSalvarPedido').onclick = salvarPedido;
-  $('#btnMeusPedidos').onclick = ()=> mostrarPedidosUsuario($('#filtroUsuario').value || 'todos');
+  $('#btnMeusPedidos').onclick = ()=> mostrarPedidosUsuario($('#filtroUsuario').value||'todos');
+  $('#btnLogout').onclick = logout;
 
   // Admin nav
-  $('#adminRelatorioBtn').onclick = ()=> verRelatorioAdmin($('#filtroAdmin').value || 'todos');
+  $('#adminRelatorioBtn').onclick = ()=> verRelatorioAdmin($('#filtroAdmin').value||'todos');
   $('#adminProdutosBtn').onclick = abrirCadastroProduto;
   $('#adminUsuariosBtn').onclick = abrirCadastroUsuarioAdmin;
   $('#adminHistoricoBtn').onclick = abrirHistoricoAdmin;
 
   // Relatório Usuário
   $('#filtroUsuario').onchange = e=> mostrarPedidosUsuario(e.target.value);
-  $('#toggleOcultarEntreguesUsuario').onchange = ()=> mostrarPedidosUsuario($('#filtroUsuario').value || 'todos');
-  $('#toggleOcultarEntreguesUsuario2').onchange = ()=> mostrarPedidosUsuario($('#filtroUsuario').value || 'todos');
+  $('#toggleOcultarEntreguesUsuario2').onchange = ()=> mostrarPedidosUsuario($('#filtroUsuario').value||'todos');
   $('#btnImprimirRelUsuario').onclick = imprimirRelatorioUsuario;
+  $('#btnPreviewRelUsuario').onclick = previewRelUsuario;
   $('#btnVoltarUsuario').onclick = ()=> go('pedidoScreen');
 
   // Relatório Admin
   $('#filtroAdmin').onchange = e=> verRelatorioAdmin(e.target.value);
-  $('#toggleOcultarEntreguesAdmin').onchange = ()=> verRelatorioAdmin($('#filtroAdmin').value || 'todos');
+  $('#toggleOcultarEntreguesAdmin').onchange = ()=> verRelatorioAdmin($('#filtroAdmin').value||'todos');
   $('#btnImprimirRelGeral').onclick = imprimirRelatorioAdmin;
+  $('#btnPreviewRelGeral').onclick = previewRelGeral;
   $('#btnImprimirRelLocalidade').onclick = imprimirRelatorioPorLocalidade;
   $('#btnImprimirResumoItens').onclick = imprimirResumoItensGeral;
+$('#btnPreviewResumoItens').onclick = previewResumoItensGeral;
+
+  $('#btnExportFechamento').onclick = exportFechamentoExcel;
+$('#btnRelatorioCiclos').onclick = abrirRelatorioCiclosFechados;
+$('#btnRelatorioStatus').onclick = abrirRelatorioStatus;
+$('#btnControleEstoque').onclick = abrirControleEstoqueAdm;
+$('#btnRelatorioMovimentacoes').onclick = abrirRelatorioMovimentacoesAdm;
+$('#btnExportarExcel').onclick = exportarExcelAdm;
+
+
+
+
   $('#btnVoltarAdmin').onclick = ()=> go('pedidoScreen');
   $('#btnAbrirCadastroUsuarioAdmin').onclick = abrirCadastroUsuarioAdmin;
   $('#btnAbrirCadastroProduto').onclick = abrirCadastroProduto;
@@ -1538,131 +1862,597 @@ function wireUI(){
   $('#btnAddProduto').onclick = addProduto;
   $('#btnVoltarAdminProd').onclick = ()=> go('pedidoScreen');
 
-  // Histórico Admin
+  // Histórico
   $('#btnVoltarHistorico').onclick = ()=> go('pedidoScreen');
   $('#filtroHistoricoTipo').onchange = carregarHistoricoAdmin;
   $('#toggleOcultarHistorico').onchange = carregarHistoricoAdmin;
-}
 
-/* ========= Admin: addProduto ========= */
-async function addProduto(){
-  if(!currentUser || !currentUser.isAdmin){ showToast('Acesso negado','error'); return; }
-  const nome = $('#novoProdutoNome').value.trim();
-  const unidade = $('#novoProdutoUnidade').value.trim();
-  if(!nome || !unidade){ showToast('Preencha nome e unidade','error'); return; }
-  try{
-    await db.ref('produtos').push({ nome, unidade });
-    $('#novoProdutoNome').value=''; $('#novoProdutoUnidade').value='';
-    await loadProdutos();
-    showToast('Produto adicionado','info');
-    await logEvent('sistema','Produto adicionado',{nome,unidade});
-  }catch(e){ console.error('addProduto', e); showToast('Erro ao adicionar produto','error'); }
-}
+  // Mostrar/ocultar tabelas (Admin)
+  const btnUsuarios=$('#btnToggleUsuarios'), tabUsuarios=$('#tabelaUsuariosAdmin');
+  if(btnUsuarios && tabUsuarios){
+    btnUsuarios.addEventListener('click', ()=>{
+      if(tabUsuarios.style.display==='none'){ tabUsuarios.style.display='table'; btnUsuarios.textContent='👤 Ocultar usuários cadastrados'; }
+      else{ tabUsuarios.style.display='none'; btnUsuarios.textContent='👁️ Mostrar usuários cadastrados'; }
+    });
+  }
+  const btnProdutos=$('#btnToggleProdutos'), tabProdutos=$('#tabelaProdutosAdmin');
+  if(btnProdutos && tabProdutos){
+    btnProdutos.addEventListener('click', ()=>{
+      if(tabProdutos.style.display==='none'){ tabProdutos.style.display='table'; btnProdutos.textContent='📦 Ocultar produtos cadastrados'; }
+      else{ tabProdutos.style.display='none'; btnProdutos.textContent='👁️ Mostrar produtos cadastrados'; }
+    });
+  }
+// ==============================
+// RELATÓRIO POR STATUS (abertos, entregues, geral)
+// ==============================
+async function abrirRelatorioStatus() {
+  try {
+    const snap = await db.ref('pedidos').once('value');
+    const pedidosObj = snap.val() || {};
+    const pedidos = Object.values(pedidosObj);
 
-/* ========= HISTÓRICO (ADMIN) ========= */
-async function abrirHistoricoAdmin(){
-  if(!currentUser?.isAdmin){ alert('Acesso negado.'); return; }
-  go('historicoAdmin');
-  await carregarHistoricoAdmin();
+    if (pedidos.length === 0) {
+      showToast('Nenhum pedido encontrado.', 'warn');
+      return;
+    }
+
+    const html = `
+      <label>Status:</label>
+      <select id="selStatus">
+        <option value="todos">Todos</option>
+        <option value="aberto">Em aberto</option>
+        <option value="entregue">Entregues</option>
+      </select>
+      <div style="text-align:center;margin-top:12px;">
+        <button id="btnViewStatus">👁️ Visualizar</button>
+        <button id="btnPrintStatus">🖨️ Imprimir</button>
+        <button id="btnExcelStatus">⬇️ Exportar Excel</button>
+        <button class="btn-muted" id="btnCancelStatus">Cancelar</button>
+      </div>
+    `;
+    abrirModal('Relatórios por Status', html);
+
+    $('#btnCancelStatus').onclick = fecharModal;
+
+    const gerarRelatorio = (modo='view') => {
+      const status = $('#selStatus').value;
+      let filtered = pedidos;
+      if (status === 'aberto') filtered = pedidos.filter(p => !p.entregue);
+      if (status === 'entregue') filtered = pedidos.filter(p => p.entregue);
+// === Cálculo dos totais ===
+const totalGeral = pedidos.length;
+const totalEntregues = pedidos.filter(p => p.entregue).length;
+const totalAbertos = pedidos.filter(p => !p.entregue).length;
+
+// === Monta o resumo ===
+// === Resumo em formato de cards ===
+const resumoHtml = `
+  <div style="display:flex;justify-content:center;gap:16px;margin-bottom:16px;flex-wrap:wrap;">
+    <div style="flex:1;min-width:160px;max-width:220px;background:#d4edda;border:1px solid #28a745;border-radius:10px;padding:10px;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,0.1);">
+      <div style="font-size:22px;font-weight:bold;color:#155724;">${totalEntregues}</div>
+      <div style="font-size:14px;color:#155724;">Entregues</div>
+    </div>
+    <div style="flex:1;min-width:160px;max-width:220px;background:#fff3cd;border:1px solid #f0ad4e;border-radius:10px;padding:10px;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,0.1);">
+      <div style="font-size:22px;font-weight:bold;color:#856404;">${totalAbertos}</div>
+      <div style="font-size:14px;color:#856404;">Em aberto</div>
+    </div>
+    <div style="flex:1;min-width:160px;max-width:220px;background:#cce5ff;border:1px solid #0056b3;border-radius:10px;padding:10px;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,0.1);">
+      <div style="font-size:22px;font-weight:bold;color:#004085;">${totalGeral}</div>
+      <div style="font-size:14px;color:#004085;">Total</div>
+    </div>
+  </div>
+`;
+
+
+
+      let bodyRows = '';
+      filtered.forEach((p,i) => {
+        bodyRows += `
+          <tr>
+            <td style="border:1px solid #ddd;padding:6px;">${i+1}</td>
+            <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(p.createdByName||p.createdBy||'')}</td>
+            <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(p.createdByLocalidade||'')}</td>
+            <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(p.produtoText||'')}</td>
+            <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(p.quantidade||0)}</td>
+            <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(p.obs||'')}</td>
+            <td style="border:1px solid #ddd;padding:6px;">${p.entregue?'Entregue':'Aberto'}</td>
+          </tr>`;
+      });
+
+      const titulo = status==='todos'
+        ? 'Relatório Geral de Pedidos'
+        : `Relatório de Pedidos (${status==='aberto'?'Em Aberto':'Entregues'})`;
+
+      const htmlDoc = `
+ ${resumoHtml}        
+<div class="print-header">
+          <div><h3 style="margin:0;">${titulo}</h3>
+          <div class="print-meta">Gerado em ${fmtDateTime(Date.now())}</div></div>
+        </div>
+        <table style="width:100%; border-collapse:collapse;">
+          <thead>
+            <tr style="background:#0056b3;color:#fff;">
+              <th>#</th><th>Usuário</th><th>Localidade</th>
+              <th>Produto</th><th>Qtd</th><th>Obs</th><th>Status</th>
+            </tr>
+          </thead>
+          <tbody>${bodyRows || '<tr><td colspan="7">Sem dados</td></tr>'}</tbody>
+        </table>
+      `;
+
+      if(modo==='view') abrirModal(titulo, htmlDoc);
+      if(modo==='print') printHtml(htmlDoc, titulo);
+      if(modo==='excel') {
+        const head = ['Usuário','Localidade','Produto','Qtd','Obs','Status'];// Adiciona o resumo no topo do Excel
+const resumo = [
+  ['Resumo:'],
+  ['Entregues', totalEntregues],
+  ['Em aberto', totalAbertos],
+  ['Total geral', totalGeral],
+  [],
+];
+
+        const rows = filtered.map(p => [
+          p.createdByName||p.createdBy||'',
+          p.createdByLocalidade||'',
+          p.produtoText||'',
+          p.quantidade||0,
+          p.obs||'',
+          p.entregue?'Entregue':'Aberto'
+        ]);
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet([...resumo, head, ...rows]);
+
+        XLSX.utils.book_append_sheet(wb, ws, 'Relatório_Status');
+        XLSX.writeFile(wb, `relatorio_status_${status}_${new Date().toISOString().slice(0,10)}.xlsx`);
+        showToast('Excel exportado com sucesso!', 'info');
+      }
+    };
+
+    $('#btnViewStatus').onclick = ()=> gerarRelatorio('view');
+    $('#btnPrintStatus').onclick = ()=> gerarRelatorio('print');
+    $('#btnExcelStatus').onclick = ()=> gerarRelatorio('excel');
+  } catch (e) {
+    console.error(e);
+    showToast('Erro ao carregar relatório por status.', 'error');
+  }
 }
-async function carregarHistoricoAdmin(){
-  const tbody = $('#tabelaHistoricoAdmin tbody');
-  tbody.innerHTML = '<tr><td colspan="5">Carregando…</td></tr>';
+// ==============================
+// MEU ESTOQUE (USUÁRIO)
+// ==============================
+$('#btnMeuEstoque').onclick = async ()=>{
   try{
-    const snap = await db.ref('logs').orderByChild('ts').limitToLast(500).once('value');
+    const uid = currentUser.uid;
+    const snap = await db.ref('estoques/'+uid).once('value');
     const obj = snap.val() || {};
-    let rows = Object.keys(obj).map(k=>({ key:k, ...obj[k] })).sort((a,b)=> b.ts - a.ts);
 
-    const tipoSel = $('#filtroHistoricoTipo').value || 'todos';
-    if(tipoSel !== 'todos') rows = rows.filter(r=> r.tipo === tipoSel);
+    if(Object.keys(obj).length === 0){
+      abrirModal('Meu Estoque', '<p>📦 Você ainda não possui itens em estoque.</p>');
+      return;
+    }
 
-    if($('#toggleOcultarHistorico').checked){ rows = []; }
+    let html = `
+      <table style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr style="background:#0056b3;color:#fff;">
+            <th>Produto</th><th>Quantidade</th><th>Última Entrada</th><th>Ação</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
 
-    tbody.innerHTML = rows.length ? '' : '<tr><td colspan="5">Sem eventos</td></tr>';
-    rows.forEach(r=>{
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${fmtDateTime(r.ts)}</td>
-        <td>${escapeHtml(r.userNome||r.user||'-')}</td>
-        <td>${escapeHtml(r.tipo||'-')}</td>
-        <td>${escapeHtml(r.descricao||'-')}</td>
-        <td><pre style="white-space:pre-wrap;margin:0;">${escapeHtml(JSON.stringify(r.detalhes||{},null,0))}</pre></td>`;
-      tbody.appendChild(tr);
+    Object.entries(obj).forEach(([pid, p])=>{
+      html += `
+        <tr>
+          <td style="border:1px solid #ddd;padding:6px;">${p.nome}</td>
+          <td style="border:1px solid #ddd;padding:6px;">${p.quantidade}</td>
+          <td style="border:1px solid #ddd;padding:6px;">${p.ultimaEntrada || '-'}</td>
+          <td style="border:1px solid #ddd;padding:6px;text-align:center;">
+            <button onclick="darBaixaEstoque('${uid}','${pid}','${p.nome}',${p.quantidade})">➖ Dar baixa</button>
+          </td>
+        </tr>
+      `;
     });
 
-    const now = Date.now();
-    const dayStart = new Date(); dayStart.setHours(0,0,0,0);
-    const last30 = now - 30*24*60*60*1000;
-    $('#kpiEvt30').textContent = rows.filter(r=> r.ts >= last30).length;
-    $('#kpiLoginHoje').textContent = rows.filter(r=> r.tipo==='login' && r.ts>=dayStart.getTime()).length;
-    $('#kpiPedidosHoje').textContent = rows.filter(r=> r.tipo==='pedido' && r.descricao.includes('Pedido criado') && r.ts>=dayStart.getTime()).length;
-    $('#kpiPwd30').textContent = rows.filter(r=> r.tipo==='perfil' && r.descricao.toLowerCase().includes('senha') && r.ts>=last30).length;
+    html += '</tbody></table>';
+    abrirModal('📦 Meu Estoque', html);
 
   }catch(e){
-    console.error('carregarHistoricoAdmin', e);
-    tbody.innerHTML = '<tr><td colspan="5">Erro ao carregar.</td></tr>';
+    console.error(e);
+    showToast('Erro ao carregar estoque','error');
+  }
+};
+// ==============================
+// DAR BAIXA NO ESTOQUE (USUÁRIO)
+// ==============================
+async function darBaixaEstoque(uid, pid, nome, qtdAtual){
+  const qtd = parseInt(prompt(`Quantas unidades de "${nome}" você usou? (Em estoque: ${qtdAtual})`));
+  if(isNaN(qtd) || qtd <= 0) return;
+  if(qtd > qtdAtual){ showToast('Quantidade maior que o estoque atual.','warn'); return; }
+
+  try{
+    const ref = db.ref(`estoques/${uid}/${pid}`);
+    const snap = await ref.once('value');
+    const atual = snap.val()?.quantidade || 0;
+    const novaQtd = atual - qtd;
+
+    await ref.update({ quantidade: novaQtd });
+
+    // registra a movimentação de saída
+    const movRef = db.ref(`movimentacoes/${uid}`).push();
+    await movRef.set({
+      tipo: 'saida',
+      produto: nome,
+      qtd: qtd,
+      data: new Date().toLocaleString('pt-BR'),
+      ciclo: 'Atual',
+      origem: 'consumo_usuario'
+    });
+
+    showToast('Baixa registrada com sucesso!','info');
+    $('#btnMeuEstoque').click(); // recarrega a tela
+  }catch(e){
+    console.error(e);
+    showToast('Erro ao registrar baixa.','error');
   }
 }
 
-/* ========= Inicialização ========= */
+// ==============================
+// CONTROLE DE ESTOQUES (ADMIN)
+// ==============================
+async function abrirControleEstoqueAdm(){
+  try {
+    const snap = await db.ref('estoques').once('value');
+    const estoques = snap.val() || {};
+
+    const todos = [];
+    for (const [uid, itens] of Object.entries(estoques)) {
+      for (const [pid, p] of Object.entries(itens)) {
+        todos.push({
+          usuario: uid,
+          produto: p.nome,
+          quantidade: p.quantidade,
+          localidade: p.localidade || 'Não Informado',
+          pid
+        });
+      }
+    }
+
+    const localidades = [...new Set(todos.map(e => e.localidade))].sort();
+    const locOpts = ['Todas', ...localidades].map(l => `<option value="${l}">${l}</option>`).join('');
+
+    let html = `
+      <label>Filtrar por localidade:</label>
+      <select id="filtroLocal">${locOpts}</select>
+      <table style="width:100%;border-collapse:collapse;margin-top:10px;">
+        <thead><tr style="background:#0056b3;color:#fff;">
+          <th>Usuário</th><th>Localidade</th><th>Produto</th><th>Qtd</th><th>Ações</th>
+        </tr></thead>
+        <tbody id="tbodyEstoqueAdm"></tbody>
+      </table>
+    `;
+    abrirModal('📦 Controle de Estoques (Administrador)', html);
+
+    const render = (loc = 'Todas') => {
+      const linhas = todos
+        .filter(e => loc === 'Todas' || e.localidade === loc)
+        .map(e => `
+          <tr>
+            <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(e.usuario)}</td>
+            <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(e.localidade)}</td>
+            <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(e.produto)}</td>
+            <td style="border:1px solid #ddd;padding:6px;">${e.quantidade}</td>
+            <td style="border:1px solid #ddd;padding:6px;">
+              <button onclick="editarEstoqueAdm('${e.usuario}','${e.pid}','${e.produto}',${e.quantidade})">✏️ Editar</button>
+            </td>
+          </tr>`
+        ).join('');
+
+      $('#tbodyEstoqueAdm').innerHTML = linhas || '<tr><td colspan="5">Nenhum registro encontrado.</td></tr>';
+    };
+
+    render();
+    $('#filtroLocal').onchange = e => render(e.target.value);
+
+  } catch (e) {
+    console.error(e);
+    showToast('Erro ao carregar estoques', 'error');
+  }
+}
+
+// ==============================
+// EDIÇÃO DE ESTOQUE (ADMIN)
+// ==============================
+async function editarEstoqueAdm(uid, pid, nome, qtdAtual) {
+  const novaQtd = parseInt(prompt(`Editar quantidade de "${nome}" (atual: ${qtdAtual})`));
+  if (isNaN(novaQtd) || novaQtd < 0) return;
+
+  await db.ref(`estoques/${uid}/${pid}`).update({ quantidade: novaQtd });
+
+  const movRef = db.ref(`movimentacoes/${uid}`).push();
+  await movRef.set({
+    tipo: 'ajuste',
+    produto: nome,
+    qtd: novaQtd,
+    data: new Date().toLocaleString('pt-BR'),
+    ciclo: 'Ajuste manual',
+    origem: 'admin_edit'
+  });
+
+  showToast('Estoque atualizado com sucesso!', 'info');
+  abrirControleEstoqueAdm(); // recarrega a lista
+}
+// ==============================
+// RELATÓRIO DE MOVIMENTAÇÕES (POR CICLO)
+// ==============================
+async function abrirRelatorioMovimentacoesAdm(){
+  try {
+    const snap = await db.ref('movimentacoes').once('value');
+    const movs = snap.val() || {};
+    const todos = [];
+
+    for (const [uid, lista] of Object.entries(movs)) {
+      for (const [mid, m] of Object.entries(lista)) {
+        todos.push({
+          usuario: uid,
+          produto: m.produto,
+          tipo: m.tipo,
+          qtd: m.qtd,
+          ciclo: m.ciclo || 'Sem ciclo',
+          data: m.data || '-',
+          origem: m.origem || '-'
+        });
+      }
+    }
+
+    if (todos.length === 0) {
+      abrirModal('📊 Relatório de Movimentações', '<p>Nenhuma movimentação registrada ainda.</p>');
+      return;
+    }
+
+    const ciclos = [...new Set(todos.map(e => e.ciclo))].sort();
+    const cicloOpts = ['Todos', ...ciclos].map(c => `<option value="${c}">${c}</option>`).join('');
+
+    let html = `
+      <label>Filtrar por ciclo:</label>
+      <select id="filtroCiclo">${cicloOpts}</select>
+      <table style="width:100%;border-collapse:collapse;margin-top:10px;">
+        <thead>
+          <tr style="background:#0056b3;color:#fff;">
+            <th>Usuário</th><th>Produto</th><th>Tipo</th><th>Qtd</th><th>Ciclo</th><th>Data/Hora</th><th>Origem</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyMovAdm"></tbody>
+      </table>
+    `;
+    abrirModal('📊 Relatório de Movimentações (por Ciclo)', html);
+
+    const render = (ciclo='Todos')=>{
+      const linhas = todos
+        .filter(e => ciclo==='Todos' || e.ciclo===ciclo)
+        .map(e => `
+          <tr>
+            <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(e.usuario)}</td>
+            <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(e.produto)}</td>
+            <td style="border:1px solid #ddd;padding:6px;">${e.tipo}</td>
+            <td style="border:1px solid #ddd;padding:6px;">${e.qtd}</td>
+            <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(e.ciclo)}</td>
+            <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(e.data)}</td>
+            <td style="border:1px solid #ddd;padding:6px;">${e.origem}</td>
+          </tr>`
+        ).join('');
+
+      $('#tbodyMovAdm').innerHTML = linhas || '<tr><td colspan="7">Nenhum registro para este ciclo.</td></tr>';
+    };
+
+    render();
+    $('#filtroCiclo').onchange = e => render(e.target.value);
+
+  } catch(e){
+    console.error(e);
+    showToast('Erro ao carregar movimentações','error');
+  }
+}
+// ==============================
+// EXPORTAR ESTOQUES E MOVIMENTAÇÕES PARA EXCEL
+// ==============================
+async function exportarExcelAdm() {
+  showToast('Gerando planilha, aguarde...','info');
+
+  try {
+    // 1️⃣ Pega dados de estoques
+    const snapEst = await db.ref('estoques').once('value');
+    const estoques = snapEst.val() || {};
+    const dadosEstoque = [];
+
+    for (const [uid, itens] of Object.entries(estoques)) {
+      for (const [pid, p] of Object.entries(itens)) {
+        dadosEstoque.push({
+          Tipo: 'Estoque Atual',
+          Usuario: uid,
+          Produto: p.nome,
+          Quantidade: p.quantidade,
+          Localidade: p.localidade || '-',
+          Ciclo: p.ciclo || '-',
+          Data: p.ultimaEntrada || '-',
+          Origem: 'estoque_atual'
+        });
+      }
+    }
+
+    // 2️⃣ Pega dados de movimentações
+    const snapMov = await db.ref('movimentacoes').once('value');
+    const movs = snapMov.val() || {};
+    const dadosMov = [];
+
+    for (const [uid, lista] of Object.entries(movs)) {
+      for (const [mid, m] of Object.entries(lista)) {
+        dadosMov.push({
+          Tipo: m.tipo,
+          Usuario: uid,
+          Produto: m.produto,
+          Quantidade: m.qtd,
+          Localidade: '-',
+          Ciclo: m.ciclo || '-',
+          Data: m.data || '-',
+          Origem: m.origem || '-'
+        });
+      }
+    }
+
+    // 3️⃣ Junta tudo
+    const todos = [...dadosEstoque, ...dadosMov];
+
+    // 4️⃣ Gera a planilha
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(todos);
+    XLSX.utils.book_append_sheet(wb, ws, "Relatorio");
+
+    // 5️⃣ Salva o arquivo
+    XLSX.writeFile(wb, `Relatorio_Estoques_Movimentacoes_${new Date().toISOString().slice(0,10)}.xlsx`);
+    showToast('Planilha gerada com sucesso!','ok');
+  } catch (e) {
+    console.error(e);
+    showToast('Erro ao exportar planilha','error');
+  }
+}
+
+// ==============================
+// GERENCIAMENTO DE CICLOS AUTOMÁTICOS
+// ==============================
+async function verificarCicloAutomatico(){
+  const cfgRef = db.ref('config');
+  const snap = await cfgRef.once('value');
+  const cfg = snap.val() || {};
+
+  // Configurações padrão
+  const inicio = cfg.cycleStart || Date.now();
+  const dias = cfg.cycleDays || 30;
+  const bloqueio = cfg.lockBeforeEnd || 5;
+  const agora = Date.now();
+  const msDia = 1000*60*60*24;
+
+  const passou = (agora - inicio) / msDia;
+  const falta = dias - passou;
+
+  // Bloqueio automático antes do fim
+  if(falta <= bloqueio && falta > 0){
+    window.__pedidosBloqueados = true;
+    console.warn(`🚫 Pedidos bloqueados — faltam ${Math.ceil(falta)} dias para o fim do ciclo.`);
+  } else {
+    window.__pedidosBloqueados = false;
+  }
+
+  // Reinício automático se o ciclo completou
+  if(passou >= dias){
+    await cfgRef.update({
+      lastCycleEnd: inicio,
+      cycleStart: agora
+    });
+    showToast('🔁 Novo ciclo iniciado automaticamente!', 'info');
+  }
+
+  // Retorna informações úteis
+  return { passou, falta, dias, bloqueio };
+}
+
+// ==============================
+// BLOQUEIO DE PEDIDOS (USUÁRIO)
+// ==============================
+async function checarBloqueioPedidos(){
+  const info = await verificarCicloAutomatico();
+  if(window.__pedidosBloqueados){
+    showToast(`🚫 Novos pedidos bloqueados — este ciclo se encerra em ${Math.ceil(info.falta)} dias.`, 'warn');
+    return true;
+  }
+  return false;
+}
+
+// ==============================
+// BOTÃO ADMIN: ENCERRAR CICLO MANUALMENTE
+// ==============================
+$('#btnEncerrarCiclo')?.addEventListener('click', async ()=>{
+  const ok = confirm('Deseja encerrar o ciclo atual e iniciar um novo agora?');
+  if(!ok) return;
+  const agora = Date.now();
+  await db.ref('config').update({
+    lastCycleEnd: agora,
+    cycleStart: agora
+  });
+  showToast('✅ Ciclo encerrado manualmente e novo ciclo iniciado!', 'info');
+  await verificarCicloAutomatico();
+});
+
+// ==============================
+// EXIBIR STATUS DO CICLO (PAINEL)
+// ==============================
+async function atualizarStatusCiclo(){
+  const info = await verificarCicloAutomatico();
+  const el = document.querySelector('#infoCiclo');
+  if(!el) return;
+  el.innerHTML = `
+    <b>📅 Ciclo atual:</b> ${info.dias} dias<br>
+    <b>⏳ Faltam:</b> ${Math.ceil(info.falta)} dias<br>
+    <b>🔒 Bloqueio:</b> ${info.bloqueio} dias antes do fim
+  `;
+}
+// 🔔 Avisos diários nos últimos N dias (ex: 5) – uma vez por dia por ciclo
+async function checarAvisosUltimosDias(janelaDias = 5){
+  try{
+    const info = await getCycleInfo(); // já existe no seu código
+    if(!info.open) return;                            // ciclo fechado? nada a fazer
+    if(info.daysRemaining <= 0) return;               // já acabou
+    if(info.daysRemaining > janelaDias) return;       // ainda está longe do fim
+
+    // evita repetir no mesmo ciclo e no mesmo dia restante
+    const key = `toast_cycle_${info.cycleId}_d${info.daysRemaining}`;
+    if(localStorage.getItem(key) === 'shown') return;
+
+    const msg = (info.daysRemaining === 1)
+      ? '⚠️ Último dia do ciclo! Novos pedidos estão bloqueados nos últimos dias.'
+      : `⚠️ Faltam ${info.daysRemaining} dias para o encerramento do ciclo. Novos pedidos serão bloqueados nos últimos dias!`;
+
+    showToast(msg, 'warn', 8000);
+    localStorage.setItem(key, 'shown');
+  }catch(e){
+    console.error('Erro ao verificar avisos dos últimos dias:', e);
+  }
+}
+
+
+// Atualiza o status do ciclo a cada 60 segundos
+setInterval(atualizarStatusCiclo, 60000);
+setInterval(() => checarAvisosUltimosDias(5), 60000);
+
+/* ======= INIT ======= */
 (async function init(){
   try{
     const sess = sessionStorage.getItem('ccb_user');
     if(sess){ currentUser = JSON.parse(sess); enterApp(); }
-
     const cfg = await db.ref('config/cycleStart').once('value');
     if(!cfg.exists() || !cfg.val()) await db.ref('config').set({ cycleStart: Date.now() });
-  }catch(e){ console.error('init cfg/sess', e); }
+  }catch(e){}
 
-  wireUI();
-  await seedProdutos();
   await loadProdutos();
   await updateCycleInfoUI();
+  await checarAvisosUltimosDias(5); // ⚠️ roda o aviso logo que o sistema carrega
 
-  let __focusRefreshTimer = null;
+  // refresh leve ao focar
+  let __focusRefreshTimer=null;
   window.addEventListener('focus', ()=>{
     clearTimeout(__focusRefreshTimer);
     __focusRefreshTimer = setTimeout(async ()=>{
       try{
-        await loadProdutos(); 
-        await renderAdminUsuarios(); 
-        await updateCycleInfoUI(); 
+        await loadProdutos(); await renderAdminUsuarios(); await updateCycleInfoUI();
         if(lastScreen==='historicoAdmin') await carregarHistoricoAdmin();
+        if(lastScreen==='relatorioAdmin') await verRelatorioAdmin($('#filtroAdmin').value||'todos');
       }catch(e){}
     }, 150);
   });
 })();
 
-/* Mostrar/ocultar tabelas (Admin) */
-document.addEventListener('DOMContentLoaded', ()=>{
-  const btnUsuarios = document.getElementById('btnToggleUsuarios');
-  const tabelaUsuarios = document.getElementById('tabelaUsuariosAdmin');
-  if(btnUsuarios && tabelaUsuarios){
-    btnUsuarios.addEventListener('click', ()=>{
-      if(tabelaUsuarios.style.display==='none'){
-        tabelaUsuarios.style.display='table';
-        btnUsuarios.textContent = '👤 Ocultar usuários cadastrados';
-      }else{
-        tabelaUsuarios.style.display='none';
-        btnUsuarios.textContent = '👁️ Mostrar usuários cadastrados';
-      }
-    });
-  }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
-  const btnProdutos = document.getElementById('btnToggleProdutos');
-  const tabelaProdutos = document.getElementById('tabelaProdutosAdmin');
-  if(btnProdutos && tabelaProdutos){
-    btnProdutos.addEventListener('click', ()=>{
-      if(tabelaProdutos.style.display==='none'){
-        tabelaProdutos.style.display='table';
-        btnProdutos.textContent = '📦 Ocultar produtos cadastrados';
-      }else{
-        tabelaProdutos.style.display='none';
-        btnProdutos.textContent = '👁️ Mostrar produtos cadastrados';
-      }
-    });
-  }
-});
-  </script>
 </body>
 </html>
