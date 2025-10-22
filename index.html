@@ -2104,6 +2104,8 @@ async function abrirControleEstoqueAdm(){
   try {
     const snap = await db.ref('estoques').once('value');
     const estoques = snap.val() || {};
+console.log('📦 Estoques carregados:', estoques);
+
 
     // 🔧 Carrega estoques e resolve nomes de usuários com segurança
 const todos = [];
@@ -2119,6 +2121,8 @@ for (const [uid, itens] of Object.entries(estoques || {})) {
 
     }
   } catch (err) {
+console.error('💥 Erro ao carregar estoques:', err);
+
     console.warn('⚠️ Erro ao buscar nome do usuário:', uid, err);
   }
 
