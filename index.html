@@ -2106,21 +2106,28 @@ async function abrirControleEstoqueAdm(){
     const estoques = snap.val() || {};
 
     const todos = [];
-    for (const [uid, itens] of Object.entries(estoques)) {
-  // Busca o nome completo do usuário no Firebase
-  const nomeUsuario = await getNomeUsuario(uid);
+    // Percorre cada UID e busca os nomes de forma assíncrona segura
+await Promise.all(
+  Object.entries(estoques).map(async ([uid, itens]) => {
+    try {
+      const nomeUsuario = await getNomeUsuario(uid);
 
-  for (const [pid, p] of Object.entries(itens)) {
-    todos.push({
-      usuario: nomeUsuario || 'Desconhecido',
-      produto: p.nome,
-      quantidade: p.quantidade,
-      localidade: p.localidade || 'Não Informado',
-      pid: pid,
-      uid: uid
-    });
-  }
-}
+      for (const [pid, p] of Object.entries(itens)) {
+        todos.push({
+          usuario: nomeUsuario || uid,
+          produto: p.nome || '-',
+          quantidade: p.quantidade || 0,
+          localidade: p.localidade || 'Não Informado',
+          pid: pid,
+          uid: uid
+        });
+      }
+    } catch (e) {
+      console.warn('⚠️ Erro ao buscar nome do usuário:', uid, e);
+    }
+  })
+);
+
 
 
     const localidades = [...new Set(todos.map(e => e.localidade))].sort();
