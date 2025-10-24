@@ -2454,7 +2454,204 @@ setInterval(() => checarAvisosUltimosDias(5), 60000);
 </script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
+
+<style id="ccb-modern-theme">
+  :root{
+    --ccb-blue:#0056b3;
+    --ccb-blue-600:#0b63c7;
+    --ccb-bg:#f6f8fb;
+    --ccb-card:#ffffff;
+    --ccb-text:#1f2937;
+    --ccb-muted:#6b7280;
+    --ccb-border:#e5e7eb;
+    --radius:14px;
+    --shadow:0 8px 22px rgba(2,8,20,.06);
+  }
+  html,body{background:var(--ccb-bg); color:var(--ccb-text);}
+  .card{background:var(--ccb-card)!important; border:1px solid var(--ccb-border)!important; border-radius:var(--radius)!important; box-shadow:var(--shadow)!important;}
+  .print-header h2, .print-header h3 { color: var(--ccb-blue); }
+  /* Elegant uniform button system */
+  button, .btn, .chipbar button{
+    appearance:none; border:0; background:var(--ccb-blue);
+    color:#fff!important; padding:10px 14px; line-height:1;
+    border-radius:10px; cursor:pointer; font-weight:600;
+    box-shadow:0 2px 0 rgba(0,0,0,.08), 0 6px 16px rgba(0,86,179,.15);
+    transition:transform .06s ease, filter .2s ease, box-shadow .2s ease;
+    white-space:nowrap;
+  }
+  button:hover{ filter:brightness(1.05); box-shadow:0 3px 0 rgba(0,0,0,.10), 0 10px 24px rgba(0,86,179,.22);}
+  button:active{ transform:translateY(1px);}
+  /* Muted / danger variants if the original uses classes */
+  .btn-muted{ background:#eef2f7!important; color:#223!important; border:1px solid var(--ccb-border)!important; box-shadow:none!important; }
+  .btn-warn{ background:#0b63c7!important; }
+  .btn-danger{ background:#e11d48!important; }
+  /* Inline toolbar layout improvements */
+  .chipbar.right, .chipbar { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .chipbar input[type="text"], .chipbar input[type="search"], .chipbar input[placeholder]{
+    border:1px solid var(--ccb-border); border-radius:10px; padding:9px 12px; outline:none;
+    background:#fff; min-width:210px;
+  }
+  /* Modal base (in case original styles miss something) */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(15,23,42,.48);
+    display:none; align-items:center; justify-content:center; z-index:9999; padding:24px;
+  }
+  .modal-overlay.open{ display:flex; }
+  .modal{
+    background:#fff; border-radius:16px; width:min(720px, 96vw); border:1px solid var(--ccb-border);
+    box-shadow:var(--shadow);
+  }
+  .modal header{ display:flex; align-items:center; justify-content:space-between; padding:16px 18px; border-bottom:1px solid var(--ccb-border); }
+  .modal header h3{ margin:0; font-size:18px; color:var(--ccb-blue); }
+  .modal .content{ padding:16px 18px; }
+  .modal .actions{ display:flex; gap:12px; justify-content:flex-end; padding:16px 18px; border-top:1px solid var(--ccb-border); }
+</style>
+
+<script id="ccb-enhance-ui">
+document.addEventListener('DOMContentLoaded', function(){
+  try{
+    // 1) Uniformizar botões antigos (classes variadas) – nada destrutivo
+    document.querySelectorAll('button').forEach(btn=>{
+      // preserva classes, apenas garante padronização visual
+      if(!btn.classList.contains('btn') && !btn.classList.contains('btn-muted') && !btn.classList.contains('btn-danger')){
+        btn.classList.add('btn');
+      }
+    });
+
+    // 2) Garantir que o Modal existe; se não, aborta com aviso
+    let modalRel = document.querySelector('#modalRelatoriosGerais');
+    const hadModal = !!modalRel;
+    if(!modalRel){
+      // Se modal não existe no HTML original, criaremos um rapidamente
+      const temp = document.createElement('div');
+      temp.innerHTML = `
+<!-- Modal Relatórios Gerais (injetado) -->
+<div id="modalRelatoriosGerais" class="modal-overlay hidden" style="display:none;">
+  <div class="modal">
+    <header>
+      <h3>Relatórios Gerais</h3>
+      <button id="btnFecharModalRel" class="btn-muted">Fechar</button>
+    </header>
+    <div class="content">
+      <p>Escolha a ação para o relatório geral do administrador.</p>
+    </div>
+    <div class="actions">
+      <button id="btnVisualizarGeralModal">👁️ Visualizar</button>
+      <button id="btnImprimirGeralModal">🖨️ Imprimir</button>
+    </div>
+  </div>
+</div>
+`.trim();
+      modalRel = temp.firstElementChild;
+      document.body.appendChild(modalRel);
+    }
+
+    const btnFecharRel = document.querySelector('#btnFecharModalRel');
+    const btnVisualizarModal = document.querySelector('#btnVisualizarGeralModal');
+    const btnImprimirModal = document.querySelector('#btnImprimirGeralModal');
+
+    // 3) Local da barra de ações em Relatório Admin
+    const ref = document.querySelector('#btnImprimirRelLocalidade');
+
+    // 4) Criar botão principal "Relatórios Gerais"
+    const novoBotao = document.createElement('button');
+    novoBotao.id = 'btnRelatoriosGeraisModal';
+    novoBotao.className = 'btn-warn';
+    novoBotao.textContent = '📊 Relatórios Gerais';
+
+    if(ref && ref.parentElement){
+      // insere antes do "Por Localidade"
+      ref.insertAdjacentElement('beforebegin', novoBotao);
+    }else{
+      // fallback: tenta inserir no topo do bloco de relatórios
+      const barra = document.querySelector('#relatorioAdmin .chipbar, #relatorioAdmin .print-header, #relatorioAdmin');
+      if(barra){
+        barra.insertAdjacentElement('afterbegin', novoBotao);
+      }else{
+        // caso extremo, joga no topo do body
+        document.body.prepend(novoBotao);
+      }
+    }
+
+    // 5) Oculta os botões "Visualizar" e "Imprimir Geral" de fora
+    const btnPreviewOut = document.querySelector('#btnPreviewRelGeral');
+    const btnImprimirOut = document.querySelector('#btnImprimirRelGeral');
+    if(btnPreviewOut) btnPreviewOut.style.display = 'none';
+    if(btnImprimirOut) btnImprimirOut.style.display = 'none';
+
+    // 6) Ações do botão principal -> abre modal
+    function abrirModalRel(){
+      if(!modalRel) return;
+      modalRel.style.display = 'flex';
+      modalRel.classList.remove('hidden');
+      modalRel.classList.add('open');
+    }
+    novoBotao.addEventListener('click', abrirModalRel);
+
+    // 7) Fecha modal
+    if(btnFecharRel){
+      btnFecharRel.addEventListener('click', ()=>{
+        modalRel.style.display = 'none';
+        modalRel.classList.add('hidden');
+        modalRel.classList.remove('open');
+      });
+    }else{
+      // Se o botão não existir (caso modal original tenha outro botão), fecha clicando fora
+      modalRel.addEventListener('click', (e)=>{
+        if(e.target === modalRel){
+          modalRel.style.display = 'none';
+          modalRel.classList.add('hidden');
+          modalRel.classList.remove('open');
+        }
+      });
+    }
+
+    // 8) Botões internos do modal chamam as funções ORIGINAIS
+    if(btnVisualizarModal){
+      btnVisualizarModal.addEventListener('click', ()=>{
+        if(typeof previewRelGeral === 'function'){
+          previewRelGeral();
+        }else{
+          alert('Função previewRelGeral() não encontrada.');
+        }
+        modalRel.style.display = 'none';
+        modalRel.classList.add('hidden');
+        modalRel.classList.remove('open');
+      });
+    }
+    if(btnImprimirModal){
+      btnImprimirModal.addEventListener('click', ()=>{
+        if(typeof imprimirRelatorioAdmin === 'function'){
+          imprimirRelatorioAdmin();
+        }else{
+          alert('Função imprimirRelatorioAdmin() não encontrada.');
+        }
+        modalRel.style.display = 'none';
+        modalRel.classList.add('hidden');
+        modalRel.classList.remove('open');
+      });
+    }
+
+    // 9) Segurança extra: se as funções originais não existirem no momento do DOMContentLoaded
+    // tentamos anexar handlers quando a janela terminar de carregar (caso scripts demorem)
+    window.addEventListener('load', ()=>{
+      if(btnVisualizarModal && typeof previewRelGeral !== 'function'){
+        const tryAgain = setInterval(()=>{
+          if(typeof previewRelGeral === 'function'){
+            clearInterval(tryAgain);
+          }
+        }, 300);
+        setTimeout(()=> clearInterval(tryAgain), 6000);
+      }
+    });
+
+  }catch(err){
+    console.error('Erro no aprimoramento de UI CCB:', err);
+  }
+});
+</script>
 </body>
 </html>
+
 
 
