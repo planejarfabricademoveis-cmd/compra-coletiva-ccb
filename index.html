@@ -735,10 +735,22 @@ window.adminEditProduto = async function(key){
   }catch(e){ showToast('Erro ao editar produto','error'); }
 };
 window.adminDeleteProduto = async function(key){
-  try{
-    if(!confirm('Excluir este produto?')) return;
-    await db.ref('produtos/'+key).remove(); await loadProdutos(); showToast('Produto excluído','info'); await logEvent('sistema','Produto excluído',{produto:key});
-  }catch(e){ showToast('Erro ao excluir produto','error'); }
+  try {
+    // 🔒 Verificação de permissão antes de excluir
+    if (!(await can(ACTIONS.DELETE))) {
+      await requestPermission(ACTIONS.DELETE, { produtoId: key });
+      return; // cancela a ação até o admin master aprovar
+    }
+
+    if (!confirm('Excluir este produto?')) return;
+    await db.ref('produtos/' + key).remove();
+    await loadProdutos();
+    showToast('Produto excluído', 'info');
+    await logEvent('sistema', 'Produto excluído', { produto: key });
+
+  } catch (e) {
+    showToast('Erro ao excluir produto', 'error');
+  }
 };
 
 /* ======= CEP (ViaCEP) ======= */
@@ -2653,6 +2665,7 @@ document.addEventListener('DOMContentLoaded', function(){
 <script src="patch_admin_localidades.js"></script>
 </body>
 </html>
+
 
 
 
