@@ -58,3 +58,60 @@
 
 /* Modal “Relatórios Gerais” (do aprimorador de UI existente) */
 .modal-overlay{ background:rgba(15,23,42,.48); }
+
+/* ===========================================================
+   AJUSTE VISUAL — Painel de Solicitações de Permissão
+   =========================================================== */
+#painelPermissoes {
+  max-width: 900px;
+  margin: 20px auto;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+#painelPermissoes h2 {
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+}
+
+#painelPermissoes p.muted {
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+  color: var(--muted);
+}
+
+#painelPermissoes table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+}
+
+#painelPermissoes th,
+#painelPermissoes td {
+  border: 1px solid var(--border);
+  padding: 6px 8px;
+  font-size: 0.85rem;
+}
+
+#painelPermissoes th {
+  background: var(--pri);
+  color: #fff;
+  text-align: left;
+}
+
+#painelPermissoes tr:nth-child(even) {
+  background: #f9fafb;
+}
+
+#painelPermissoes .btn-ok,
+#painelPermissoes .btn-warn {
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+#painelPermissoes .btn-ok { background: var(--ok); color: #fff; }
+#painelPermissoes .btn-warn { background: var(--warn); color: #fff; }
+
+
