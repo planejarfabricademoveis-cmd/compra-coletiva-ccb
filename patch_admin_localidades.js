@@ -794,5 +794,14 @@ window.excluirProdutoAdmin = async function(key) {
 // Executa automaticamente ao abrir o painel de produtos
 document.addEventListener('DOMContentLoaded', renderProdutosAdmin);
 
+// Chama a listagem de produtos quando o painel de produtos é aberto
+document.addEventListener('click', (e) => {
+  if (e.target?.id === 'adminProdutosBtn') {
+    renderProdutosAdmin();
+  }
+});
+
+
+
 
 
