@@ -2380,17 +2380,26 @@ async function checarBloqueioPedidos(){
 // ==============================
 // BOTÃO ADMIN: ENCERRAR CICLO MANUALMENTE
 // ==============================
-$('#btnEncerrarCiclo')?.addEventListener('click', async ()=>{
+document.getElementById('btnEncerrarCiclo')?.addEventListener('click', async ()=>{
+  // 🔒 Verificação de permissão antes de encerrar ciclo
+  if (!(await can(ACTIONS.CLOSE_CYCLE))) {
+    await requestPermission(ACTIONS.CLOSE_CYCLE, {});
+    return;
+  }
+
   const ok = confirm('Deseja encerrar o ciclo atual e iniciar um novo agora?');
   if(!ok) return;
+
   const agora = Date.now();
   await db.ref('config').update({
     lastCycleEnd: agora,
     cycleStart: agora
   });
+
   showToast('✅ Ciclo encerrado manualmente e novo ciclo iniciado!', 'info');
   await verificarCicloAutomatico();
 });
+
 
 // ==============================
 // EXIBIR STATUS DO CICLO (PAINEL)
@@ -2662,6 +2671,7 @@ document.addEventListener('DOMContentLoaded', function(){
 <script src="patch_admin_localidades.js"></script>
 </body>
 </html>
+
 
 
 
