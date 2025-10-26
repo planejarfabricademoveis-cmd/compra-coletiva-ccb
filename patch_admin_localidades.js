@@ -765,13 +765,14 @@ async function carregarSolicitacoesPermissao(){
     const snap = await db.ref('permRequests').orderByChild('createdAt').once('value');
     const data = snap.val() || {};
     const registros = Object.entries(data)
+      .filter(([id, req]) => req.status === 'pending') // ❗ mostra só as pendentes
       .sort((a,b)=>b[1].createdAt - a[1].createdAt)
       .map(([id, req])=>{
         const statusColor = req.status === 'approved' ? '#16a34a' :
                             req.status === 'rejected' ? '#dc2626' : '#f59e0b';
         return `
           <tr>
-            <td>${escapeHtml(req.requester || '-')}</td>
+            <td>${escapeHtml(req.requesterName || req.requester || '-')}</td>
             <td>${escapeHtml(req.action || '-')}</td>
             <td>${escapeHtml(req.reason || '(sem motivo informado)')}</td>
             <td style="color:${statusColor};font-weight:bold;">${req.status || 'pending'}</td>
@@ -790,7 +791,7 @@ async function carregarSolicitacoesPermissao(){
         <thead>
           <tr><th>Usuário</th><th>Ação</th><th>Motivo</th><th>Status</th><th>Ações</th></tr>
         </thead>
-        <tbody>${registros || '<tr><td colspan="5">Nenhuma solicitação encontrada.</td></tr>'}</tbody>
+        <tbody>${registros || '<tr><td colspan="5">Nenhuma solicitação pendente.</td></tr>'}</tbody>
       </table>
     `;
   } catch(e){
@@ -798,6 +799,7 @@ async function carregarSolicitacoesPermissao(){
     lista.innerHTML = '<p style="color:red;">Erro ao carregar solicitações.</p>';
   }
 }
+
 
 async function aprovarPermissao(id){
   try {
@@ -887,6 +889,7 @@ function adicionarBotaoTogglePainel() {
 
 // Espera o painel existir antes de criar o botão
 setTimeout(adicionarBotaoTogglePainel, 2000);
+
 
 
 
