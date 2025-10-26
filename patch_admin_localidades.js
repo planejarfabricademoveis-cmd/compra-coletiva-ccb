@@ -843,6 +843,45 @@ async function negarPermissao(id){
 }
 
 /* ===========================================================
+   NOTIFICAÇÕES AUTOMÁTICAS DE PERMISSÕES (para todos os usuários)
+   =========================================================== */
+async function checarNotificacoesPermissoes() {
+  if (!currentUser?.user) return;
+
+  try {
+    // Carrega todas as solicitações do usuário atual
+    const snap = await db.ref('permRequests').orderByChild('requester').equalTo(currentUser.user).once('value');
+    const data = snap.val() || {};
+
+    let houveAviso = false;
+
+    for (const [id, req] of Object.entries(data)) {
+      if (req.status === 'approved' && !req.notified) {
+        showToast(`✅ Sua solicitação "${req.action}" foi aprovada!`, 'info');
+        await db.ref(`permRequests/${id}/notified`).set(true);
+        houveAviso = true;
+      } else if (req.status === 'rejected' && !req.notified) {
+        showToast(`❌ Sua solicitação "${req.action}" foi negada. Motivo: ${req.reason || 'sem motivo informado'}`, 'warn');
+        await db.ref(`permRequests/${id}/notified`).set(true);
+        houveAviso = true;
+      }
+    }
+
+    if (houveAviso) {
+      console.log('📢 Notificação de permissão entregue ao usuário.');
+    }
+  } catch (e) {
+    console.error('Erro ao verificar notificações de permissão:', e);
+  }
+}
+
+// Roda a verificação automática a cada 15 segundos (enquanto logado)
+setInterval(() => {
+  if (currentUser?.user) checarNotificacoesPermissoes();
+}, 15000);
+
+
+/* ===========================================================
    CRIAÇÃO E EXIBIÇÃO DO PAINEL DE PERMISSÕES (SOMENTE LOGADO)
    =========================================================== */
 setInterval(()=>{
@@ -926,6 +965,7 @@ function adicionarBotaoTogglePainel() {
 
 // Espera o painel existir antes de criar o botão
 setTimeout(adicionarBotaoTogglePainel, 2000);
+
 
 
 
