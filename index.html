@@ -273,6 +273,8 @@ table{
 <button id="btnControleEstoque" class="btn-ok">🧾 Controle de Estoques (Admin)</button>
 <button id="btnRelatorioMovimentacoes" class="btn-warn">📊 Relatório de Movimentações (por Ciclo)</button>
 <button id="btnExportarExcel" class="btn-ok">⬇️ Exportar Estoques / Movimentações (Excel)</button>
+        <button id="btnPermissoesAdmin" class="btn-ok" onclick="abrirPainelPermissoes()">🔐 Solicitações de Permissão</button>
+
 <div class="menu" style="margin-top:20px;">
   <h3>🕓 Ciclo Atual</h3>
   <div id="infoCiclo" style="margin-bottom:10px; font-size:0.9rem; color:#333;"></div>
@@ -2671,6 +2673,7 @@ document.addEventListener('DOMContentLoaded', function(){
 <script src="patch_admin_localidades.js"></script>
 </body>
 </html>
+
 
 
 
