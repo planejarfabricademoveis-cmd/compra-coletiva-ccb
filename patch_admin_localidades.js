@@ -739,4 +739,88 @@ function renderTabelaRelGeral(pedidos) {
 window.previewRelGeral = previewRelGeral;
 window.imprimirRelatorioAdmin = imprimirRelatorioAdmin;
 
+/* ===========================================================
+   PAINEL DE SOLICITAÇÕES DE PERMISSÃO (Admin Master)
+   =========================================================== */
+function criarPainelPermissoes(){
+  // Evita duplicar o painel
+  if (document.getElementById('painelPermissoes')) return;
+
+  const html = `
+    <section id="painelPermissoes" class="card" style="margin-top:20px;">
+      <h2>🔐 Solicitações de Permissão</h2>
+      <p class="muted">Somente o <b>Administrador Master</b> pode aprovar ou negar solicitações.</p>
+      <div id="listaPermissoes" class="table-wrap" style="margin-top:10px;">Carregando...</div>
+    </section>
+  `;
+  document.body.insertAdjacentHTML('beforeend', html);
+  carregarSolicitacoesPermissao();
+}
+
+async function carregarSolicitacoesPermissao(){
+  const lista = document.getElementById('listaPermissoes');
+  if (!lista) return;
+
+  try {
+    const snap = await db.ref('permRequests').orderByChild('createdAt').once('value');
+    const data = snap.val() || {};
+    const registros = Object.entries(data)
+      .sort((a,b)=>b[1].createdAt - a[1].createdAt)
+      .map(([id, req])=>{
+        const statusColor = req.status === 'approved' ? '#16a34a' :
+                            req.status === 'rejected' ? '#dc2626' : '#f59e0b';
+        return `
+          <tr>
+            <td>${escapeHtml(req.requester || '-')}</td>
+            <td>${escapeHtml(req.action || '-')}</td>
+            <td>${escapeHtml(req.reason || '(sem motivo informado)')}</td>
+            <td style="color:${statusColor};font-weight:bold;">${req.status || 'pending'}</td>
+            <td>
+              ${req.status === 'pending'
+                ? `<button class="btn-ok" onclick="aprovarPermissao('${id}')">✅ Aprovar</button>
+                   <button class="btn-warn" onclick="negarPermissao('${id}')">❌ Negar</button>`
+                : '-'}
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+    lista.innerHTML = `
+      <table class="localidades-table" style="width:100%;">
+        <thead>
+          <tr><th>Usuário</th><th>Ação</th><th>Motivo</th><th>Status</th><th>Ações</th></tr>
+        </thead>
+        <tbody>${registros || '<tr><td colspan="5">Nenhuma solicitação encontrada.</td></tr>'}</tbody>
+      </table>
+    `;
+  } catch(e){
+    console.error(e);
+    lista.innerHTML = '<p style="color:red;">Erro ao carregar solicitações.</p>';
+  }
+}
+
+async function aprovarPermissao(id){
+  try {
+    await db.ref(`permRequests/${id}`).update({ status: 'approved' });
+    showToast('Solicitação aprovada!', 'info');
+    carregarSolicitacoesPermissao();
+  } catch(e){ showToast('Erro ao aprovar.', 'error'); }
+}
+
+async function negarPermissao(id){
+  try {
+    await db.ref(`permRequests/${id}`).update({ status: 'rejected' });
+    showToast('Solicitação negada.', 'warn');
+    carregarSolicitacoesPermissao();
+  } catch(e){ showToast('Erro ao negar.', 'error'); }
+}
+
+// Criar painel automaticamente ao carregar, se for o admin master
+setTimeout(()=>{
+  if (currentUser?.user === 'fernando_filho87') {
+    criarPainelPermissoes();
+  }
+}, 1500);
+
+
 
