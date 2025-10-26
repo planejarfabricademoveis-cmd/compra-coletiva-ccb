@@ -822,5 +822,27 @@ setTimeout(()=>{
   }
 }, 1500);
 
+/* ===========================================================
+   BOTÃO DE ACESSO AO PAINEL DE PERMISSÕES
+   =========================================================== */
+function abrirPainelPermissoes(){
+  // Garante que o painel foi criado
+  if (!document.getElementById('painelPermissoes')) {
+    criarPainelPermissoes();
+  }
+
+  // Rolagem suave até o painel
+  const painel = document.getElementById('painelPermissoes');
+  if (painel) {
+    painel.scrollIntoView({ behavior: 'smooth' });
+    painel.style.boxShadow = '0 0 15px rgba(0,0,0,0.2)';
+    setTimeout(()=> painel.style.boxShadow = '', 2000);
+  } else {
+    showToast('Painel de permissões não encontrado', 'error');
+  }
+}
+
+
+
 
 
