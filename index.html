@@ -726,32 +726,29 @@ function renderProdutosAdminTabelas(){
   });}
 }
 window.adminEditProduto = async function(key){
-  try{
-    const p = produtosCache.find(x=>x.key===key); if(!p) return;
-    const novoNome = prompt('Novo nome:', p.nome); if(novoNome===null) return;
-    const novaUn = prompt('Unidade:', p.unidade||''); if(novaUn===null) return;
-    await db.ref('produtos/'+key).update({ nome: novoNome.trim(), unidade: novaUn.trim() });
-    await loadProdutos(); showToast('Produto atualizado','info'); await logEvent('sistema','Produto atualizado',{produto:key});
-  }catch(e){ showToast('Erro ao editar produto','error'); }
-};
-window.adminDeleteProduto = async function(key){
   try {
-    // 🔒 Verificação de permissão antes de excluir
-    if (!(await can(ACTIONS.DELETE))) {
-      await requestPermission(ACTIONS.DELETE, { produtoId: key });
-      return; // cancela a ação até o admin master aprovar
+    // 🔒 Verificação de permissão antes de editar
+    if (!(await can(ACTIONS.EDIT))) {
+      await requestPermission(ACTIONS.EDIT, { produtoId: key });
+      return;
     }
 
-    if (!confirm('Excluir este produto?')) return;
-    await db.ref('produtos/' + key).remove();
-    await loadProdutos();
-    showToast('Produto excluído', 'info');
-    await logEvent('sistema', 'Produto excluído', { produto: key });
+    const p = produtosCache.find(x => x.key === key);
+    if (!p) return;
+    const novoNome = prompt('Novo nome:', p.nome);
+    if (novoNome === null) return;
+    const novaUn = prompt('Unidade:', p.unidade || '');
+    if (novaUn === null) return;
 
+    await db.ref('produtos/' + key).update({ nome: novoNome.trim(), unidade: novaUn.trim() });
+    await loadProdutos();
+    showToast('Produto atualizado', 'info');
+    await logEvent('sistema', 'Produto atualizado', { produto: key });
   } catch (e) {
-    showToast('Erro ao excluir produto', 'error');
+    showToast('Erro ao editar produto', 'error');
   }
 };
+
 
 /* ======= CEP (ViaCEP) ======= */
 async function buscaCEP(cep){
@@ -2665,6 +2662,7 @@ document.addEventListener('DOMContentLoaded', function(){
 <script src="patch_admin_localidades.js"></script>
 </body>
 </html>
+
 
 
 
