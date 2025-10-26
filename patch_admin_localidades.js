@@ -733,24 +733,3 @@ function renderTabelaRelGeral(pedidos) {
 window.previewRelGeral = previewRelGeral;
 window.imprimirRelatorioAdmin = imprimirRelatorioAdmin;
 
-
-
-/* ==== MELHORIA: Atualização automática da tabela de produtos ==== */
-function iniciarMonitoramentoProdutos() {
-  try {
-    const produtosRef = db.ref('produtos');
-    produtosRef.off(); // Remove listeners antigos para evitar duplicação
-    produtosRef.on('value', () => {
-      console.log('[AUTO] Atualizando lista de produtos...');
-      if (!document.getElementById('adminProdutos')?.classList.contains('hidden')) {
-        loadProdutos();
-      }
-    });
-  } catch (err) {
-    console.error('Erro ao iniciar monitoramento automático:', err);
-  }
-}
-
-// Ativa o monitoramento assim que a página carregar
-document.addEventListener('DOMContentLoaded', iniciarMonitoramentoProdutos);
-
