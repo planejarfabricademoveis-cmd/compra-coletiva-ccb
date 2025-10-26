@@ -734,12 +734,14 @@ window.previewRelGeral = previewRelGeral;
 window.imprimirRelatorioAdmin = imprimirRelatorioAdmin;
 /* ==== Botão Produtos (Admin) ==== */
 document.addEventListener('click', (e) => {
-  if (e.target && e.target.id === 'adminProdutosBtn') {
+ if (e.target && (e.target.id === 'adminProdutosBtn' || e.target.id === 'btnToggleProdutos')) {
+
     console.log('[ADMIN] Abrindo painel de produtos...');
     hideAll(); // esconde as outras telas
     document.getElementById('adminProdutos').classList.remove('hidden');
     loadProdutos(); // carrega os produtos do Firebase
   }
 });
+
 
 
