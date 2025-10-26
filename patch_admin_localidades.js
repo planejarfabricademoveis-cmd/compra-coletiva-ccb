@@ -249,26 +249,32 @@ async function loadSolicitacoes(){
 /* ==== Aprovar / Negar Solicitações ==== */
 async function aprovarSolicitacao(uid){
   try {
+    // 1. Atualiza o status da solicitação
     await db.ref(`solicitacoes/${uid}`).update({ status: 'aprovado' });
+
+    // 2. Define o usuário como admin
     await db.ref(`usuarios/${uid}`).update({ permissao: 'admin' });
-    showToast('Solicitação aprovada e permissão concedida!', 'info');
+
+    // 3. Concede permissões reais no banco
+    await db.ref(`usuarios/${uid}/permissoes`).set({
+      canEdit: true,
+      canAdd: true,
+      canDelete: true,
+      canCloseCycle: true,
+      canMarkDelivered: true
+    });
+
+    // 4. Exibe mensagem e recarrega a lista
+    showToast('✅ Solicitação aprovada e permissões aplicadas!', 'info');
+    await logEvent('sistema', 'Solicitação aprovada e permissões aplicadas', { uid });
     loadSolicitacoes();
+
   } catch(e){
     console.error(e);
     showToast('Erro ao aprovar solicitação', 'error');
   }
 }
 
-async function negarSolicitacao(uid){
-  try {
-    await db.ref(`solicitacoes/${uid}`).update({ status: 'negado' });
-    showToast('Solicitação negada com sucesso.', 'warn');
-    loadSolicitacoes();
-  } catch(e){
-    console.error(e);
-    showToast('Erro ao negar solicitação', 'error');
-  }
-}
 
 
 /* ==== Listagem & Impressão de Localidades (com filtros) ==== */
@@ -732,4 +738,5 @@ function renderTabelaRelGeral(pedidos) {
 
 window.previewRelGeral = previewRelGeral;
 window.imprimirRelatorioAdmin = imprimirRelatorioAdmin;
+
 
