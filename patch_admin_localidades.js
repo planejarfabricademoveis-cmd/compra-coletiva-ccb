@@ -825,12 +825,24 @@ async function negarPermissao(id){
   } catch(e){ showToast('Erro ao negar.', 'error'); }
 }
 
-// Criar painel automaticamente ao carregar, se for o admin master
-setTimeout(()=>{
-  if (currentUser?.user === 'fernando_filho87') {
-    criarPainelPermissoes();
+/* ===========================================================
+   CRIAÇÃO E EXIBIÇÃO DO PAINEL DE PERMISSÕES (SOMENTE LOGADO)
+   =========================================================== */
+setInterval(()=>{
+  const painel = document.getElementById('painelPermissoes');
+  if(!currentUser){ // 🔒 usuário deslogado
+    if(painel) painel.style.display = 'none';
+    return;
   }
-}, 1500);
+  // apenas o Master pode ver
+  if(currentUser?.user === 'fernando_filho87'){
+    if(!painel) criarPainelPermissoes();
+    else painel.style.display = 'block';
+  } else {
+    if(painel) painel.style.display = 'none';
+  }
+}, 1000);
+
 
 /* ===========================================================
    BOTÃO DE ACESSO AO PAINEL DE PERMISSÕES
@@ -897,6 +909,7 @@ function adicionarBotaoTogglePainel() {
 
 // Espera o painel existir antes de criar o botão
 setTimeout(adicionarBotaoTogglePainel, 2000);
+
 
 
 
