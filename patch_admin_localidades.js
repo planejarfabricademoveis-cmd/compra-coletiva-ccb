@@ -751,7 +751,6 @@ window.imprimirRelatorioAdmin = imprimirRelatorioAdmin;
    PAINEL DE SOLICITAÇÕES DE PERMISSÃO (Admin Master)
    =========================================================== */
 function criarPainelPermissoes(){
-  // Evita duplicar o painel
   if (document.getElementById('painelPermissoes')) return;
 
   const html = `
@@ -759,11 +758,29 @@ function criarPainelPermissoes(){
       <h2>🔐 Solicitações de Permissão</h2>
       <p class="muted">Somente o <b>Administrador Master</b> pode aprovar ou negar solicitações.</p>
       <div id="listaPermissoes" class="table-wrap" style="margin-top:10px;">Carregando...</div>
+      <div style="text-align:center;margin-top:8px;">
+        <button id="btnTogglePainel" class="btn-muted">👁️ Ocultar Painel</button>
+      </div>
     </section>
   `;
   document.body.insertAdjacentHTML('beforeend', html);
   carregarSolicitacoesPermissao();
+
+  const btn = document.getElementById('btnTogglePainel');
+  btn.addEventListener('click', ()=>{
+    const painel = document.getElementById('painelPermissoes');
+    if(!painel) return;
+    if(painel.style.display === 'none'){
+      painel.style.display = 'block';
+      btn.textContent = '👁️ Ocultar Painel';
+      carregarSolicitacoesPermissao();
+    } else {
+      painel.style.display = 'none';
+      btn.textContent = '👁️ Mostrar Painel';
+    }
+  });
 }
+
 
 async function carregarSolicitacoesPermissao(){
   const lista = document.getElementById('listaPermissoes');
@@ -909,6 +926,7 @@ function adicionarBotaoTogglePainel() {
 
 // Espera o painel existir antes de criar o botão
 setTimeout(adicionarBotaoTogglePainel, 2000);
+
 
 
 
