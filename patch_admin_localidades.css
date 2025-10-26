@@ -1,0 +1,60 @@
+/* ===== PATCH CSS - Permissões & Localidades ===== */
+:root{
+  --pri:#0056b3; --pri-700:#004080; --ok:#16a34a; --warn:#f59e0b; --err:#dc2626;
+  --muted:#6b7280; --border:#e5e7eb;
+}
+
+/* Badge de Localidade para impressão (≈ 3cm de altura) */
+.localidade-badge-print { position:relative; text-align:center; margin:6mm 0 10mm; }
+.localidade-badge-print .num {
+  display:inline-block; line-height:1; font-weight:900;
+  font-family:Arial,Helvetica,sans-serif; font-size:118px; /* ~3cm */
+}
+
+/* Chips/status */
+.badge { display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; background:#eef2ff; color:#1e3a8a; }
+.status-pending  { color:#b45309; font-weight:700; }
+.status-approved { color:#16a34a; font-weight:700; }
+.status-rejected { color:#dc2626; font-weight:700; }
+
+/* Área de Permissões (Admin) */
+.perms-grid{
+  display:grid; grid-template-columns: repeat(auto-fit,minmax(160px,1fr));
+  gap:8px; border:1px solid var(--border); border-radius:10px; padding:10px; background:#fff;
+}
+.perms-grid label{ display:flex; align-items:center; gap:8px; font-size:14px; color:#111; }
+.perms-grid input[type="checkbox"]{ width:auto; }
+
+.role-row{
+  display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:8px 0;
+}
+.role-row .pill{ background:#f1f5f9; padding:6px 10px; border-radius:999px; }
+
+/* Tabela Localidades */
+.localidades-table{
+  width:100%; border-collapse:collapse; border:1px solid var(--border);
+}
+.localidades-table th, .localidades-table td{
+  border-bottom:1px solid var(--border); padding:8px; text-align:left;
+}
+.localidades-table th{ background:#0056b3; color:#fff; }
+/* Realce da aba ativa (Permissões / Localidades) */
+#relatorioAdmin .menu button.ativo {
+  box-shadow: 0 0 0 3px #fff inset, 0 0 0 3px rgba(0,0,0,0.15);
+  filter: brightness(1.15);
+  transition: all 0.2s ease;
+}
+
+/* Tabela de Solicitações */
+#listaSolicitacoes table td, 
+#listaSolicitacoes table th {
+  padding: 8px;
+  border: 1px solid var(--border);
+  text-align: left;
+}
+#listaSolicitacoes .btn-ok { background: var(--ok); color: #fff; border-radius: 6px; padding: 4px 8px; }
+#listaSolicitacoes .btn-warn { background: var(--warn); color: #fff; border-radius: 6px; padding: 4px 8px; }
+
+
+/* Modal “Relatórios Gerais” (do aprimorador de UI existente) */
+.modal-overlay{ background:rgba(15,23,42,.48); }

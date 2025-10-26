@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+<link rel="stylesheet" href="patch_admin_localidades.css">
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>CCB - Compra Coletiva</title>
@@ -2117,9 +2118,8 @@ async function abrirControleEstoqueAdm(){
         });
       }
     }
-
-    const localidades = [...new Set(todos.map(e => e.localidade))].sort();
-    const locOpts = ['Todas', ...localidades].map(l => `<option value="${l}">${l}</option>`).join('');
+const localidades = [...new Set(todos.map(e => e.localidade))].sort();
+const locOpts = ['Todas', ...localidades].map(l => `<option value="${l}">${l}</option>`).join('');
 
     let html = `
       <label>Filtrar por localidade:</label>
@@ -2650,8 +2650,10 @@ document.addEventListener('DOMContentLoaded', function(){
   }
 });
 </script>
+<script src="patch_admin_localidades.js"></script>
 </body>
 </html>
+
 
 
 
