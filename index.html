@@ -305,48 +305,47 @@ table{
     </div>
 
     <h3>Pedidos</h3>
-<div class="table-wrap">
-  <table id="tabelaPedidosAdmin">
-    <thead>
-      <tr>
-        <th>#</th><th>Usuário</th><th>Localidade</th><th>Produto</th><th>Qtd</th><th>Obs</th><th>Status</th><th>Ações</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-</div>
+    <div class="table-wrap">
+      <table id="tabelaPedidosAdmin">
+        <thead>
+          <tr>
+            <th>#</th><th>Usuário</th><th>Localidade</th><th>Produto</th><th>Qtd</th><th>Obs</th><th>Status</th><th>Ações</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
 
-<h3 style="margin-top:16px;">Usuários Cadastrados</h3>
-<div style="text-align:right; margin-bottom:10px;">
-  <button id="btnToggleUsuarios" class="btn btn-secondary">👤 Ocultar usuários cadastrados</button>
-</div>
-<div class="table-wrap">
-  <table id="tabelaUsuariosAdmin">
-    <thead>
-      <tr><th>Nome</th><th>Usuário</th><th>Localidade</th><th>Ministério</th><th>Provisório?</th><th>Ações</th></tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-</div>
+    <h3 style="margin-top:16px;">Usuários Cadastrados</h3>
+    <div style="text-align:right; margin-bottom:10px;">
+      <button id="btnToggleUsuarios" class="btn btn-secondary">👤 Ocultar usuários cadastrados</button>
+    </div>
+    <div class="table-wrap">
+      <table id="tabelaUsuariosAdmin">
+        <thead>
+          <tr><th>Nome</th><th>Usuário</th><th>Localidade</th><th>Ministério</th><th>Provisório?</th><th>Ações</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
 
-<!-- removido o título e botão de produtos -->
-<div class="table-wrap" style="margin-top:16px;">
-  <table id="tabelaProdutosAdmin">
-    <thead>
-      <tr><th>Produto</th><th>Unidade</th><th>Ações</th></tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-</div>
+    <h3 style="margin-top:16px;">Produtos</h3>
+    <div style="text-align:right; margin-bottom:10px;">
+      <button id="btnToggleProdutos" class="btn btn-secondary">📦 Ocultar produtos cadastrados</button>
+    </div>
+    <div class="table-wrap">
+      <table id="tabelaProdutosAdmin">
+        <thead><tr><th>Produto</th><th>Unidade</th><th>Ações</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
 
-
-<div style="margin-top:12px;" class="menu">
-  <button id="btnAbrirCadastroUsuarioAdmin">Adicionar Usuário (Admin)</button>
-  <button id="btnAbrirCadastroProduto">Adicionar Produto (Admin)</button>
-  <button class="btn-muted" id="btnVoltarAdmin">Voltar</button>
-</div>
-</section>
-
+    <div style="margin-top:12px;" class="menu">
+      <button id="btnAbrirCadastroUsuarioAdmin">Adicionar Usuário (Admin)</button>
+      <button id="btnAbrirCadastroProduto">Adicionar Produto (Admin)</button>
+      <button class="btn-muted" id="btnVoltarAdmin">Voltar</button>
+    </div>
+  </section>
 
   <!-- ADMIN: USUÁRIOS -->
   <section id="adminUsuarios" class="card hidden">
@@ -2530,7 +2529,7 @@ document.addEventListener('DOMContentLoaded', function(){
 <div id="modalRelatoriosGerais" class="modal-overlay hidden" style="display:none;">
   <div class="modal">
     <header>
-      Relatórios Gerais</h3>
+      <h3>Relatórios Gerais</h3>
       <button id="btnFecharModalRel" class="btn-muted">Fechar</button>
     </header>
     <div class="content">
@@ -2654,11 +2653,6 @@ document.addEventListener('DOMContentLoaded', function(){
 <script src="patch_admin_localidades.js"></script>
 </body>
 </html>
-
-
-
-
-
 
 
 
