@@ -114,4 +114,21 @@
 #painelPermissoes .btn-ok { background: var(--ok); color: #fff; }
 #painelPermissoes .btn-warn { background: var(--warn); color: #fff; }
 
+#btnTogglePainel {
+  display: block;
+  margin: 0 auto 10px auto;
+  background: #f3f4f6;
+  color: #111;
+  border: 1px solid #ccc;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+#btnTogglePainel:hover {
+  background: #e5e7eb;
+}
+
+
+
 
