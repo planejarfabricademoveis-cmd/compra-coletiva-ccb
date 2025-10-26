@@ -733,35 +733,7 @@ function renderTabelaRelGeral(pedidos) {
 window.previewRelGeral = previewRelGeral;
 window.imprimirRelatorioAdmin = imprimirRelatorioAdmin;
 
-/* ==== MELHORIA: Botão Mostrar/Ocultar Produtos (Admin) ==== */
-document.addEventListener('click', async (e) => {
-  const btn = e.target;
-  if (!btn || (btn.id !== 'btnToggleProdutos' && btn.id !== 'adminProdutosBtn')) return;
 
-  console.log('[ADMIN] Clicou no botão de produtos');
-
-  const secao = document.getElementById('adminProdutos') || document.getElementById('secaoProdutosAdmin');
-  const tabela = document.getElementById('tabelaProdutos');
-  const textoBtn = btn.textContent.trim();
-
-  // Se estiver oculto, mostra com animação
-  if (secao.classList.contains('hidden')) {
-    hideAll(); // Oculta outras seções
-    secao.classList.remove('hidden');
-    secao.style.opacity = 0;
-    secao.style.transition = 'opacity 0.3s ease';
-    setTimeout(() => (secao.style.opacity = 1), 10);
-
-    btn.textContent = '📦 Ocultar produtos cadastrados';
-    await loadProdutos();
-  } 
-  // Se estiver visível, oculta com animação
-  else {
-    secao.style.opacity = 0;
-    setTimeout(() => secao.classList.add('hidden'), 300);
-    btn.textContent = '📦 Mostrar produtos cadastrados';
-  }
-});
 
 /* ==== MELHORIA: Atualização automática da tabela de produtos ==== */
 function iniciarMonitoramentoProdutos() {
@@ -781,3 +753,4 @@ function iniciarMonitoramentoProdutos() {
 
 // Ativa o monitoramento assim que a página carregar
 document.addEventListener('DOMContentLoaded', iniciarMonitoramentoProdutos);
+
