@@ -842,6 +842,53 @@ function abrirPainelPermissoes(){
   }
 }
 
+/* ===========================================================
+   EXIBIÇÃO CONDICIONAL — Painel de Permissões
+   =========================================================== */
+
+// Oculta o painel se o usuário não estiver logado
+function atualizarVisibilidadePainel() {
+  const painel = document.getElementById('painelPermissoes');
+  if (!painel) return;
+  if (!currentUser || !currentUser.user) {
+    painel.style.display = 'none';
+  } else {
+    painel.style.display = 'block';
+  }
+}
+
+// Verifica ao carregar e sempre que mudar o estado de autenticação
+setInterval(atualizarVisibilidadePainel, 1500);
+
+/* ===========================================================
+   BOTÃO DE MOSTRAR / OCULTAR O PAINEL
+   =========================================================== */
+function adicionarBotaoTogglePainel() {
+  // Cria o botão só se ainda não existir
+  if (document.getElementById('btnTogglePainel')) return;
+
+  const btn = document.createElement('button');
+  btn.id = 'btnTogglePainel';
+  btn.textContent = '👁️ Ocultar Painel';
+  btn.className = 'btn-muted';
+  btn.style.marginTop = '10px';
+
+  btn.addEventListener('click', () => {
+    const painel = document.getElementById('painelPermissoes');
+    if (!painel) return;
+    const visivel = painel.style.display !== 'none';
+    painel.style.display = visivel ? 'none' : 'block';
+    btn.textContent = visivel ? '👁️ Mostrar Painel' : '👁️ Ocultar Painel';
+  });
+
+  const painel = document.getElementById('painelPermissoes');
+  if (painel) painel.insertAdjacentElement('beforebegin', btn);
+}
+
+// Espera o painel existir antes de criar o botão
+setTimeout(adicionarBotaoTogglePainel, 2000);
+
+
 
 
 
