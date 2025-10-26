@@ -83,13 +83,21 @@ function openReasonModal(action){
 async function requestPermission(action, payload){
   const reason = await openReasonModal(action);
   if(!reason){ showToast('Solicitação cancelada','warn'); return null; }
+
   const reqRef = await db.ref('permRequests').push({
-    action, payload: payload||{}, requester: currentUser?.user||'-',
-    createdAt: Date.now(), status: 'pending'
+    action,
+    payload: payload || {},
+    requester: currentUser?.user || '-',
+    requesterName: currentUser?.nome || currentUser?.user || '-',
+    reason: reason,
+    createdAt: Date.now(),
+    status: 'pending'
   });
+
   showToast('Solicitação enviada ao Administrador Master.','info');
   return reqRef.key;
 }
+
 
 /* ==== Localidades ==== */
 async function getLocalidadeNumero(nome){
@@ -889,6 +897,7 @@ function adicionarBotaoTogglePainel() {
 
 // Espera o painel existir antes de criar o botão
 setTimeout(adicionarBotaoTogglePainel, 2000);
+
 
 
 
