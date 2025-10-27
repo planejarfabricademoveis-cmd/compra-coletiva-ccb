@@ -210,10 +210,40 @@ table{
     </div>
 
     <div class="menu" style="margin-top:6px;">
-<button id="btnMeuEstoque">📦 Meu Estoque</button>
+  <button id="btnMeuEstoque">📦 Meu Estoque</button>
 
-      <button class="btn-danger" id="btnLogout">Sair</button>
-    </div>
+  <!-- 🔔 Notificações -->
+  <div id="notificacoesWrap" style="position:relative; display:inline-block; margin-right:10px;">
+    <button id="btnNotificacoes" class="btn-muted">🔔</button>
+    <span id="badgeNotificacoes" style="
+      position:absolute;
+      top:-5px;
+      right:-5px;
+      background:red;
+      color:white;
+      font-size:11px;
+      font-weight:bold;
+      border-radius:50%;
+      padding:2px 6px;
+      display:none;
+    ">0</span>
+
+    <div id="listaNotificacoes" class="card hidden" style="
+      position:absolute;
+      right:0;
+      top:35px;
+      width:260px;
+      max-height:300px;
+      overflow-y:auto;
+      box-shadow:0 4px 10px rgba(0,0,0,0.2);
+      z-index:999;
+      background:white;
+    "></div>
+  </div>
+
+  <button class="btn-danger" id="btnLogout">Sair</button>
+</div>
+
 
     <p id="pedidoMsg" class="center" style="color:var(--ok); min-height:18px;"></p>
     <p id="cycleInfo" class="center muted" style="margin-top:6px;"></p>
@@ -2712,6 +2742,7 @@ document.addEventListener('DOMContentLoaded', function(){
 <script src="patch_admin_localidades.js"></script>
 </body>
 </html>
+
 
 
 
