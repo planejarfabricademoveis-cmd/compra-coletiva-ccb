@@ -921,6 +921,141 @@ async function negarPermissao(id){
 }
 
 /* ===========================================================
+   PAINEL DE PERMISSÕES (checkboxes) — Somente Master
+   =========================================================== */
+
+// Abre/fecha o painel
+function abrirPermissoesAdmin(){
+  if(!isMaster()){ showToast('Acesso restrito ao Administrador Master','error'); return; }
+  const sec = document.getElementById('painelPermsAdmin');
+  if(!sec){ showToast('Painel de permissões não encontrado','error'); return; }
+  sec.classList.toggle('hidden');
+  if(!sec.classList.contains('hidden')) loadUsuariosParaPermissoes();
+}
+
+// Carrega usuários e renderiza lista
+async function loadUsuariosParaPermissoes(){
+  const box = document.getElementById('listaUsuariosPerms');
+  if(!box) return;
+  box.innerHTML = 'Carregando...';
+
+  try{
+    const snap = await db.ref('usuarios').once('value');
+    const obj = snap.val() || {};
+    const busca = (document.getElementById('buscaUsuarioPerm')?.value || '').toLowerCase().trim();
+
+    // Ordena por nome
+    const pares = Object.entries(obj).sort((a,b)=>{
+      const na=(a[1].nome||a[1].user||'').toLowerCase();
+      const nb=(b[1].nome||b[1].user||'').toLowerCase();
+      return na.localeCompare(nb);
+    }).filter(([key,u])=>{
+      if(!busca) return true;
+      const txt = `${u.nome||''} ${u.user||''}`.toLowerCase();
+      return txt.includes(busca);
+    });
+
+    if(!pares.length){
+      box.innerHTML = '<p class="muted">Nenhum usuário encontrado.</p>';
+      return;
+    }
+
+    const html = pares.map(([key,u])=>{
+      const nome = escapeHtml(u.nome || '(sem nome)');
+      const user = escapeHtml(u.user || key);
+      const adminLevel = u.adminLevel || 'user';
+      const isAdmin = !!u.isAdmin || adminLevel!=='user';
+      const perms = u.permissoes || {};
+
+      return `
+        <div class="row-user" data-key="${key}">
+          <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+            <div>
+              <b>${nome}</b> <span class="muted">@${user}</span>
+              <span class="badge-role">${adminLevel.toUpperCase()}</span>
+            </div>
+            <div>
+              <label class="pill"><input type="checkbox" class="chk-isAdmin" ${isAdmin?'checked':''}> É administrador</label>
+              <label class="pill"><input type="checkbox" class="chk-isMaster" ${adminLevel==='master'?'checked':''}> Administrador Master</label>
+            </div>
+          </div>
+
+          <div class="perms-grid-mini" style="margin-top:8px;">
+            <label><input type="checkbox" class="perm-canAdd" ${perms.canAdd?'checked':''}> Adicionar</label>
+            <label><input type="checkbox" class="perm-canEdit" ${perms.canEdit?'checked':''}> Editar</label>
+            <label><input type="checkbox" class="perm-canDelete" ${perms.canDelete?'checked':''}> Excluir</label>
+            <label><input type="checkbox" class="perm-canMarkDelivered" ${perms.canMarkDelivered?'checked':''}> Marcar/Desmarcar Entregue</label>
+            <label><input type="checkbox" class="perm-canCloseCycle" ${perms.canCloseCycle?'checked':''}> Encerrar Ciclos</label>
+          </div>
+
+          <div class="row-actions">
+            <button class="btn-ok" onclick="salvarPermissoesUsuario('${key}')">💾 Salvar</button>
+          </div>
+        </div>`;
+    }).join('');
+
+    box.innerHTML = html;
+
+    // Atalho: Enter no campo de busca recarrega
+    const inputBusca = document.getElementById('buscaUsuarioPerm');
+    if(inputBusca && !inputBusca.__wired){
+      inputBusca.__wired = true;
+      inputBusca.addEventListener('keydown', (e)=>{
+        if(e.key==='Enter') loadUsuariosParaPermissoes();
+      });
+    }
+
+  }catch(e){
+    console.error(e);
+    box.innerHTML = '<p style="color:red;">Erro ao carregar usuários.</p>';
+  }
+}
+
+// Salva permissões do usuário escolhido
+window.salvarPermissoesUsuario = async function(key){
+  if(!isMaster()){ showToast('Ação restrita ao Administrador Master','error'); return; }
+
+  try{
+    const row = document.querySelector(`.row-user[data-key="${key}"]`);
+    if(!row){ showToast('Usuário não encontrado na lista','error'); return; }
+
+    const isAdmin = row.querySelector('.chk-isAdmin').checked;
+    const isMasterF = row.querySelector('.chk-isMaster').checked;
+
+    // Se Master, ignora granular e grava perfil de master
+    const perms = isMasterF ? { master: true } : {
+      canAdd: row.querySelector('.perm-canAdd').checked,
+      canEdit: row.querySelector('.perm-canEdit').checked,
+      canDelete: row.querySelector('.perm-canDelete').checked,
+      canMarkDelivered: row.querySelector('.perm-canMarkDelivered').checked,
+      canCloseCycle: row.querySelector('.perm-canCloseCycle').checked
+    };
+
+    const updates = {
+      isAdmin: isAdmin || isMasterF,
+      adminLevel: isMasterF ? 'master' : (isAdmin ? 'admin' : 'user'),
+      permissoes: perms
+    };
+
+    await db.ref(`usuarios/${key}`).update(updates);
+
+    // Log
+    try{
+      await logEvent('permissoes','Permissões atualizadas (Master)', { userKey:key, ...updates });
+    }catch(_){}
+
+    showToast('Permissões salvas com sucesso!','info');
+    // Atualiza a lista para refletir papel/etiqueta
+    loadUsuariosParaPermissoes();
+
+  }catch(e){
+    console.error(e);
+    showToast('Erro ao salvar permissões','error');
+  }
+};
+
+
+/* ===========================================================
    🔔 Exibir notificações ao entrar (usuário comum e admin)
    =========================================================== */
 async function verificarNotificacoesUsuario(){
@@ -1126,6 +1261,7 @@ function iniciarContadorPermissoes() {
     }
   });
 }
+
 
 
 
