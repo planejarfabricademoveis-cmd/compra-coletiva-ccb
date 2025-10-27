@@ -260,6 +260,15 @@ table{
     <div class="print-header">
       <h2>Relatórios (Administrador)</h2>
       <div class="chipbar right">
+        <label class="chip">
+  Filtro:
+  <select id="filtroImpressao" style="border:none;">
+    <option value="todos">Todas as Localidades</option>
+    <option value="aberto">Somente com Pedidos Abertos</option>
+    <option value="entregue">Somente com Pedidos Entregues</option>
+  </select>
+</label>
+
         <input id="raIntervalo" placeholder="Linhas: 1-50,60-80" style="max-width:260px;"/>
         <button id="btnPreviewRelGeral">👁️ Visualizar</button>
         <button id="btnImprimirRelGeral">🖨️ Imprimir Geral</button>
@@ -2703,6 +2712,7 @@ document.addEventListener('DOMContentLoaded', function(){
 <script src="patch_admin_localidades.js"></script>
 </body>
 </html>
+
 
 
 
