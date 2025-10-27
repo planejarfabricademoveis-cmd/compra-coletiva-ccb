@@ -825,6 +825,43 @@ async function carregarSolicitacoesPermissao(){
   }
 }
 
+/* ===========================================================
+   MONITORAR SOLICITAÇÕES PENDENTES (Contador 🔴 no botão)
+   =========================================================== */
+function iniciarContadorPermissoes() {
+  const btn = document.getElementById('btnAbrirPermissoes');
+  if (!btn) return; // botão ainda não existe
+
+  const badge = document.createElement('span');
+  badge.id = 'contadorPermissoes';
+  badge.style.cssText = `
+    background: #dc2626;
+    color: #fff;
+    font-size: 12px;
+    font-weight: bold;
+    border-radius: 50%;
+    padding: 2px 6px;
+    margin-left: 6px;
+    vertical-align: middle;
+    display: none;
+  `;
+  btn.appendChild(badge);
+
+  // Monitora o banco em tempo real (Firebase)
+  db.ref('permRequests').on('value', snap => {
+    const data = snap.val() || {};
+    const pendentes = Object.values(data).filter(req => req.status === 'pending').length;
+
+    if (pendentes > 0) {
+      badge.style.display = 'inline-block';
+      badge.textContent = pendentes;
+    } else {
+      badge.style.display = 'none';
+    }
+  });
+}
+
+
 
 async function aprovarPermissao(id){
   try {
@@ -1000,6 +1037,7 @@ async function atualizarBadgePermissoes() {
 
 // Atualiza a cada 15 segundos
 setInterval(atualizarBadgePermissoes, 15000);
+
 
 
 
