@@ -676,13 +676,26 @@ async function executeApprovedAction(req){
 // ==============================
 // RELATÓRIO GERAL COM FILTROS
 // ==============================
+
 async function previewRelGeral() {
   try {
     const snap = await db.ref('pedidos').once('value');
     const pedidos = Object.values(snap.val() || {});
+         // 🧩 Aplica o filtro do menu principal (Todas / Abertas / Entregues)
+    const filtro = document.getElementById('filtroImpressao')?.value || 'todos';
+    let pedidosFiltrados = pedidos;
 
-    if (!pedidos || !Array.isArray(pedidos) || pedidos.length === 0) {
-      showToast('Nenhum pedido encontrado no banco.', 'warn');
+    if (filtro === 'aberto') {
+      pedidosFiltrados = pedidos.filter(p => !p.entregue);
+    } else if (filtro === 'entregue') {
+      pedidosFiltrados = pedidos.filter(p => p.entregue);
+    }
+
+    // substitui a lista original
+    pedidos = pedidosFiltrados;
+
+    if (!pedidos.length) {
+      showToast('Nenhum pedido encontrado.', 'warn');
       return;
     }
 
@@ -731,98 +744,27 @@ async function previewRelGeral() {
   }
 }
 
-
-
-    const localidades = [...new Set(pedidos.map(p => p.createdByLocalidade || '-'))].sort();
-
-    let filtroHTML = `
-      <div class="menu" style="margin-bottom:10px;">
-        <label>Localidade:
-          <select id="filtroLocalidade">
-            <option value="todas">Todas</option>
-            ${localidades.map(l => `<option value="${l}">${l}</option>`).join('')}
-          </select>
-        </label>
-        <label style="margin-left:12px;">Status:
-          <select id="filtroStatus">
-            <option value="todos">Todos</option>
-            <option value="entregues">Entregues</option>
-            <option value="pendentes">Pendentes</option>
-          </select>
-        </label>
-        <button id="btnAplicarFiltros" class="btn-ok" style="margin-left:12px;">Aplicar</button>
-      </div>
-      <div id="tabelaRelGeral"></div>
-    `;
-
-    abrirModal('📊 Relatório Geral de Pedidos', filtroHTML);
-    renderTabelaRelGeral(pedidos);
-
-    setTimeout(() => {
-      document.getElementById('btnAplicarFiltros').onclick = () => {
-        const loc = document.getElementById('filtroLocalidade').value;
-        const st = document.getElementById('filtroStatus').value;
-        let filtrado = pedidos;
-
-        if (loc !== 'todas') filtrado = filtrado.filter(p => (p.createdByLocalidade || '-') === loc);
-        if (st === 'entregues') filtrado = filtrado.filter(p => p.entregue);
-        if (st === 'pendentes') filtrado = filtrado.filter(p => !p.entregue);
-
-        renderTabelaRelGeral(filtrado);
-      };
-    }, 200);
-
-  } catch (err) {
-    console.error(err);
-    showToast('Erro ao gerar relatório.', 'error');
-  }
-}
-
 function renderTabelaRelGeral(pedidos) {
-  if (!pedidos?.length) {
-    document.getElementById('tabelaRelGeral').innerHTML = '<p class="muted">Nenhum pedido encontrado.</p>';
-    return;
-  }
+  const rows = pedidos.map((p, i) => `
+    <tr>
+      <td style="border:1px solid #ddd;padding:6px;">${i + 1}</td>
+      <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(p.createdByLocalidade || '-')}</td>
+      <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(p.nome || '-')}</td>
+      <td style="border:1px solid #ddd;padding:6px;">${p.quantidade || 0}</td>
+      <td style="border:1px solid #ddd;padding:6px;">${p.entregue ? '✅' : '❌'}</td>
+    </tr>`).join('');
 
-  let html = `
-    <table class="tabela-rel" style="width:100%; border-collapse:collapse;">
+  const html = `
+    <table style="width:100%;border-collapse:collapse;">
       <thead>
-        <tr style="background:#0056b3; color:#fff;">
-          <th>#</th>
-          <th>Produto</th>
-          <th>Quantidade</th>
-          <th>Usuário</th>
-          <th>Localidade</th>
-          <th>Status</th>
+        <tr style="background:#0056b3;color:#fff;">
+          <th>#</th><th>Localidade</th><th>Produto</th><th>Qtd</th><th>Entregue</th>
         </tr>
       </thead>
-      <tbody>
-  `;
-
-  pedidos.forEach((p, i) => {
-    const statusIcon = p.entregue
-      ? `<span style="color:green;font-weight:bold;">✅ Entregue</span>`
-      : `<span style="color:red;font-weight:bold;">❌ Em aberto</span>`;
-    const nomeProd = escapeHtml(p.nome || '');
-    const nomeUser = escapeHtml(p.user || '');
-    const loc = escapeHtml(p.createdByLocalidade || '-');
-
-    html += `
-      <tr style="border-bottom:1px solid #ddd;">
-        <td style="padding:6px;">${i + 1}</td>
-        <td style="padding:6px;">${nomeProd}</td>
-        <td style="padding:6px;">${p.quantidade || 0}</td>
-        <td style="padding:6px;">${nomeUser}</td>
-        <td style="padding:6px;">${loc}</td>
-        <td style="padding:6px;">${statusIcon}</td>
-      </tr>
-    `;
-  });
-
-  html += '</tbody></table>';
+      <tbody>${rows || '<tr><td colspan="5">Sem resultados</td></tr>'}</tbody>
+    </table>`;
   document.getElementById('tabelaRelGeral').innerHTML = html;
 }
-
 
 window.previewRelGeral = previewRelGeral;
 window.imprimirRelatorioAdmin = imprimirRelatorioAdmin;
@@ -1525,8 +1467,6 @@ setInterval(() => {
 
 // Disparo inicial (pequeno atraso pós-login)
 setTimeout(()=> currentUser?.user && carregarNotificacoesPersistentes(), 3000);
-
-
 
 
 
