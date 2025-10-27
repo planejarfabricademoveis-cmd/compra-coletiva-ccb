@@ -876,6 +876,8 @@ async function aprovarPermissao(id){
   try {
     // Atualiza status
     await db.ref(`permRequests/${id}`).update({ status: 'approved', decidedAt: Date.now() });
+     await logEvent('permRequest', 'Solicitação APROVADA pelo Administrador Master', { id });
+
 
     // Busca a solicitação original para notificar o autor
     const snap = await db.ref(`permRequests/${id}`).once('value');
@@ -900,6 +902,8 @@ async function aprovarPermissao(id){
 async function negarPermissao(id){
   try {
     await db.ref(`permRequests/${id}`).update({ status: 'rejected', decidedAt: Date.now() });
+     await logEvent('permRequest', 'Solicitação NEGADA pelo Administrador Master', { id });
+
 
     const snap = await db.ref(`permRequests/${id}`).once('value');
     const req = snap.val();
@@ -1287,6 +1291,7 @@ async function logEvent(tipo, descricao, dados = {}) {
     console.error('Erro ao registrar log:', e);
   }
 }
+
 
 
 
