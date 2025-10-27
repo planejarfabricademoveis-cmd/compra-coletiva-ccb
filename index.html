@@ -347,6 +347,18 @@ table{
       <button id="btnAbrirCadastroProduto">Adicionar Produto (Admin)</button>
       <button class="btn-muted" id="btnVoltarAdmin">Voltar</button>
     </div>
+
+<!-- Painel de Solicitações de Permissão -->
+<div id="containerPermissoes" style="margin-top:20px;">
+  <button id="btnAbrirPermissoes" class="btn-ok" onclick="abrirPainelPermissoes()">🔐 Solicitações de Permissão</button>
+  <section id="painelPermissoes" class="card hidden" style="margin-top:10px;">
+    <h2>🔐 Solicitações de Permissão</h2>
+    <p class="muted">Somente o <b>Administrador Master</b> pode aprovar ou negar solicitações.</p>
+    <div id="listaPermissoes" class="table-wrap" style="margin-top:10px;">Carregando...</div>
+  </section>
+</div>
+
+    
   </section>
 
   <!-- ADMIN: USUÁRIOS -->
@@ -2673,6 +2685,7 @@ document.addEventListener('DOMContentLoaded', function(){
 <script src="patch_admin_localidades.js"></script>
 </body>
 </html>
+
 
 
 
