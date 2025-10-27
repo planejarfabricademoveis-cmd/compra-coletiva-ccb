@@ -1377,6 +1377,90 @@ async function marcarNotificacoesLidas() {
 setInterval(carregarNotificacoes, 10000);
 setTimeout(carregarNotificacoes, 4000);
 
+/* ===========================================================
+   🔔 SININHO DE NOTIFICAÇÕES (persistentes)
+   - Lê usuarios/{user}/notificacoes
+   - Mostra lista, marca como lida ao clicar
+   - Atualiza bolinha com não lidas
+   =========================================================== */
+
+function toggleListaNotifs(show) {
+  const box = document.getElementById('listaNotificacoes');
+  if (!box) return;
+  const visivel = show ?? box.classList.contains('hidden');
+  box.classList.toggle('hidden', !visivel);
+}
+
+async function carregarNotificacoesPersistentes() {
+  if (!currentUser?.user) return;
+  const wrap = document.getElementById('notificacoesWrap');
+  const btn  = document.getElementById('btnNotificacoes');
+  const badge= document.getElementById('badgeNotificacoes');
+  const box  = document.getElementById('listaNotificacoes');
+  if (!wrap || !btn || !badge || !box) return;
+
+  // Lê notificações do usuário
+  const snap = await db.ref(`usuarios/${currentUser.user}/notificacoes`).once('value');
+  const notifsObj = snap.val() || {};
+  const itens = Object.entries(notifsObj)
+    .sort((a,b)=> (b[1]?.createdAt||0) - (a[1]?.createdAt||0));
+
+  // Monta lista
+  const linhas = itens.map(([key, n]) => {
+    const cor = n.tipo === 'warn' ? '#b45309' : (n.tipo === 'error' ? '#dc2626' : '#1e3a8a');
+    const lida = n.lida ? 'opacity:.55;' : '';
+    const quando = n.createdAt ? new Date(n.createdAt).toLocaleString('pt-BR') : '';
+    return `
+      <div class="notif-item" data-key="${key}" style="border-bottom:1px solid #e5e7eb;padding:8px;cursor:pointer;${lida}">
+        <div style="color:${cor};font-weight:600;margin-bottom:4px;">${n.tipo?.toUpperCase()||'INFO'}</div>
+        <div style="white-space:pre-wrap">${escapeHtml(n.mensagem||'(sem mensagem)')}</div>
+        <div style="font-size:12px;color:#6b7280;margin-top:4px;">${quando}</div>
+      </div>`;
+  }).join('') || '<div style="padding:10px;color:#6b7280;">Sem notificações.</div>';
+
+  box.innerHTML = linhas;
+
+  // Badge = quantidade de NÃO lidas
+  const naoLidas = itens.filter(([,n])=> !n.lida).length;
+  if (naoLidas > 0) {
+    badge.textContent = naoLidas;
+    badge.style.display = 'inline-block';
+  } else {
+    badge.style.display = 'none';
+  }
+
+  // Clique no sininho abre/fecha a lista
+  if (!btn.__wired) {
+    btn.__wired = true;
+    btn.addEventListener('click', () => toggleListaNotifs());
+    // Clique fora fecha
+    document.addEventListener('click', (ev)=>{
+      if (!wrap.contains(ev.target)) toggleListaNotifs(false);
+    });
+  }
+
+  // Clique numa notificação = marcar como lida
+  box.querySelectorAll('.notif-item').forEach(el=>{
+    el.addEventListener('click', async ()=>{
+      const key = el.getAttribute('data-key');
+      await db.ref(`usuarios/${currentUser.user}/notificacoes/${key}/lida`).set(true);
+      el.style.opacity = .55;
+      // Atualiza badge rapidinho
+      carregarNotificacoesPersistentes();
+    });
+  });
+}
+
+// Atualiza ao logar e a cada 20s
+setInterval(() => {
+  if (currentUser?.user) carregarNotificacoesPersistentes();
+}, 20000);
+
+// Disparo inicial (pequeno atraso pós-login)
+setTimeout(()=> currentUser?.user && carregarNotificacoesPersistentes(), 3000);
+
+
+
 
 
 
