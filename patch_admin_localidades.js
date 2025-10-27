@@ -966,6 +966,43 @@ function adicionarBotaoTogglePainel() {
 // Espera o painel existir antes de criar o botão
 setTimeout(adicionarBotaoTogglePainel, 2000);
 
+/* ===========================================================
+   ATUALIZA BADGE DE NOTIFICAÇÃO DE SOLICITAÇÕES
+   =========================================================== */
+async function atualizarBadgePermissoes() {
+  const btn = document.getElementById('btnAbrirPermissoes');
+  if (!btn) return;
+
+  // Cria o badge se ainda não existir
+  let badge = btn.querySelector('.badge-alert');
+  if (!badge) {
+    badge = document.createElement('span');
+    badge.className = 'badge-alert';
+    btn.appendChild(badge);
+  }
+
+  try {
+    // Busca solicitações pendentes
+    const snap = await db.ref('permRequests').orderByChild('status').equalTo('pending').once('value');
+    const totalPendentes = snap.exists() ? Object.keys(snap.val()).length : 0;
+
+    // Atualiza badge
+    if (totalPendentes > 0) {
+      badge.textContent = totalPendentes;
+      badge.style.display = 'inline-block';
+    } else {
+      badge.style.display = 'none';
+    }
+  } catch (e) {
+    console.error('Erro ao atualizar badge de permissões:', e);
+  }
+}
+
+// Atualiza a cada 15 segundos
+setInterval(atualizarBadgePermissoes, 15000);
+
+
+
 
 
 
