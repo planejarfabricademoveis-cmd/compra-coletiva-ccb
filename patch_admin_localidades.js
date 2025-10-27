@@ -765,6 +765,9 @@ function criarPainelPermissoes(){
   `;
   document.body.insertAdjacentHTML('beforeend', html);
   carregarSolicitacoesPermissao();
+   iniciarContadorPermissoes();
+
+   
 
   const btn = document.getElementById('btnTogglePainel');
   btn.addEventListener('click', ()=>{
@@ -1037,6 +1040,7 @@ async function atualizarBadgePermissoes() {
 
 // Atualiza a cada 15 segundos
 setInterval(atualizarBadgePermissoes, 15000);
+
 
 
 
