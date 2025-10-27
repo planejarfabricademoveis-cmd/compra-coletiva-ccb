@@ -252,26 +252,8 @@ table{
     </div>
     <div class="center" style="margin-top:10px;">
       <button class="btn-muted" id="btnVoltarUsuario">Voltar</button>
-    </div> 
-  </section>
-
-  <!-- === Permissões de Administradores (somente Master) === -->
-<div id="containerPermsAdmin" style="margin-top:20px;">
-  <button id="btnAbrirPermsAdmin" class="btn-ok" onclick="abrirPermissoesAdmin()">🛡️ Permissões de Administradores</button>
-
-  <section id="painelPermsAdmin" class="card hidden" style="margin-top:10px;">
-    <h2>🛡️ Permissões de Administradores</h2>
-    <p class="muted">Somente o <b>Administrador Master</b> pode alterar estas permissões.</p>
-
-    <div class="menu" style="gap:8px;">
-      <input id="buscaUsuarioPerm" placeholder="Buscar por nome ou usuário" style="max-width:260px;">
-      <button class="btn-muted" onclick="loadUsuariosParaPermissoes()">🔄 Atualizar</button>
     </div>
-
-    <div id="listaUsuariosPerms" class="table-wrap" style="margin-top:10px;">Carregando...</div>
   </section>
-</div>
-
 
   <!-- RELATÓRIO ADMIN -->
   <section id="relatorioAdmin" class="card hidden">
@@ -292,6 +274,24 @@ table{
 <button id="btnRelatorioMovimentacoes" class="btn-warn">📊 Relatório de Movimentações (por Ciclo)</button>
 <button id="btnExportarExcel" class="btn-ok">⬇️ Exportar Estoques / Movimentações (Excel)</button>
         <button id="btnPermissoesAdmin" class="btn-ok" onclick="abrirPainelPermissoes()">🔐 Solicitações de Permissão</button>
+
+        <!-- === Permissões de Administradores (somente Master) === -->
+<div id="containerPermsAdmin" style="margin-top:20px;">
+  <button id="btnAbrirPermsAdmin" class="btn-ok" onclick="abrirPermissoesAdmin()">🛡️ Permissões de Administradores</button>
+
+  <section id="painelPermsAdmin" class="card hidden" style="margin-top:10px;">
+    <h2>🛡️ Permissões de Administradores</h2>
+    <p class="muted">Somente o <b>Administrador Master</b> pode alterar estas permissões.</p>
+
+    <div class="menu" style="gap:8px;">
+      <input id="buscaUsuarioPerm" placeholder="Buscar por nome ou usuário" style="max-width:260px;">
+      <button class="btn-muted" onclick="loadUsuariosParaPermissoes()">🔄 Atualizar</button>
+    </div>
+
+    <div id="listaUsuariosPerms" class="table-wrap" style="margin-top:10px;">Carregando...</div>
+  </section>
+</div>
+
 
 <div class="menu" style="margin-top:20px;">
   <h3>🕓 Ciclo Atual</h3>
@@ -2703,7 +2703,6 @@ document.addEventListener('DOMContentLoaded', function(){
 <script src="patch_admin_localidades.js"></script>
 </body>
 </html>
-
 
 
 
