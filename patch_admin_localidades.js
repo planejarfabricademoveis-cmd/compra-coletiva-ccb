@@ -1305,6 +1305,78 @@ async function logEvent(tipo, descricao, dados = {}) {
   }
 }
 
+/* ===========================================================
+   🔔 SISTEMA DE NOTIFICAÇÕES PERSISTENTES (Sininho)
+   =========================================================== */
+async function carregarNotificacoes() {
+  if (!currentUser?.user) return;
+
+  const lista = document.getElementById('listaNotificacoes');
+  const badge = document.getElementById('badgeNotificacoes');
+  if (!lista || !badge) return;
+
+  try {
+    const snap = await db.ref(`usuarios/${currentUser.user}/notificacoes`).once('value');
+    const notificacoes = snap.val() || {};
+
+    const naoLidas = Object.entries(notificacoes)
+      .filter(([id, n]) => !n.lida)
+      .sort((a, b) => (b[1].createdAt || 0) - (a[1].createdAt || 0));
+
+    badge.textContent = naoLidas.length;
+    badge.style.display = naoLidas.length > 0 ? 'inline-block' : 'none';
+
+    const html = Object.entries(notificacoes)
+      .sort((a, b) => (b[1].createdAt || 0) - (a[1].createdAt || 0))
+      .map(([id, n]) => `
+        <div class="notificacao-item" data-id="${id}" style="padding:8px;border-bottom:1px solid #eee;">
+          <span style="font-size:13px;display:block;">${n.mensagem}</span>
+          <small style="color:#666;">${new Date(n.createdAt).toLocaleString('pt-BR')}</small>
+        </div>
+      `).join('');
+
+    lista.innerHTML = html || '<p class="muted" style="padding:8px;">Sem notificações.</p>';
+
+  } catch (e) {
+    console.error('Erro ao carregar notificações:', e);
+  }
+}
+
+// Alterna visibilidade do painel ao clicar no sininho
+document.addEventListener('click', (e) => {
+  if (e.target.id === 'btnNotificacoes') {
+    const lista = document.getElementById('listaNotificacoes');
+    if (!lista) return;
+    const visible = !lista.classList.contains('hidden');
+    lista.classList.toggle('hidden', visible);
+    if (!visible) {
+      // Marcar todas como lidas ao abrir
+      marcarNotificacoesLidas();
+    }
+  } else {
+    // Clicar fora fecha o painel
+    if (!e.target.closest('#notificacoesWrap')) {
+      document.getElementById('listaNotificacoes')?.classList.add('hidden');
+    }
+  }
+});
+
+async function marcarNotificacoesLidas() {
+  if (!currentUser?.user) return;
+  const snap = await db.ref(`usuarios/${currentUser.user}/notificacoes`).once('value');
+  const notificacoes = snap.val() || {};
+  for (const [id, n] of Object.entries(notificacoes)) {
+    if (!n.lida) {
+      await db.ref(`usuarios/${currentUser.user}/notificacoes/${id}/lida`).set(true);
+    }
+  }
+  carregarNotificacoes();
+}
+
+// Atualiza o sininho automaticamente a cada 10 segundos
+setInterval(carregarNotificacoes, 10000);
+setTimeout(carregarNotificacoes, 4000);
+
 
 
 
