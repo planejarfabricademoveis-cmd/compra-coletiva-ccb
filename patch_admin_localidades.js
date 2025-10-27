@@ -763,30 +763,28 @@ function criarPainelPermissoes(){
       </div>
     </section>
   `;
-  document.body.insertAdjacentHTML('beforeend', html);
-  carregarSolicitacoesPermissao();
-   iniciarContadorPermissoes();
+ document.body.insertAdjacentHTML('beforeend', html);
+carregarSolicitacoesPermissao();
+iniciarContadorPermissoes();
 
-   
+const btn = document.getElementById('btnTogglePainel');
+btn.addEventListener('click', ()=>{
+  const painel = document.getElementById('painelPermissoes');
+  if(!painel) return;
+  if(painel.style.display === 'none'){
+    painel.style.display = 'block';
+    btn.textContent = '👁️ Ocultar Painel';
+    carregarSolicitacoesPermissao();
 
-  const btn = document.getElementById('btnTogglePainel');
-  btn.addEventListener('click', ()=>{
-    const painel = document.getElementById('painelPermissoes');
-    if(!painel) return;
-    if(painel.style.display === 'none'){
-  painel.style.display = 'block';
-  btn.textContent = '👁️ Ocultar Painel';
-  carregarSolicitacoesPermissao();
+    // ✅ Assim que o painel for aberto, remove o contador 🔴 (notificação)
+    const badge = document.querySelector('#btnAbrirPermissoes .badge-alert');
+    if (badge) badge.style.display = 'none';
+  } else {
+    painel.style.display = 'none';
+    btn.textContent = '👁️ Mostrar Painel';
+  }
+});
 
-  // ✅ Assim que o painel for aberto, remove o contador 🔴 (notificação)
-  const badge = document.getElementById('contadorPermissoes');
-  if (badge) badge.style.display = 'none';
-} else {
-  painel.style.display = 'none';
-  btn.textContent = '👁️ Mostrar Painel';
-}
-
-  });
 }
 
 
@@ -1102,6 +1100,34 @@ async function atualizarBadgePermissoes() {
 
 // Atualiza a cada 15 segundos
 setInterval(atualizarBadgePermissoes, 15000);
+
+/* ===========================================================
+   MONITORAR SOLICITAÇÕES PENDENTES (Contador 🔴 no botão)
+   =========================================================== */
+function iniciarContadorPermissoes() {
+  const btn = document.getElementById('btnAbrirPermissoes');
+  if (!btn) return; // botão ainda não existe
+
+  // Cria o círculo vermelho (badge)
+  const badge = document.createElement('span');
+  badge.className = 'badge-alert';
+  btn.appendChild(badge);
+
+  // Monitora em tempo real as solicitações pendentes no banco
+  db.ref('permRequests').on('value', snap => {
+    const data = snap.val() || {};
+    const pendentes = Object.values(data).filter(req => req.status === 'pending').length;
+
+    if (pendentes > 0) {
+      badge.textContent = pendentes;
+      badge.style.display = 'inline-block';
+    } else {
+      badge.style.display = 'none';
+    }
+  });
+}
+
+
 
 
 
