@@ -812,7 +812,7 @@ async function carregarSolicitacoesPermissao(){
             <td>
               ${req.status === 'pending'
                 ? `<button class="btn-ok" onclick="aprovarPermissao('${id}')">✅ Aprovar</button>
-                   <button class="btn-warn" onclick="negarPermissao('${id}')">❌ Negar</button>`
+                   <button class="btn-warn" onclick="('${id}')">❌ Negar</button>`
                 : '-'}
             </td>
           </tr>
@@ -921,6 +921,27 @@ async function negarPermissao(id){
     showToast('Erro ao negar.', 'error');
   }
 }
+
+/* ===========================================================
+   🔔 Exibir notificações ao entrar (usuário comum e admin)
+   =========================================================== */
+async function verificarNotificacoesUsuario(){
+  if (!currentUser || !currentUser.user) return;
+
+  const snap = await db.ref(`usuarios/${currentUser.user}/notificacoes`).once('value');
+  const notificacoes = snap.val() || {};
+
+  for (const [key, n] of Object.entries(notificacoes)) {
+    if (!n.lida) {
+      showToast(n.mensagem, n.tipo || 'info');
+      // marca como lida para não repetir
+      await db.ref(`usuarios/${currentUser.user}/notificacoes/${key}/lida`).set(true);
+    }
+  }
+}
+
+// Executa automaticamente 3 segundos após login
+setTimeout(verificarNotificacoesUsuario, 3000);
 
 
 /* ===========================================================
@@ -1081,6 +1102,7 @@ async function atualizarBadgePermissoes() {
 
 // Atualiza a cada 15 segundos
 setInterval(atualizarBadgePermissoes, 15000);
+
 
 
 
