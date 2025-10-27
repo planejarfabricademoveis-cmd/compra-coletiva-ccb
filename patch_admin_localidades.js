@@ -676,20 +676,13 @@ async function executeApprovedAction(req){
 // ==============================
 // RELATÓRIO GERAL COM FILTROS
 // ==============================
-
 async function previewRelGeral() {
   try {
     const snap = await db.ref('pedidos').once('value');
-    const pedidosRaw = snap.val();
+    const pedidos = Object.values(snap.val() || {});
 
-    if (!pedidosRaw) {
+    if (!pedidos || !Array.isArray(pedidos) || pedidos.length === 0) {
       showToast('Nenhum pedido encontrado no banco.', 'warn');
-      return;
-    }
-
-    const pedidos = Object.values(pedidosRaw || {});
-    if (!pedidos.length) {
-      showToast('Nenhum pedido encontrado.', 'warn');
       return;
     }
 
@@ -719,9 +712,7 @@ async function previewRelGeral() {
     renderTabelaRelGeral(pedidos);
 
     setTimeout(() => {
-      const btnFiltro = document.getElementById('btnAplicarFiltros');
-      if (!btnFiltro) return;
-      btnFiltro.onclick = () => {
+      document.getElementById('btnAplicarFiltros').onclick = () => {
         const loc = document.getElementById('filtroLocalidade').value;
         const st = document.getElementById('filtroStatus').value;
         let filtrado = pedidos;
@@ -732,12 +723,14 @@ async function previewRelGeral() {
 
         renderTabelaRelGeral(filtrado);
       };
-    }, 300);
+    }, 200);
+
   } catch (err) {
-    console.error('Erro ao gerar relatório:', err);
+    console.error(err);
     showToast('Erro ao gerar relatório.', 'error');
   }
 }
+
 
 
     const localidades = [...new Set(pedidos.map(p => p.createdByLocalidade || '-'))].sort();
@@ -1508,6 +1501,7 @@ setInterval(() => {
 
 // Disparo inicial (pequeno atraso pós-login)
 setTimeout(()=> currentUser?.user && carregarNotificacoesPersistentes(), 3000);
+
 
 
 
