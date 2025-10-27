@@ -871,21 +871,57 @@ function iniciarContadorPermissoes() {
 
 
 
+// ===========================================================
+// ✅ Aprovar / ❌ Negar Solicitação + Enviar Notificação
+// ===========================================================
 async function aprovarPermissao(id){
   try {
-    await db.ref(`permRequests/${id}`).update({ status: 'approved' });
+    // Atualiza status
+    await db.ref(`permRequests/${id}`).update({ status: 'approved', decidedAt: Date.now() });
+
+    // Busca a solicitação original para notificar o autor
+    const snap = await db.ref(`permRequests/${id}`).once('value');
+    const req = snap.val();
+    if (req && req.requester) {
+      await db.ref(`usuarios/${req.requester}/notificacoes`).push({
+        tipo: 'info',
+        mensagem: `✅ Sua solicitação (${req.action || 'ação'}) foi aprovada pelo Administrador Master.`,
+        createdAt: Date.now(),
+        lida: false
+      });
+    }
+
     showToast('Solicitação aprovada!', 'info');
     carregarSolicitacoesPermissao();
-  } catch(e){ showToast('Erro ao aprovar.', 'error'); }
+  } catch(e){
+    console.error(e);
+    showToast('Erro ao aprovar.', 'error');
+  }
 }
 
 async function negarPermissao(id){
   try {
-    await db.ref(`permRequests/${id}`).update({ status: 'rejected' });
-    showToast('Solicitação negada.', 'warn');
+    await db.ref(`permRequests/${id}`).update({ status: 'rejected', decidedAt: Date.now() });
+
+    const snap = await db.ref(`permRequests/${id}`).once('value');
+    const req = snap.val();
+    if (req && req.requester) {
+      await db.ref(`usuarios/${req.requester}/notificacoes`).push({
+        tipo: 'warn',
+        mensagem: `❌ Sua solicitação (${req.action || 'ação'}) foi negada pelo Administrador Master.`,
+        createdAt: Date.now(),
+        lida: false
+      });
+    }
+
+    showToast('Solicitação negada!', 'warn');
     carregarSolicitacoesPermissao();
-  } catch(e){ showToast('Erro ao negar.', 'error'); }
+  } catch(e){
+    console.error(e);
+    showToast('Erro ao negar.', 'error');
+  }
 }
+
 
 /* ===========================================================
    NOTIFICAÇÕES AUTOMÁTICAS DE PERMISSÕES (para todos os usuários)
@@ -1045,6 +1081,7 @@ async function atualizarBadgePermissoes() {
 
 // Atualiza a cada 15 segundos
 setInterval(atualizarBadgePermissoes, 15000);
+
 
 
 
