@@ -672,6 +672,19 @@ async function previewRelGeral() {
   try {
     const snap = await db.ref('pedidos').once('value');
     const pedidos = Object.values(snap.val() || {});
+         // 🧩 Aplica o filtro do menu principal (Todas / Abertas / Entregues)
+    const filtro = document.getElementById('filtroImpressao')?.value || 'todos';
+    let pedidosFiltrados = pedidos;
+
+    if (filtro === 'aberto') {
+      pedidosFiltrados = pedidos.filter(p => !p.entregue);
+    } else if (filtro === 'entregue') {
+      pedidosFiltrados = pedidos.filter(p => p.entregue);
+    }
+
+    // substitui a lista original
+    pedidos = pedidosFiltrados;
+
     if (!pedidos.length) {
       showToast('Nenhum pedido encontrado.', 'warn');
       return;
@@ -1291,6 +1304,7 @@ async function logEvent(tipo, descricao, dados = {}) {
     console.error('Erro ao registrar log:', e);
   }
 }
+
 
 
 
