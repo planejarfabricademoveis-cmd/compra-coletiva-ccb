@@ -1262,6 +1262,33 @@ function iniciarContadorPermissoes() {
   });
 }
 
+/* ===========================================================
+   SISTEMA DE LOGS — Registro de Ações Importantes
+   =========================================================== */
+
+// Grava log no banco (Firebase)
+async function logEvent(tipo, descricao, dados = {}) {
+  try {
+    const user = currentUser?.user || '(desconhecido)';
+    const nome = currentUser?.nome || '(sem nome)';
+    const agora = new Date().toLocaleString('pt-BR');
+    const logData = {
+      usuario: user,
+      nome: nome,
+      tipo,
+      descricao,
+      dados,
+      timestamp: Date.now(),
+      dataHora: agora
+    };
+    await db.ref('logs').push(logData);
+    console.log('🪶 Log gravado:', logData);
+  } catch (e) {
+    console.error('Erro ao registrar log:', e);
+  }
+}
+
+
 
 
 
