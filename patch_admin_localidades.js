@@ -339,8 +339,17 @@ async function renderLocalidades(){
 }
 
 async function imprimirLocalidades(){
+  async function imprimirLocalidades(){
+  const filtroSel = document.getElementById('filtroLocs')?.value || 'todas';
   const data = await fetchLocalidadesComUso();
-  const rows = data.sort((a,b)=> a.numero - b.numero).map((l,i)=>`
+
+  const filtrados = data.filter(l=>{
+    if (filtroSel === 'todas') return true;
+    if (filtroSel === 'abertas') return l.abertos > 0;
+    if (filtroSel === 'entregues') return l.entregues > 0;
+    return true;
+  }).sort((a,b)=> a.numero - b.numero);
+
     <tr>
       <td style="border:1px solid #ddd;padding:6px;">${i+1}</td>
       <td style="border:1px solid #ddd;padding:6px;">${l.numero}</td>
@@ -1458,6 +1467,7 @@ setInterval(() => {
 
 // Disparo inicial (pequeno atraso pós-login)
 setTimeout(()=> currentUser?.user && carregarNotificacoesPersistentes(), 3000);
+
 
 
 
