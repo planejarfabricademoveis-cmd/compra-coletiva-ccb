@@ -680,24 +680,65 @@ async function executeApprovedAction(req){
 async function previewRelGeral() {
   try {
     const snap = await db.ref('pedidos').once('value');
-    const pedidos = Object.values(snap.val() || {});
-         // 🧩 Aplica o filtro do menu principal (Todas / Abertas / Entregues)
-    const filtro = document.getElementById('filtroImpressao')?.value || 'todos';
-    let pedidosFiltrados = pedidos;
+    const pedidosRaw = snap.val();
 
-    if (filtro === 'aberto') {
-      pedidosFiltrados = pedidos.filter(p => !p.entregue);
-    } else if (filtro === 'entregue') {
-      pedidosFiltrados = pedidos.filter(p => p.entregue);
+    if (!pedidosRaw) {
+      showToast('Nenhum pedido encontrado no banco.', 'warn');
+      return;
     }
 
-    // substitui a lista original
-    pedidos = pedidosFiltrados;
-
+    const pedidos = Object.values(pedidosRaw || {});
     if (!pedidos.length) {
       showToast('Nenhum pedido encontrado.', 'warn');
       return;
     }
+
+    const localidades = [...new Set(pedidos.map(p => p.createdByLocalidade || '-'))].sort();
+
+    let filtroHTML = `
+      <div class="menu" style="margin-bottom:10px;">
+        <label>Localidade:
+          <select id="filtroLocalidade">
+            <option value="todas">Todas</option>
+            ${localidades.map(l => `<option value="${l}">${l}</option>`).join('')}
+          </select>
+        </label>
+        <label style="margin-left:12px;">Status:
+          <select id="filtroStatus">
+            <option value="todos">Todos</option>
+            <option value="entregues">Entregues</option>
+            <option value="pendentes">Pendentes</option>
+          </select>
+        </label>
+        <button id="btnAplicarFiltros" class="btn-ok" style="margin-left:12px;">Aplicar</button>
+      </div>
+      <div id="tabelaRelGeral"></div>
+    `;
+
+    abrirModal('📊 Relatório Geral de Pedidos', filtroHTML);
+    renderTabelaRelGeral(pedidos);
+
+    setTimeout(() => {
+      const btnFiltro = document.getElementById('btnAplicarFiltros');
+      if (!btnFiltro) return;
+      btnFiltro.onclick = () => {
+        const loc = document.getElementById('filtroLocalidade').value;
+        const st = document.getElementById('filtroStatus').value;
+        let filtrado = pedidos;
+
+        if (loc !== 'todas') filtrado = filtrado.filter(p => (p.createdByLocalidade || '-') === loc);
+        if (st === 'entregues') filtrado = filtrado.filter(p => p.entregue);
+        if (st === 'pendentes') filtrado = filtrado.filter(p => !p.entregue);
+
+        renderTabelaRelGeral(filtrado);
+      };
+    }, 300);
+  } catch (err) {
+    console.error('Erro ao gerar relatório:', err);
+    showToast('Erro ao gerar relatório.', 'error');
+  }
+}
+
 
     const localidades = [...new Set(pedidos.map(p => p.createdByLocalidade || '-'))].sort();
 
@@ -1467,6 +1508,7 @@ setInterval(() => {
 
 // Disparo inicial (pequeno atraso pós-login)
 setTimeout(()=> currentUser?.user && carregarNotificacoesPersistentes(), 3000);
+
 
 
 
