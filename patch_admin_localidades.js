@@ -774,13 +774,18 @@ function criarPainelPermissoes(){
     const painel = document.getElementById('painelPermissoes');
     if(!painel) return;
     if(painel.style.display === 'none'){
-      painel.style.display = 'block';
-      btn.textContent = '👁️ Ocultar Painel';
-      carregarSolicitacoesPermissao();
-    } else {
-      painel.style.display = 'none';
-      btn.textContent = '👁️ Mostrar Painel';
-    }
+  painel.style.display = 'block';
+  btn.textContent = '👁️ Ocultar Painel';
+  carregarSolicitacoesPermissao();
+
+  // ✅ Assim que o painel for aberto, remove o contador 🔴 (notificação)
+  const badge = document.getElementById('contadorPermissoes');
+  if (badge) badge.style.display = 'none';
+} else {
+  painel.style.display = 'none';
+  btn.textContent = '👁️ Mostrar Painel';
+}
+
   });
 }
 
@@ -1040,6 +1045,7 @@ async function atualizarBadgePermissoes() {
 
 // Atualiza a cada 15 segundos
 setInterval(atualizarBadgePermissoes, 15000);
+
 
 
 
