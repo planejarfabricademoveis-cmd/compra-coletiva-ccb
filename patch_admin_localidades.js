@@ -779,26 +779,50 @@ async function previewRelGeral() {
 }
 
 function renderTabelaRelGeral(pedidos) {
-  const rows = pedidos.map((p, i) => `
-    <tr>
-      <td style="border:1px solid #ddd;padding:6px;">${i + 1}</td>
-      <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(p.createdByLocalidade || '-')}</td>
-      <td style="border:1px solid #ddd;padding:6px;">${escapeHtml(p.nome || '-')}</td>
-      <td style="border:1px solid #ddd;padding:6px;">${p.quantidade || 0}</td>
-      <td style="border:1px solid #ddd;padding:6px;">${p.entregue ? '✅' : '❌'}</td>
-    </tr>`).join('');
+  if (!pedidos?.length) {
+    document.getElementById('tabelaRelGeral').innerHTML = '<p class="muted">Nenhum pedido encontrado.</p>';
+    return;
+  }
 
-  const html = `
-    <table style="width:100%;border-collapse:collapse;">
+  let html = `
+    <table class="tabela-rel" style="width:100%; border-collapse:collapse;">
       <thead>
-        <tr style="background:#0056b3;color:#fff;">
-          <th>#</th><th>Localidade</th><th>Produto</th><th>Qtd</th><th>Entregue</th>
+        <tr style="background:#0056b3; color:#fff;">
+          <th>#</th>
+          <th>Produto</th>
+          <th>Quantidade</th>
+          <th>Usuário</th>
+          <th>Localidade</th>
+          <th>Status</th>
         </tr>
       </thead>
-      <tbody>${rows || '<tr><td colspan="5">Sem resultados</td></tr>'}</tbody>
-    </table>`;
+      <tbody>
+  `;
+
+  pedidos.forEach((p, i) => {
+    const statusIcon = p.entregue
+      ? `<span style="color:green;font-weight:bold;">✅ Entregue</span>`
+      : `<span style="color:red;font-weight:bold;">❌ Em aberto</span>`;
+    const nomeProd = escapeHtml(p.nome || '');
+    const nomeUser = escapeHtml(p.user || '');
+    const loc = escapeHtml(p.createdByLocalidade || '-');
+
+    html += `
+      <tr style="border-bottom:1px solid #ddd;">
+        <td style="padding:6px;">${i + 1}</td>
+        <td style="padding:6px;">${nomeProd}</td>
+        <td style="padding:6px;">${p.quantidade || 0}</td>
+        <td style="padding:6px;">${nomeUser}</td>
+        <td style="padding:6px;">${loc}</td>
+        <td style="padding:6px;">${statusIcon}</td>
+      </tr>
+    `;
+  });
+
+  html += '</tbody></table>';
   document.getElementById('tabelaRelGeral').innerHTML = html;
 }
+
 
 window.previewRelGeral = previewRelGeral;
 window.imprimirRelatorioAdmin = imprimirRelatorioAdmin;
@@ -1501,6 +1525,7 @@ setInterval(() => {
 
 // Disparo inicial (pequeno atraso pós-login)
 setTimeout(()=> currentUser?.user && carregarNotificacoesPersistentes(), 3000);
+
 
 
 
