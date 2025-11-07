@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<link rel="stylesheet" href="patch_admin_localidades.css">
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>CCB - Compra Coletiva</title>
@@ -210,40 +209,10 @@ table{
     </div>
 
     <div class="menu" style="margin-top:6px;">
-  <button id="btnMeuEstoque">📦 Meu Estoque</button>
+<button id="btnMeuEstoque">📦 Meu Estoque</button>
 
-  <!-- 🔔 Notificações -->
-  <div id="notificacoesWrap" style="position:relative; display:inline-block; margin-right:10px;">
-    <button id="btnNotificacoes" class="btn-muted">🔔</button>
-    <span id="badgeNotificacoes" style="
-      position:absolute;
-      top:-5px;
-      right:-5px;
-      background:red;
-      color:white;
-      font-size:11px;
-      font-weight:bold;
-      border-radius:50%;
-      padding:2px 6px;
-      display:none;
-    ">0</span>
-
-    <div id="listaNotificacoes" class="card hidden" style="
-      position:absolute;
-      right:0;
-      top:35px;
-      width:260px;
-      max-height:300px;
-      overflow-y:auto;
-      box-shadow:0 4px 10px rgba(0,0,0,0.2);
-      z-index:999;
-      background:white;
-    "></div>
-  </div>
-
-  <button class="btn-danger" id="btnLogout">Sair</button>
-</div>
-
+      <button class="btn-danger" id="btnLogout">Sair</button>
+    </div>
 
     <p id="pedidoMsg" class="center" style="color:var(--ok); min-height:18px;"></p>
     <p id="cycleInfo" class="center muted" style="margin-top:6px;"></p>
@@ -290,15 +259,6 @@ table{
     <div class="print-header">
       <h2>Relatórios (Administrador)</h2>
       <div class="chipbar right">
-        <label class="chip">
-  Filtro:
-  <select id="filtroImpressao" style="border:none;">
-    <option value="todos">Todas as Localidades</option>
-    <option value="aberto">Somente com Pedidos Abertos</option>
-    <option value="entregue">Somente com Pedidos Entregues</option>
-  </select>
-</label>
-
         <input id="raIntervalo" placeholder="Linhas: 1-50,60-80" style="max-width:260px;"/>
         <button id="btnPreviewRelGeral">👁️ Visualizar</button>
         <button id="btnImprimirRelGeral">🖨️ Imprimir Geral</button>
@@ -312,26 +272,6 @@ table{
 <button id="btnControleEstoque" class="btn-ok">🧾 Controle de Estoques (Admin)</button>
 <button id="btnRelatorioMovimentacoes" class="btn-warn">📊 Relatório de Movimentações (por Ciclo)</button>
 <button id="btnExportarExcel" class="btn-ok">⬇️ Exportar Estoques / Movimentações (Excel)</button>
-        <button id="btnPermissoesAdmin" class="btn-ok" onclick="abrirPainelPermissoes()">🔐 Solicitações de Permissão</button>
-
-        <!-- === Permissões de Administradores (somente Master) === -->
-<div id="containerPermsAdmin" style="margin-top:20px;">
-  <button id="btnAbrirPermsAdmin" class="btn-ok" onclick="abrirPermissoesAdmin()">🛡️ Permissões de Administradores</button>
-
-  <section id="painelPermsAdmin" class="card hidden" style="margin-top:10px;">
-    <h2>🛡️ Permissões de Administradores</h2>
-    <p class="muted">Somente o <b>Administrador Master</b> pode alterar estas permissões.</p>
-
-    <div class="menu" style="gap:8px;">
-      <input id="buscaUsuarioPerm" placeholder="Buscar por nome ou usuário" style="max-width:260px;">
-      <button class="btn-muted" onclick="loadUsuariosParaPermissoes()">🔄 Atualizar</button>
-    </div>
-
-    <div id="listaUsuariosPerms" class="table-wrap" style="margin-top:10px;">Carregando...</div>
-  </section>
-</div>
-
-
 <div class="menu" style="margin-top:20px;">
   <h3>🕓 Ciclo Atual</h3>
   <div id="infoCiclo" style="margin-bottom:10px; font-size:0.9rem; color:#333;"></div>
@@ -404,18 +344,6 @@ table{
       <button id="btnAbrirCadastroProduto">Adicionar Produto (Admin)</button>
       <button class="btn-muted" id="btnVoltarAdmin">Voltar</button>
     </div>
-
-<!-- Painel de Solicitações de Permissão -->
-<div id="containerPermissoes" style="margin-top:20px;">
-  <button id="btnAbrirPermissoes" class="btn-ok" onclick="abrirPainelPermissoes()">🔐 Solicitações de Permissão</button>
-  <section id="painelPermissoes" class="card hidden" style="margin-top:10px;">
-    <h2>🔐 Solicitações de Permissão</h2>
-    <p class="muted">Somente o <b>Administrador Master</b> pode aprovar ou negar solicitações.</p>
-    <div id="listaPermissoes" class="table-wrap" style="margin-top:10px;">Carregando...</div>
-  </section>
-</div>
-
-    
   </section>
 
   <!-- ADMIN: USUÁRIOS -->
@@ -797,29 +725,20 @@ function renderProdutosAdminTabelas(){
   });}
 }
 window.adminEditProduto = async function(key){
-  try {
-    // 🔒 Verificação de permissão antes de editar
-    if (!(await can(ACTIONS.EDIT))) {
-      await requestPermission(ACTIONS.EDIT, { produtoId: key });
-      return;
-    }
-
-    const p = produtosCache.find(x => x.key === key);
-    if (!p) return;
-    const novoNome = prompt('Novo nome:', p.nome);
-    if (novoNome === null) return;
-    const novaUn = prompt('Unidade:', p.unidade || '');
-    if (novaUn === null) return;
-
-    await db.ref('produtos/' + key).update({ nome: novoNome.trim(), unidade: novaUn.trim() });
-    await loadProdutos();
-    showToast('Produto atualizado', 'info');
-    await logEvent('sistema', 'Produto atualizado', { produto: key });
-  } catch (e) {
-    showToast('Erro ao editar produto', 'error');
-  }
+  try{
+    const p = produtosCache.find(x=>x.key===key); if(!p) return;
+    const novoNome = prompt('Novo nome:', p.nome); if(novoNome===null) return;
+    const novaUn = prompt('Unidade:', p.unidade||''); if(novaUn===null) return;
+    await db.ref('produtos/'+key).update({ nome: novoNome.trim(), unidade: novaUn.trim() });
+    await loadProdutos(); showToast('Produto atualizado','info'); await logEvent('sistema','Produto atualizado',{produto:key});
+  }catch(e){ showToast('Erro ao editar produto','error'); }
 };
-
+window.adminDeleteProduto = async function(key){
+  try{
+    if(!confirm('Excluir este produto?')) return;
+    await db.ref('produtos/'+key).remove(); await loadProdutos(); showToast('Produto excluído','info'); await logEvent('sistema','Produto excluído',{produto:key});
+  }catch(e){ showToast('Erro ao excluir produto','error'); }
+};
 
 /* ======= CEP (ViaCEP) ======= */
 async function buscaCEP(cep){
@@ -2198,8 +2117,9 @@ async function abrirControleEstoqueAdm(){
         });
       }
     }
-const localidades = [...new Set(todos.map(e => e.localidade))].sort();
-const locOpts = ['Todas', ...localidades].map(l => `<option value="${l}">${l}</option>`).join('');
+
+    const localidades = [...new Set(todos.map(e => e.localidade))].sort();
+    const locOpts = ['Todas', ...localidades].map(l => `<option value="${l}">${l}</option>`).join('');
 
     let html = `
       <label>Filtrar por localidade:</label>
@@ -2451,26 +2371,17 @@ async function checarBloqueioPedidos(){
 // ==============================
 // BOTÃO ADMIN: ENCERRAR CICLO MANUALMENTE
 // ==============================
-document.getElementById('btnEncerrarCiclo')?.addEventListener('click', async ()=>{
-  // 🔒 Verificação de permissão antes de encerrar ciclo
-  if (!(await can(ACTIONS.CLOSE_CYCLE))) {
-    await requestPermission(ACTIONS.CLOSE_CYCLE, {});
-    return;
-  }
-
+$('#btnEncerrarCiclo')?.addEventListener('click', async ()=>{
   const ok = confirm('Deseja encerrar o ciclo atual e iniciar um novo agora?');
   if(!ok) return;
-
   const agora = Date.now();
   await db.ref('config').update({
     lastCycleEnd: agora,
     cycleStart: agora
   });
-
   showToast('✅ Ciclo encerrado manualmente e novo ciclo iniciado!', 'info');
   await verificarCicloAutomatico();
 });
-
 
 // ==============================
 // EXIBIR STATUS DO CICLO (PAINEL)
@@ -2739,19 +2650,8 @@ document.addEventListener('DOMContentLoaded', function(){
   }
 });
 </script>
-<script src="patch_admin_localidades.js"></script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
 
 
 
